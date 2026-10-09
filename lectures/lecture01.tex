@@ -1,0 +1,1060 @@
+\chapter{Why PCP and Unique Games Matter}
+\label{lec:why}
+
+{\sffamily\large\color{softgray}From checking proofs to approximating optima\par}
+\vspace{0.5em}
+
+\noindent
+Color every vertex of a graph red or blue, and call an edge \emph{cut} if its endpoints
+get different colors.  Flipping a fair coin for each vertex cuts every edge with
+probability~$\tfrac12$, so some coloring cuts at least half of all edges.  In 1994
+Goemans and Williamson \citep{GW95} showed how to do much better: using semidefinite
+programming and a random hyperplane, one can find in polynomial time a cut that contains
+at least $0.8785\ldots$ times as many edges as a \emph{maximum} cut.  More than thirty
+years later that constant has not moved.  Is it a limit of our imagination, or a limit of
+mathematics?
+
+Here is a remarkable partial answer.  The best \emph{unconditional} hardness result says
+that, unless $\Ptime=\NP$, no polynomial-time algorithm beats $16/17\approx 0.941$.  But
+if the \emph{Unique Games Conjecture} (UGC) is true, then no polynomial-time algorithm can
+beat $0.8785\ldots+\eps$ for any $\eps>0$ \citep{KKMO07,MOO10}: the strange constant defined
+by a calculus minimization is \emph{exactly} the truth.  The conjecture was formulated by
+Khot in 2002 \citep{Khot02}.  As we write this (October 2026) it is in an unusual
+position: a manuscript dated 23~September~2026 claims a proof (Section~\ref{sec:map}).  We
+treat the conjecture as a conjecture throughout, and say so whenever a result depends on it.
+
+Every step of this story---what ``hard to approximate'' means, why we can prove it at all,
+and why the conjecture takes such a peculiar form---traces back to a single idea:
+
+\begin{quote}\itshape
+To prove that an optimization problem is hard to approximate, we need proofs that can be
+checked by reading only a few bits.
+\end{quote}
+
+\noindent
+This lecture builds the vocabulary (gap problems, probabilistically checkable proofs,
+two-prover games, Label Cover, Unique Games), proves the handful of short results that
+explain \emph{why} the vocabulary looks the way it does, and draws the map on which the
+remaining fifteen lectures sit.
+
+\begin{goalbox}{After this lecture you should be able to\ldots}
+\begin{enumerate}[leftmargin=*,label=(\arabic*)]
+  \item define a gap problem, and explain how $\NP$-hardness of a gap problem rules out
+        approximation algorithms (Lemma~\ref{lem:gap-approx});
+  \item explain why the classical reductions of the 1970s cannot produce a gap, and what the
+        PCP theorem adds (Section~\ref{sec:nogap});
+  \item translate between PCP verifiers, CSPs, two-prover games and Label Cover, and prove
+        the two forms of the PCP theorem equivalent (Proposition~\ref{prop:pcp-equiv});
+  \item state the Unique Games Conjecture with its quantifiers in the right order, and say
+        why a Unique Game with perfect completeness is easy;
+  \item locate each later lecture on a map of the field (Section~\ref{sec:map}).
+\end{enumerate}
+\end{goalbox}
+
+
+%% ===========================================================================
+\section{A scoreboard of approximability}
+\label{sec:scoreboard}
+%% ===========================================================================
+
+Let us begin with the answer key.  Table~\ref{tab:scoreboard} lists four problems, the best
+approximation ratio known for each, and what is known about the \emph{limit} of
+approximability.
+
+\begin{table}[t]
+\centering\small
+\renewcommand{\arraystretch}{1.35}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.75cm}
+                   >{\raggedright\arraybackslash}p{2.95cm}
+                   >{\raggedright\arraybackslash}p{3.85cm}
+                   >{\raggedright\arraybackslash}p{3.45cm}@{}}
+\toprule
+Problem & Best algorithm & $\NP$-hard beyond & If the UGC holds, hard beyond\\
+\midrule
+\sat{Max-E3-Lin}$(\F_2)$ & $\tfrac12$ (random) & $\tfrac12+\eps$ \citep{Hastad01} & (already tight)\\
+\sat{Max-E3-SAT} & $\tfrac78$ (random) & $\tfrac78+\eps$ \citep{Hastad01} & (already tight)\\
+\midrule
+\sat{Max-Cut} & $\alpha_{\mathrm{GW}}\approx 0.8786$ \citep{GW95} &
+   $\tfrac{16}{17}+\eps\approx 0.941$ \citep{Hastad01,TSSW00} &
+   $\alpha_{\mathrm{GW}}+\eps$ \citep{KKMO07,MOO10}\\[3pt]
+\sat{Vertex Cover} & $2$ (maximal matching) &
+   $\sqrt2-\eps\approx 1.414$ \citep{DKKMS18,KMS18} &
+   $2-\eps$ \citep{KhotRegev08}\\
+\bottomrule
+\end{tabular}
+\caption{Approximability thresholds for four basic problems.  Ratios are
+$\le 1$ for maximization and $\ge 1$ for minimization problems (Definition~\ref{def:approx}).
+``$\NP$-hard beyond $\alpha$'' means that no polynomial-time algorithm achieves ratio better
+than $\alpha$ unless $\Ptime=\NP$.  The first two rows are unconditionally tight; for the last
+two, the UGC would close the gap between algorithm and hardness.}
+\label{tab:scoreboard}
+\end{table}
+
+The first two rows are the great success of the PCP method, and they are astonishing.
+\sat{Max-E3-Lin}$(\F_2)$ asks for an assignment satisfying as many as possible of a given
+list of linear equations $x_i+x_j+x_k=b \pmod 2$.  A uniformly random assignment satisfies
+half of the equations, whatever the system is.  H\aa stad proved that nothing polynomial-time
+does better, even if you are promised that a $(1-\eps)$-fraction of the equations can be
+satisfied simultaneously: \emph{guessing is optimal}.  The same is true for \sat{Max-E3-SAT},
+where a random assignment satisfies a $\tfrac78$-fraction of the clauses.
+
+The last two rows are where the story stops being a triumph.  For \sat{Max-Cut} and
+\sat{Vertex Cover} the best algorithms (a clever semidefinite program; a trivial maximal matching)
+leave a visible gap to the best hardness proofs.  Assuming the UGC, both gaps close
+\emph{simultaneously} and \emph{exactly}.  In Lecture~11 we shall see that this is not a
+coincidence: Raghavendra \citep{Raghavendra08} proved that, assuming the UGC, for \emph{every}
+constraint satisfaction problem the optimal approximation ratio is the integrality gap of
+one generic semidefinite program.  In the other direction, the constant in the \sat{Max-Cut} row is
+\begin{equation}\label{eq:alphaGW}
+  \alpha_{\mathrm{GW}} \;=\; \min_{0<\theta\le\pi}\;\frac{2}{\pi}\cdot\frac{\theta}{1-\cos\theta}\;\approx\;0.87856,
+\end{equation}
+and the hardness proof of Khot, Kindler, Mossel and O'Donnell reproduces precisely this
+minimization, with $\theta$ the angle between two random-hyperplane vectors.
+We will see in Lecture~9 how the same expression emerges from a Fourier-analytic argument
+about Gaussian noise.
+
+\begin{bigpicture}[unbreakable]{The question behind the whole course}
+For which problems can an efficient algorithm do better than the trivial one, by how much, and
+how do we \emph{prove} that nothing does better?  The PCP theorem answers this for problems
+like \sat{Max-E3-SAT}; the Unique Games Conjecture (still unproven) would answer it for a much
+larger class.
+\end{bigpicture}
+
+
+%% ===========================================================================
+\section{Approximation algorithms in one page}
+\label{sec:approx}
+%% ===========================================================================
+
+All problems in this lecture are constraint satisfaction problems or close relatives.  An
+\defn{instance} of a \sat{Max-CSP} consists of variables $x_1,\dots,x_n$ with values in a
+finite domain and a list of $m$ \defn{constraints}, each depending on a few variables.  The
+\defn{value} of an assignment is the \emph{fraction} of constraints it satisfies, and
+$\OPT(I)$ is the maximum value over all assignments.  Examples:
+\sat{Max-3SAT} (clauses with at most three literals),
+\sat{Max-E3-Lin}$(\F_2)$ (equations $x_i+x_j+x_k=b$),
+\sat{Max-Cut} (constraints $x_u\ne x_v$, one per edge).
+
+\begin{definition}[Approximation ratio]\label{def:approx}
+A polynomial-time algorithm $\mathcal A$ is an \defn{$\alpha$-approximation} for a
+maximization problem ($0<\alpha\le1$) if on every instance $I$ it outputs a solution of value
+at least $\alpha\cdot\OPT(I)$.  For a minimization problem $\mathcal A$ is a
+\defn{$\rho$-approximation} ($\rho\ge1$) if it outputs a solution of value at most
+$\rho\cdot\OPT(I)$.  The \defn{approximation threshold} of a problem is the best constant
+$\alpha$ (or $\rho$) for which an approximation algorithm exists.
+\end{definition}
+
+\begin{example}[Four one-paragraph algorithms]\label{ex:random}
+\leavevmode
+\begin{itemize}
+  \item \emph{\sat{Max-Cut}, ratio $\tfrac12$.}  Put each vertex on a random side.  Every edge is
+        cut with probability $\tfrac12$, so the expected number of cut edges is $m/2\ge\OPT/2$.
+  \item \emph{\sat{Max-E3-Lin}$(\F_2)$, ratio $\tfrac12$.}  For a random assignment and any
+        fixed equation $x_i+x_j+x_k=b$, condition on $x_i,x_j$: exactly one value of $x_k$
+        satisfies the equation, so it holds with probability~$\tfrac12$.
+  \item \emph{\sat{Max-E3-SAT}, ratio $\tfrac78$} (every clause has three literals on three
+        distinct variables).  A clause is violated by exactly one of the eight settings of its
+        variables, hence is satisfied with probability $\tfrac78$.
+  \item \emph{\sat{Vertex Cover}, ratio $2$.}  Let $M$ be a maximal matching.  Its $2|M|$
+        endpoints form a vertex cover (an uncovered edge could be added to $M$), while any
+        cover must contain one endpoint of each of the $|M|$ disjoint edges of $M$, so
+        $\OPT\ge|M|$.
+\end{itemize}
+The three randomized algorithms can be derandomized by the method of conditional
+expectations (Exercise~\ref{ex:derand}).
+\end{example}
+
+So an algorithm that does \emph{nothing intelligent} already achieves a constant ratio.  The
+whole subject starts from the question whether intelligence can ever pay off---and for
+\sat{Max-E3-SAT} and \sat{Max-E3-Lin} it turns out that it cannot.  The tool that proves this is the
+subject of the next three sections.
+
+
+%% ===========================================================================
+\section{Gap problems: the language of hardness}
+\label{sec:gap}
+%% ===========================================================================
+
+How does one prove that an \emph{approximation} problem is $\NP$-hard?  Decision problems
+are what the theory of $\NP$-completeness knows how to handle, so we turn the approximation
+problem into a decision problem---a \emph{promise} problem.
+
+\begin{definition}[Gap problem]\label{def:gap}
+Let $\Pi$ be a \sat{Max-CSP} and $0\le s<c\le1$.  The \defn{gap problem}
+$\Gap{c}{s}{$\Pi$}$ is the following promise problem.  Given an instance $I$ of $\Pi$ such that
+either
+\[
+  \text{(YES)}\ \ \OPT(I)\ge c \qquad\text{or}\qquad \text{(NO)}\ \ \OPT(I)\le s,
+\]
+decide which of the two cases holds.  On instances outside both cases, any answer is acceptable.
+We call $c$ the \defn{completeness} and $s$ the \defn{soundness}; the gap problem has
+\defn{perfect completeness} if $c=1$.  The problem is \defn{$\NP$-hard} if there is a
+polynomial-time map $f$ from $3$-CNF formulas to instances of $\Pi$ with
+$\varphi$ satisfiable $\Rightarrow f(\varphi)$ is a YES instance, and $\varphi$ unsatisfiable
+$\Rightarrow f(\varphi)$ is a NO instance.
+\end{definition}
+
+\begin{lemma}[Gap hardness implies inapproximability]\label{lem:gap-approx}
+If $\Gap{c}{s}{$\Pi$}$ is $\NP$-hard, then for every $\alpha>s/c$ there is no polynomial-time
+$\alpha$-approximation algorithm for $\Pi$ unless $\Ptime=\NP$.
+\end{lemma}
+\begin{proof}
+Suppose $\mathcal A$ is a polynomial-time $\alpha$-approximation with $\alpha>s/c$.  We use it
+to decide $3$SAT.  Given $\varphi$, compute $I=f(\varphi)$, run $\mathcal A$ on $I$, evaluate the
+value $v$ of the solution it returns (this is easy), and accept iff $v>s$.
+If $\varphi$ is satisfiable then $\OPT(I)\ge c$, so $v\ge\alpha c>s$.
+If $\varphi$ is unsatisfiable then $v\le\OPT(I)\le s$.
+Hence this is a polynomial-time algorithm for $3$SAT.
+\end{proof}
+
+\noindent Conversely, an approximation algorithm with ratio below $s/c$ would solve the gap
+problem---so the gap problem \emph{is} the decision core of approximation.  In this language, the
+rows of Table~\ref{tab:scoreboard} read as follows:
+\begin{align*}
+  &\text{H\aa stad:} && \Gap{1-\eps}{\tfrac12+\eps}{Max-E3-Lin}\ \text{ and }\ \Gap{1}{\tfrac78+\eps}{Max-E3-SAT}\ \text{ are $\NP$-hard};\\
+  &\text{UGC:} && \Gap{c}{\alpha_{\mathrm{GW}}\, c+\eps}{Max-Cut}\ \text{ is $\NP$-hard (for suitable $c$).}
+\end{align*}
+
+\begin{remark}[Why completeness $1-\eps$ rather than $1$]
+Perfect completeness is not always attainable.  A system of linear equations over $\F_2$ whose
+equations can \emph{all} be satisfied is solved by Gaussian elimination, so
+$\Gap{1}{s}{Max-E3-Lin}\in\Ptime$ for every $s<1$ (Exercise~\ref{ex:gauss}).  Håstad's theorem has to
+take $c=1-\eps$ for exactly this reason, and we will see the same phenomenon, for a similar
+reason, in the Unique Games Conjecture (Section~\ref{sec:ug}).
+\end{remark}
+
+
+%% ===========================================================================
+\section{Why ordinary reductions cannot create a gap}
+\label{sec:nogap}
+%% ===========================================================================
+
+The NP-completeness theory of the 1970s \citep{Cook71,Levin73,Karp72} is a theory of
+\emph{exact} problems, and its reductions are, in a precise sense, too gentle for
+approximation.  This section explains why, and in doing so isolates what the PCP theorem
+must supply.
+
+\subsection{Cook--Levin yields a gap of one clause}
+
+Recall how $3$SAT is shown $\NP$-hard.  Let $L\in\NP$ with verifier $V$ and let $x$ be an
+input.  The Cook--Levin reduction outputs a formula $\varphi_x$ that encodes the computation
+tableau of $V$ on $(x,w)$, where the witness $w$ is left as free variables.  The clauses say that
+(a)~the first row of the tableau contains $x$, (b)~every $2\times3$ window of the tableau is
+consistent with the transition function of $V$, and (c)~the last row contains the accepting state.
+
+\begin{observation}\label{obs:cl}
+For \emph{every} $x$---also for $x\notin L$---there is an assignment to $\varphi_x$ that
+violates only the clause in~(c).  Hence $\OPT(\varphi_x)\ge 1-1/m$, where $m$ is the number
+of clauses.
+\end{observation}
+\begin{proof}[Proof sketch]
+Choose any witness $w$ and write down the true computation of $V$ on $(x,w)$ as a tableau.
+Constraints (a) and (b) hold by construction; (c) fails if $V$ rejects $(x,w)$, but it is a single
+clause.
+\end{proof}
+
+So the classical reduction maps YES instances to formulas with $\OPT=1$ and NO instances to
+formulas with $\OPT=1-\tfrac1m$ exactly.  It proves that $\Gap{1}{1-1/m}{3SAT}$
+is $\NP$-hard, which is nothing but the statement that maximizing the number of satisfied
+clauses \emph{exactly} is $\NP$-hard.  The gap is a single clause out of $m$, and by
+Lemma~\ref{lem:gap-approx} it rules out only approximation ratios above $1-\tfrac1m$, which
+is no restriction at all on an algorithm.
+
+\subsection{Karp reductions transport gaps, they do not create them}
+
+Suppose now that someone \emph{gives us} a gap, and we want to carry it to another problem.
+The standard reduction from $3$SAT to \sat{Independent Set} does this perfectly.
+
+\begin{proposition}[The triangle reduction]\label{prop:triangle}
+Let $\varphi$ be a $3$-CNF with $m$ clauses, and define the graph $G_\varphi$ as follows:
+there is a vertex for every pair (clause $C_j$, literal $\ell\in C_j$); the three vertices of each
+clause form a triangle; and two vertices $(j,\ell)$, $(j',\ell')$ are adjacent when
+$\ell'=\neg\ell$.  Then the size of a maximum independent set of $G_\varphi$ equals the
+maximum number of clauses of $\varphi$ that can be simultaneously satisfied.
+\end{proposition}
+\begin{proof}
+($\ge$) Given an assignment satisfying $t$ clauses, pick for each satisfied clause one
+satisfied literal.  The $t$ chosen vertices lie in different triangles, and no two of them carry
+complementary literals, since both are true under the same assignment.  So they are independent.
+($\le$) Let $S$ be an independent set.  It contains at most one vertex per triangle, and the
+literals it contains are pairwise non-complementary, so they can all be set to true by a single
+assignment, which then satisfies at least $|S|$ clauses.
+\end{proof}
+
+Consequently $\Gap{c}{s}{3SAT}$ reduces to the problem of distinguishing independent sets of
+size $\ge cm$ from independent sets of size $\le sm$ in a graph with $3m$ vertices:
+the gap is carried over \emph{unchanged}.  The same is true for almost all the textbook
+reductions among $\NP$-complete problems.  They are \emph{local gadget constructions} that
+preserve the quantity ``how many constraints can be satisfied''; so they preserve a gap if
+there is one at the start, and they have none to preserve if there is none.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,every node/.style={font=\small}]
+  % ---------- panel (a)
+  \node[anchor=west,font=\sffamily\small\bfseries,color=accent] at (0,4.5) {(a)\; Cook--Levin / Karp reduction};
+  \draw[-{Stealth[length=2mm]}] (0,3.4) -- (12.6,3.4);
+  \foreach \x/\l in {0/{$\tfrac12$}, 12/{$1$}} \draw (\x,3.33)--(\x,3.47) node[below=6pt]{\l};
+  \draw[line width=3pt,warn] (0,3.4) -- (11.55,3.4);
+  \fill[claim] (12,3.4) circle (3pt);
+  \node[warn,above] at (5.5,3.5) {NO: $\OPT\le 1-\tfrac1m$};
+  \node[claim,above] at (12,3.5) {YES};
+  \draw[decorate,decoration={brace,amplitude=2.5pt,mirror}] (11.55,2.55) -- (12,2.55)
+        node[midway,below=3pt,font=\footnotesize]{gap $=\tfrac1m$};
+  % ---------- panel (b)
+  \node[anchor=west,font=\sffamily\small\bfseries,color=accent] at (0,0.95) {(b)\; After the PCP theorem};
+  \draw[-{Stealth[length=2mm]}] (0,-0.15) -- (12.6,-0.15);
+  \foreach \x/\l in {0/{$\tfrac12$}, 12/{$1$}} \draw (\x,-0.22)--(\x,-0.08) node[below=6pt]{\l};
+  \draw[line width=3pt,warn] (0,-0.15) -- (9.3,-0.15);
+  \fill[claim] (12,-0.15) circle (3pt);
+  \node[warn,above] at (4.6,-0.05) {NO: $\OPT\le 1-\varepsilon_0$};
+  \node[claim,above] at (12,-0.05) {YES};
+  \draw[decorate,decoration={brace,amplitude=3pt,mirror}] (9.3,-1.0) -- (12,-1.0)
+        node[midway,below=4pt,font=\footnotesize]{gap $=\varepsilon_0$, a constant};
+\end{tikzpicture}
+\caption{Where the optimum $\OPT(\varphi)$ lives for YES and NO instances of a reduction to
+\sat{Max-3SAT} (schematic, not to scale).  The classical reductions leave a single clause between the two
+cases; the PCP theorem moves the NO instances away by a constant fraction.}
+\label{fig:gap}
+\end{figure}
+
+\begin{bigpicture}{Gap creation versus gap preservation}
+Hardness of approximation has two ingredients.  \textbf{(i) Gap creation}: one reduction from
+$\NP$ (\eg from $3$SAT) to a constraint satisfaction problem that turns ``satisfiable'' vs.\
+``unsatisfiable'' into ``everything satisfiable'' vs.\ ``at most a $(1-\eps_0)$ fraction
+satisfiable.''  This is the PCP theorem (Section~\ref{sec:pcp}), and it does not follow from
+anything in the $\NP$-completeness toolbox.  \textbf{(ii) Gap preservation or
+amplification}: a long chain of reductions that carry the gap to other problems, sharpening its
+parameters on the way.  Lectures 3, 4 and~6 are about~(i); Lectures 5 and~7 are about~(ii); and Lectures 8--16 explore what
+happens when ordinary gap amplification runs out of steam, which is where the Unique Games
+Conjecture comes in.
+\end{bigpicture}
+
+
+%% ===========================================================================
+\section{The PCP theorem: two faces}
+\label{sec:pcp}
+%% ===========================================================================
+
+\subsection{Proofs that can be spot-checked}
+
+A classical $\NP$ verifier reads its entire witness.  Suppose instead we insist that the
+verifier be \emph{randomized} and may read only a constant number of bits of a (very long)
+proof $\pi$.  Of course it must then sometimes accept wrong proofs; the demand is that it
+reject every proof of a false statement with probability bounded away from $0$.
+
+\begin{definition}[Probabilistically checkable proofs]\label{def:pcp}
+A \defn{probabilistic verifier} $V$ with randomness $r(n)$ and query complexity $q(n)$ is a
+polynomial-time algorithm that, on input $x$ of length $n$ and oracle access to a proof string
+$\pi$, draws a random string $\rho\in\{0,1\}^{r(n)}$, \emph{non-adaptively} computes $q(n)$
+positions $i_1(x,\rho),\dots,i_q(x,\rho)$, reads $\pi_{i_1},\dots,\pi_{i_q}$, and accepts or rejects
+according to a predicate $P_{x,\rho}\colon\{0,1\}^q\to\{0,1\}$.
+Let $0\le s<c\le1$.  A language $L$ belongs to $\PCP_{c,s}[r,q]$ if there is such a
+verifier with
+\begin{align*}
+  x\in L &\ \Longrightarrow\ \exists\pi:\ \Pr_\rho[V^\pi(x)\text{ accepts}]\ge c &&\text{(completeness)},\\
+  x\notin L &\ \Longrightarrow\ \forall\pi:\ \Pr_\rho[V^\pi(x)\text{ accepts}]\le s &&\text{(soundness)}.
+\end{align*}
+We write $\PCP[r,q]=\PCP_{1,1/2}[r,q]$.
+\end{definition}
+
+Two extreme cases show that the trade-off is not vacuous.  With $r=0$ and $q=n^{O(1)}$ the verifier
+is deterministic and reads the whole witness: $\PCP[0,\poly(n)]=\NP$.  With $q=0$ the proof is
+useless, and we get randomized polynomial time.  The question is how much \emph{randomness}
+(which buys coverage of the proof) and how many \emph{queries} are needed.  Note that
+$\PCP[O(\log n),O(1)]\subseteq\NP$ trivially: there are only $2^{O(\log n)}=\poly(n)$ random
+strings, and together they query only polynomially many positions of $\pi$, so a nondeterministic
+machine can guess these bits and check all random strings.  The surprise is the other direction.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,every node/.style={font=\small}]
+  % proof string
+  \foreach \i in {0,...,15} {\draw[fill=white] (\i*0.68,0) rectangle +(0.68,0.6);}
+  \foreach \i in {2,7,12} {\draw[fill=accent!25] (\i*0.68,0) rectangle +(0.68,0.6);}
+  \node[anchor=east] at (-0.15,0.3) {proof $\pi$};
+  \node at (5.44,-0.55) {$\pi\in\{0,1\}^N$,\quad $N=\poly(n)$};
+  % verifier
+  \node[draw,rounded corners=3pt,fill=black!5,minimum width=3.4cm,minimum height=0.9cm] (V) at (5.44,2.8) {Verifier $V(x)$};
+  \node[anchor=east,align=right] at (3.5,2.8) {random string\\ $\rho\in\{0,1\}^{O(\log n)}$};
+  \draw[->] (3.55,2.8) -- (V.west);
+  \foreach \i in {2,7,12} \draw[-{Stealth[length=1.8mm]},accent,thick] (V.south) to[out=-90,in=90] (\i*0.68+0.34,0.62);
+  \node[anchor=west,align=left] at (7.6,2.8) {reads $\pi_{i_1},\pi_{i_2},\pi_{i_3}$ \;($q=O(1)$)\\
+       accepts iff $P_{x,\rho}(\pi_{i_1},\pi_{i_2},\pi_{i_3})=1$};
+\end{tikzpicture}
+\caption{A PCP verifier.  For each of polynomially many random strings $\rho$ it inspects a constant
+number of proof bits and applies a local test.  A correct proof passes every test; every proof of a
+false statement fails at least half of them.}
+\label{fig:pcp}
+\end{figure}
+
+\begin{theorem}[PCP theorem, proof-checking form; Arora--Safra, Arora--Lund--Motwani--Sudan--Szegedy]\label{thm:pcp1}
+$\NP=\PCP[O(\log n),O(1)]$.
+\end{theorem}
+
+\begin{theorem}[PCP theorem, hardness form]\label{thm:pcp2}
+There is a constant $\eps_0>0$ such that $\Gap{1}{1-\eps_0}{3SAT}$ is $\NP$-hard.
+\end{theorem}
+
+\noindent
+Here $\Gap{1}{1-\eps_0}{3SAT}$ asks to distinguish satisfiable $3$-CNF formulas from formulas
+in which every assignment violates an $\eps_0$-fraction of the clauses.  Compare with
+Figure~\ref{fig:gap}: this is precisely the picture in panel~(b).  The two theorems look very
+different---one about proofs, one about optimization---but they say the same thing.
+
+\begin{proposition}[Equivalence of the two forms]\label{prop:pcp-equiv}
+Theorem~\ref{thm:pcp1} holds if and only if Theorem~\ref{thm:pcp2} holds.
+\end{proposition}
+
+\begin{proof}
+\emph{Hardness form $\Rightarrow$ proof-checking form.}  Let $L\in\NP$.  Compose the Cook--Levin
+reduction with the reduction witnessing the $\NP$-hardness of $\Gap{1}{1-\eps_0}{3SAT}$ to obtain a
+polynomial-time map $x\mapsto\varphi_x$ such that $x\in L$ implies that $\varphi_x$ is
+satisfiable, and $x\notin L$ implies that every assignment violates at least $\eps_0 m$ clauses,
+where $m=|\varphi_x|$.  The verifier expects as proof a satisfying assignment $\pi$ of $\varphi_x$.
+It picks a clause uniformly at random ($\log m=O(\log n)$ random bits), reads the (at most) three
+variables occurring in it, and accepts iff the clause is satisfied.  If $x\in L$, an honest
+proof is accepted with probability~$1$.  If $x\notin L$ then \emph{whatever} $\pi$ is, it is an
+assignment and thus violates an $\eps_0$-fraction of the clauses, so $V$ accepts with probability
+at most $1-\eps_0$.  Now repeat the test $k=\lceil\ln2/\eps_0\rceil$ times with
+independent clauses, accepting iff all $k$ clauses are satisfied.  The proof $\pi$ is fixed once
+and for all, so the $k$ tests are independent given $\pi$ and the acceptance probability is at most
+$(1-\eps_0)^k\le e^{-\eps_0k}\le\tfrac12$.  The verifier uses $k\log m=O(\log n)$ random bits and
+$3k=O(1)$ queries.
+
+\emph{Proof-checking form $\Rightarrow$ hardness form.}  Let $V$ be a verifier for $\sat{3SAT}\in\NP$
+with $r=O(\log n)$ random bits, $q=O(1)$ queries, perfect completeness and soundness~$\tfrac12$.
+(We may assume $q\ge3$.)  Given a formula $\psi$, we build a $3$-CNF $\varphi$ as follows.
+Since $2^r=\poly(n)$, we can enumerate every random string $\rho$ and compute the query positions
+$i_1(\rho),\dots,i_q(\rho)$ and the predicate $P_\rho$.  Introduce one Boolean variable $y_i$ for every
+position $i$ of the proof.  For each $\rho$ we want to enforce $P_\rho(y_{i_1},\dots,y_{i_q})=1$.  This
+constraint is a CNF with at most $2^q$ clauses of width $q$: one clause for each $a\in\{0,1\}^q$ with
+$P_\rho(a)=0$, namely the clause that is false exactly on the input~$a$.  Finally, each clause
+$(\ell_1\vee\dots\vee\ell_q)$ of width $q$ is converted into $q-2$ clauses of width~$3$ with fresh
+variables $z_1,\dots,z_{q-3}$:
+\[
+  (\ell_1\vee\ell_2\vee z_1)\wedge(\neg z_1\vee\ell_3\vee z_2)\wedge\dots\wedge(\neg z_{q-3}\vee\ell_{q-1}\vee\ell_q).
+\]
+If some $\ell_j$ is true, one can choose the $z$'s to satisfy all $q-2$ clauses; if all $\ell_j$ are
+false then $z_1$ must be true, hence $z_2$, \dots, hence $z_{q-3}$, and the last clause is violated, so
+\emph{at least one} of the $q-2$ clauses fails for every choice of $z$.
+Let $\varphi_\rho$ be the resulting $3$-CNF; it has at most $K:=(q-2)2^q$ clauses, and let $\varphi=\bigwedge_\rho\varphi_\rho$,
+which has $m\le K\cdot 2^r$ clauses.
+
+\emph{Completeness.}  If $\psi$ is satisfiable, there is a proof $\pi$ accepted for every $\rho$.  Setting $y=\pi$ and
+choosing the $z$'s suitably satisfies all of $\varphi$.
+
+\emph{Soundness.}  If $\psi$ is unsatisfiable, every proof $\pi$ is rejected for at least half of
+the random strings.  Given any assignment to $\varphi$, read off $\pi=y$.  For every $\rho$ on which $V^\pi$
+rejects, the assignment violates \emph{at least one} clause of $\varphi_\rho$.  There are at least $2^{r}/2$
+such $\rho$, so at least $2^r/2$ clauses are violated out of $m\le K2^r$, \ie a fraction
+$\ge 1/(2K)$.  Thus $\Gap{1}{1-\eps_0}{3SAT}$ is $\NP$-hard with $\eps_0=1/(2K)$, a constant.
+\end{proof}
+
+\begin{remark}[A dictionary]
+The proof is our first instance of a translation that we shall use constantly:
+\emph{a verifier is a constraint satisfaction problem}.  Random strings $\rho$ correspond to
+constraints; positions of the proof correspond to variables; the predicate $P_\rho$ is the
+constraint; the number $q$ of queries is the arity; soundness $s$ is the bound on the optimum
+in the NO case.  We extend the dictionary to games in Section~\ref{sec:games}
+(Table~\ref{tab:dict}).
+\end{remark}
+
+\begin{pitfall}{a proof is not a witness}
+In Definition~\ref{def:pcp} the soundness condition quantifies over \emph{every} string~$\pi$,
+including strings that have nothing to do with any computation.  A PCP is useful precisely
+because its verifier cannot be fooled by an adversarially chosen $\pi$ that is merely
+\emph{locally plausible}.  In the first half of the proof above this is why we can read off
+an assignment from $\pi$ and apply the NO-case promise to it.
+\end{pitfall}
+
+The PCP theorem is a deep result: the original proofs by \citet{AroraSafra98} and
+\citet{ALMSS98} are algebraic (low-degree polynomials and recursive proof composition), and \citet{Dinur07}
+later found a purely combinatorial proof by gap amplification on expander graphs.  We take
+Theorem~\ref{thm:pcp1} for granted in this lecture, return to its proofs in
+Lectures~3, 4 and~6, and ask here what it gives us.
+
+\begin{remark}[Two-sided history]
+Theorem~\ref{thm:pcp2} reads as a statement about \emph{approximation}, yet the road to it was
+paved by results about \emph{interactive proofs}: multi-prover interactive proofs
+\citep{BGKW88}, $\mathsf{NEXP}=\mathsf{MIP}$ \citep{BFL91}, and the discovery by
+\citet{FGLSS96} that a PCP verifier can be turned into a graph whose largest clique encodes the
+maximum acceptance probability (Exercise~\ref{ex:fglss}), and hence that PCPs imply
+hardness of approximating \sat{Max-Clique}.  Section~\ref{sec:games} follows the thread through
+the multi-prover systems.
+\end{remark}
+
+
+%% ===========================================================================
+\section{Two provers, Label Cover, and parallel repetition}
+\label{sec:games}
+%% ===========================================================================
+
+The gap in the PCP theorem is a small constant: soundness $1-\eps_0$.  To prove hardness
+results with sharp constants like $\tfrac78$ and $\tfrac12$ we need soundness $s\to0$, and
+we need it while keeping the \emph{number of queries} under control.  The cleanest setting for
+this is the following.
+
+\subsection{Games, labelings, projections}
+
+\begin{definition}[Two-prover one-round game / Label Cover]\label{def:game}
+A \defn{two-prover one-round game} $G$ consists of a bipartite graph $(U,W,E)$ with finite
+label sets $\Sigma_U,\Sigma_W$ and, for each edge $e=(u,w)$, a \defn{constraint}
+$C_e\subseteq\Sigma_U\times\Sigma_W$.  The referee draws an edge $e=(u,w)$ uniformly at random,
+sends $u$ to Alice and $w$ to Bob, receives answers $a\in\Sigma_U$ and $b\in\Sigma_W$ from
+the provers (who cannot communicate), and accepts iff $(a,b)\in C_e$.  The \defn{value} of $G$,
+\[
+  \val(G)\;=\;\max_{\ell_U\colon U\to\Sigma_U,\ \ell_W\colon W\to\Sigma_W}\ \Pr_{e=(u,w)\sim E}\big[(\ell_U(u),\ell_W(w))\in C_e\big],
+\]
+is the maximum over \defn{labelings}, \ie over deterministic strategies of the two provers.
+Finding an optimal labeling is the optimization problem \defn{Label Cover}.  The game is a
+\defn{projection game} if every $C_e$ is the graph of a function $\pi_e\colon\Sigma_U\to\Sigma_W$:
+$C_e=\{(a,\pi_e(a))\}$.  It is a \defn{Unique Game} if moreover $|\Sigma_U|=|\Sigma_W|=k$
+and every $\pi_e$ is a bijection.
+\end{definition}
+
+Restricting to deterministic strategies loses nothing.
+
+\begin{lemma}[Determinism suffices]\label{lem:determ}
+The maximum acceptance probability over all (randomized, possibly correlated through shared
+randomness) strategies of Alice and Bob equals $\val(G)$.
+\end{lemma}
+\begin{proof}
+A randomized strategy with shared random string $r$ is, for each fixed $r$, a deterministic
+strategy.  Its acceptance probability is the average over $r$ of the acceptance probabilities of
+the deterministic strategies, hence at most the maximum.
+\end{proof}
+
+\begin{lemma}[Random labeling]\label{lem:random-label}
+In a projection game, $\val(G)\ge 1/|\Sigma_W|$.  In particular, for every Unique Game with $k$ labels
+$\val(G)\ge1/k$.
+\end{lemma}
+\begin{proof}
+Fix any labels for the $u\in U$ and give every $w\in W$ an independent uniformly random
+label.  For each edge $e=(u,w)$ the label $\pi_e(\ell_U(u))$ is fixed, so $w$ matches it with
+probability exactly $1/|\Sigma_W|$.  By linearity of expectation some labeling achieves at least that.
+\end{proof}
+
+\noindent
+Lemma~\ref{lem:random-label} will matter later: no hardness theorem can have soundness $\delta$ with
+fewer than $1/\delta$ labels.
+
+\begin{example}[The clause--variable game]\label{ex:cv}
+Let $\varphi$ be a $3$-CNF in which every clause has three distinct variables.  Alice plays the
+\emph{clause prover}, Bob the \emph{variable prover}.  The referee picks a uniformly random clause
+$C$ and a uniformly random variable $x$ in it.  Alice receives $C$ and must answer with a
+satisfying assignment of its three variables ($7$ possibilities); Bob receives $x$ and answers
+with a bit.  They win iff Bob's bit equals Alice's value for $x$.  This is a projection game with
+$|\Sigma_U|=7$ and $|\Sigma_W|=2$ (Figure~\ref{fig:cv}); the projection $\pi_{(C,x)}$ sends an
+assignment of $C$ to its restriction to~$x$.
+\end{example}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,every node/.style={font=\small},
+   cl/.style={draw,rounded corners=2pt,minimum width=4.1cm,minimum height=0.62cm,fill=accent!8},
+   vr/.style={draw,circle,minimum size=0.75cm,fill=warn!10}]
+  \node[font=\sffamily\small\bfseries,color=accent] at (0,3.3) {Alice: clause prover};
+  \node[font=\sffamily\small\bfseries,color=warn]   at (8,3.3) {Bob: variable prover};
+  \node[cl] (c1) at (0,2.2) {$C_1=(x_1\vee x_2\vee\neg x_3)$};
+  \node[cl] (c2) at (0,0.9) {$C_2=(\neg x_1\vee x_3\vee x_4)$};
+  \node[cl] (c3) at (0,-0.4) {$C_3=(\neg x_2\vee\neg x_3\vee\neg x_4)$};
+  \node[vr] (x1) at (8,2.6) {$x_1$};
+  \node[vr] (x2) at (8,1.5) {$x_2$};
+  \node[vr] (x3) at (8,0.4) {$x_3$};
+  \node[vr] (x4) at (8,-0.7) {$x_4$};
+  \draw[black!55] (c1.east)--(x1) (c1.east)--(x2) (c1.east)--(x3)
+        (c2.east)--(x1) (c2.east)--(x3) (c2.east)--(x4)
+        (c3.east)--(x2) (c3.east)--(x3) (c3.east)--(x4);
+  \draw[accent,very thick] (c2.east)--(x3);
+  \node[font=\footnotesize,align=center,color=accent] at (0,-1.45)
+     {answer: one of the $7$ satisfying\\ assignments of the clause};
+  \node[font=\footnotesize,align=center,color=warn] at (8,-1.45)
+     {answer: a bit\\ (value of the variable)};
+\end{tikzpicture}
+\caption{The clause--variable game of a $3$-CNF.  An edge is a pair (clause, variable occurring in it).
+The highlighted edge $(C_2,x_3)$ is accepted iff Alice's assignment to $C_2$ and Bob's bit agree on~$x_3$,
+\ie iff the projection $\pi_{(C_2,x_3)}$ of Alice's label to the coordinate $x_3$ equals Bob's label.}
+\label{fig:cv}
+\end{figure}
+
+\begin{proposition}[Soundness of the clause--variable game]\label{prop:cv}
+If $\varphi$ is satisfiable then $\val(G_\varphi)=1$.  If every assignment violates at least an
+$\eps$-fraction of the clauses then $\val(G_\varphi)\le1-\eps/3$.
+\end{proposition}
+\begin{proof}
+If $\varphi$ is satisfiable, let both provers answer according to a satisfying assignment.
+Conversely, fix deterministic strategies; Bob's answers define an assignment $b$ to the variables.
+By assumption $b$ violates at least an $\eps$-fraction of the clauses.  Consider a clause $C$ violated by $b$.
+Alice's answer $a_C$ is a satisfying assignment of $C$ (otherwise she loses outright), so $a_C\ne b|_C$,
+and therefore $a_C$ disagrees with $b$ on at least one of the three variables of $C$.  The referee asks
+exactly that variable with probability at least $\tfrac13$, and rejects.  Hence the rejection probability is
+at least $\eps\cdot\tfrac13$.
+\end{proof}
+
+\noindent
+Combined with Theorem~\ref{thm:pcp2}, Proposition~\ref{prop:cv} shows that it is $\NP$-hard to
+distinguish $\val(G)=1$ from $\val(G)\le1-\eps_0/3$ for projection games over alphabets of
+size~$7$ and $2$.  We have now met the ``game'' column of the dictionary.
+
+\begin{table}[t]
+\centering\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}llll@{}}
+\toprule
+PCP verifier & CSP & Two-prover game & Label Cover\\
+\midrule
+random string $\rho$ & constraint & question pair $(u,w)$ & edge $e$\\
+proof position & variable & (a prover's answer table) & vertex\\
+$q$ queries & arity $q$ & $2$ provers & arity $2$\\
+predicate $P_\rho$ & constraint predicate & referee's test & relation $C_e$\\
+alphabet $\{0,1\}$ & domain & answer set & label set $\Sigma$\\
+soundness $s$ & $\OPT\le s$ & $\val(G)\le s$ & $\val\le s$\\
+\bottomrule
+\end{tabular}
+\caption{The dictionary.  The same object is a verifier, a constraint satisfaction problem, a game, and a
+Label Cover instance.}
+\label{tab:dict}
+\end{table}
+
+\subsection{Parallel repetition}
+
+To drive the soundness from $1-\eps_0/3$ to a small $\delta$ we want to repeat.
+For a one-oracle verifier, as we saw in the proof of Proposition~\ref{prop:pcp-equiv}, independent
+repetition multiplies the acceptance probabilities.  For a game we are not free to repeat
+sequentially: that would require several rounds of communication, which we want to avoid
+(otherwise the provers could coordinate).  Instead one repeats \emph{in parallel}.
+
+\begin{definition}[Parallel repetition]
+The \defn{$k$-fold parallel repetition} $G^{\otimes k}$ of a game $G$: the referee draws $k$ independent
+edges $e_i=(u_i,w_i)$, sends $(u_1,\dots,u_k)$ to Alice and $(w_1,\dots,w_k)$ to Bob, receives
+$a\in\Sigma_U^k$ and $b\in\Sigma_W^k$, and accepts iff $(a_i,b_i)\in C_{e_i}$ for every $i$.
+\end{definition}
+
+Alice and Bob can play each coordinate independently with an optimal strategy of $G$, so
+$\val(G^{\otimes k})\ge\val(G)^k$.  Is this an equality?  It is not, and the failure is
+dramatic enough to deserve a warning.
+
+\begin{pitfall}{parallel repetition is not independent repetition}
+Let $\ell\ge3$ be odd.  In the \defn{odd cycle game} the questions are the vertices of an
+$\ell$-cycle.  With probability $\tfrac12$ the referee sends the \emph{same} vertex to both provers and
+demands the same color ($0$ or~$1$); with probability $\tfrac12$ it sends the two \emph{endpoints
+of a random edge}, in random order, and demands different colors.  The provers are trying to convince
+the referee that an odd cycle is $2$-colorable.  Its value is $1-\tfrac1{2\ell}$ (Exercise~\ref{ex:oddcycle});
+this is a Unique Game with two labels.  Naively, $k$ repetitions should yield value about
+$(1-\tfrac1{2\ell})^k\approx e^{-k/2\ell}$, which for $k=\ell^2/100$ is exponentially small in $\ell$.
+In fact \citet{Raz11} showed that for $k\le\ell^2$ there is a strategy winning $G^{\otimes k}$ with
+probability $1-O(\sqrt k/\ell)$, so that even for $k=c\,\ell^2$ with a small constant~$c$ the
+value of $G^{\otimes k}$ is still at least~$\tfrac12$ (this is essentially tight by \citealp{FKO07}).
+Exercise~\ref{ex:fortnow} gives a much smaller example in which already the $2$-fold game beats $\val^2$.
+Examples of this kind go back to Fortnow and Feige around 1990, and for several years it was a
+famous open problem whether repetition drives the value to $0$ at all.
+\end{pitfall}
+
+The qualitative fact that repetition \emph{does} drive the value to $0$ is the theorem of Raz.
+
+\begin{theorem}[Parallel repetition; Raz 1998, Holenstein 2009, Rao 2011]\label{thm:raz}
+There is an absolute constant $c>0$ such that for every two-prover one-round game $G$ with
+$\val(G)\le1-\eta$ and answer sets of size at most~$\sigma$,
+\[
+  \val(G^{\otimes k})\;\le\;\bigl(1-\eta^{c}\bigr)^{\Omega(k/\log\sigma)}.
+\]
+For projection games, Rao showed $\val(G^{\otimes k})\le(1-\Omega(\eta^2))^k$, independently of $\sigma$.
+\end{theorem}
+
+\noindent
+Raz's original paper has $c=32$ \citep{Raz98}; Holenstein simplified the proof and improved this to $c=3$
+\citep{Holenstein09}.  (We prove none of this until Lecture~5.)  Putting the PCP theorem, the
+clause--variable game and parallel repetition together, we obtain the result that all of
+Lectures 7--16 take as their starting point.
+
+\begin{theorem}[Label Cover theorem]\label{thm:lc}
+For every $\delta>0$ there is a $\sigma=\poly(1/\delta)$ and a reduction, running in time
+$n^{O(\log(1/\delta))}$ on formulas of size $n$, from $3$SAT to projection games with label sets
+of size at most $\sigma$, such that
+\[
+  \varphi\text{ satisfiable}\ \Rightarrow\ \val(G_\varphi)=1,\qquad
+  \varphi\text{ unsatisfiable}\ \Rightarrow\ \val(G_\varphi)\le\delta.
+\]
+In other words $\Gap{1}{\delta}{LabelCover}_{\sigma}$ is $\NP$-hard.
+\end{theorem}
+\begin{proof}
+Apply Theorem~\ref{thm:pcp2} to obtain $\varphi'$ with the $\eps_0$-gap, then form the
+clause--variable game $G=G_{\varphi'}$; by Proposition~\ref{prop:cv} we have $\val(G)=1$ or $\val(G)\le1-\eta$
+with $\eta=\eps_0/3$.  Take $G^{\otimes k}$ with $k=O(\log(1/\delta)/\eta^2)=O(\log(1/\delta))$.  Repetition
+of a projection game is again a projection game (the projection is $\pi_{e_1}\times\dots\times\pi_{e_k}$).
+If $\val(G)=1$ then $\val(G^{\otimes k})=1$.  Otherwise Theorem~\ref{thm:raz} gives $\val(G^{\otimes k})\le(1-\Omega(\eta^2))^k\le\delta$.
+The new label sets have sizes $7^k$ and $2^k$, which is $\poly(1/\delta)$, and $G^{\otimes k}$ has at most $(3m)^k$ edges.
+\end{proof}
+
+\noindent
+Two remarks about the price we paid.  First, the alphabet size $\sigma$ is polynomial in $1/\delta$,
+and by Lemma~\ref{lem:random-label} it \emph{must} be at least $1/\delta$.  Second, the projection games we
+have produced are $d$-to-$1$ with large $d$: each label of Bob has about $\sigma/2^k$ preimages.
+Both facts will be the stage on which Unique Games enters.
+
+
+%% ===========================================================================
+\section{Unique Games and the Unique Games Conjecture}
+\label{sec:ug}
+%% ===========================================================================
+
+\subsection{Definition and a first observation}
+
+We now restrict the projection constraints as much as possible.  It is convenient (and customary)
+to define Unique Games on a general graph.
+
+\begin{definition}[Unique Games]\label{def:ug}
+A \defn{Unique Games instance} $\mathcal U=(G,[k],\{\pi_e\})$ consists of a graph $G=(V,E)$, a label
+set $[k]$, and for every edge $e=(u,v)$ a \emph{bijection} $\pi_e\colon[k]\to[k]$.  A labeling
+$\ell\colon V\to[k]$ \defn{satisfies} $e$ if $\pi_e(\ell(u))=\ell(v)$, and
+$\val(\mathcal U)=\max_\ell\Pr_{e\sim E}[\ell\text{ satisfies }e]$.  Since $\pi_e$ is a bijection,
+$\pi_e(\ell(u))=\ell(v)\iff\ell(u)=\pi_e^{-1}(\ell(v))$, so the orientation of an edge is immaterial.
+\end{definition}
+
+\begin{example}\label{ex:ug-examples}
+\sat{Max-Cut} is a Unique Game with $k=2$ and $\pi_e=$ the transposition $0\leftrightarrow1$ for every edge.
+More generally, a system of equations $x_u-x_v=c_e\pmod k$ is a Unique Game with $\pi_e(i)=i+c_e$: two-variable
+linear equations over $\Z_k$.  By contrast, \sat{Max-3-Cut} ($x_u\ne x_v$ with $k=3$) is \emph{not} a Unique Game:
+given $x_u$, the constraint allows two values of $x_v$, not one (Exercise~\ref{ex:not-ug}).
+\end{example}
+
+The word ``unique'' means that, given the label of one endpoint, the label of the other endpoint is forced.
+That makes perfect completeness trivial.
+
+\begin{proposition}[Unique Games with perfect completeness are easy]\label{prop:ug-easy}
+Given a Unique Games instance with $k$ labels, one can decide in time $O(k\,(|V|+|E|))$ whether $\val(\mathcal U)=1$, and find a
+perfect labeling if there is one.
+\end{proposition}
+\begin{proof}
+Treat each connected component separately.  Pick a root $r$ and try each of the $k$ labels $a$ for it.  Propagate
+along a BFS tree: if $u$ has label $\ell(u)$ and $(u,v)$ is a tree edge then set $\ell(v)=\pi_e(\ell(u))$
+(or $\pi_e^{-1}(\ell(u))$ if the edge is traversed against its orientation).  Check all edges.
+If a perfect labeling $\ell^\ast$ exists, then with $a=\ell^\ast(r)$ the propagation reconstructs $\ell^\ast$ by induction along
+the tree, because bijectivity makes each step forced.  So some $a$ passes the check.
+\end{proof}
+
+\begin{remark}
+The argument breaks down for projection games, where the label of $u$ determines that of $w$ but
+not vice versa: propagating from $w$ to $u$ requires choosing among the $d$ preimages, and the
+branching is exponential.  Indeed, deciding $\val=1$ for projection games is $\NP$-hard (Proposition~\ref{prop:cv}).
+Likewise, as in Section~\ref{sec:gap}, if a hard Unique Games gap problem exists, it must have
+completeness $1-\eps<1$: an approximately satisfiable instance may have a bad edge on every
+propagation path, and the instance has to be built so that no local repair works.
+\end{remark}
+
+\subsection{The conjecture}
+
+\begin{conjecture}[Unique Games Conjecture; Khot 2002]\label{conj:ugc}
+For every $\eps,\delta>0$ there is a $k=k(\eps,\delta)$ such that $\Gap{1-\eps}{\delta}{UG}_k$ is $\NP$-hard:
+it is $\NP$-hard to distinguish Unique Games instances over $k$ labels with $\val\ge1-\eps$ from those with
+$\val\le\delta$.
+\end{conjecture}
+
+\noindent
+Every word of this statement carries weight.
+
+\begin{enumerate}[label=(\roman*)]
+  \item \emph{Quantifiers.}  First $\eps$ and $\delta$ are chosen, \emph{then} the alphabet~$k$.  The
+        alphabet is a constant but it grows without bound as $\eps,\delta\to0$.  It must:
+        by Lemma~\ref{lem:random-label}, $k\ge1/\delta$.
+  \item \emph{A family of problems.}  The UGC is not a statement about one problem, but about
+        a family of promise problems parametrised by $(\eps,\delta)$.  (Hence ``UG is $\NP$-hard to
+        approximate'' is a misleading summary.)
+  \item \emph{Completeness $1-\eps$.}  By Proposition~\ref{prop:ug-easy} we cannot ask for completeness~$1$.
+  \item \emph{Soundness $\delta\to 0$.}  This is the opposite extreme to the PCP theorem, which only
+        gets soundness $1-\eps_0$: the conjecture says that even ``almost satisfiable'' and ``almost
+        completely unsatisfiable'' are indistinguishable.
+  \item \emph{Reductions.}  ``$\NP$-hard'' means via polynomial-time Karp reductions from $3$SAT.  Some
+        applications are known to go through under weaker hypotheses, \eg randomized reductions.
+\end{enumerate}
+
+\begin{remark}
+There are many variants of the conjecture: with bipartite graphs, with linear constraints
+$\pi_e(i)=i+c_e$ (a special case, believed hard too), with ``strong'' versions in which
+soundness is measured on vertex sets rather than edges.  Their relationships are surveyed by
+\citet{Khot10} and \citet{Trevisan12}.  The manuscript discussed in Section~\ref{sec:map} addresses the
+usual edge-value form of Conjecture~\ref{conj:ugc} with translation constraints on a bipartite graph.
+\end{remark}
+
+\subsection{Why Unique Games?}
+
+If we can already prove $\Gap{1}{\delta}{LabelCover}$ is $\NP$-hard for every $\delta$ (Theorem~\ref{thm:lc}), why would
+anyone want a new conjecture?  Because Label Cover is the wrong tool for exactly the problems in the last two
+rows of Table~\ref{tab:scoreboard}.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,every node/.style={font=\small},
+   la/.style={circle,fill=accent,inner sep=1.7pt}, lb/.style={circle,fill=warn,inner sep=1.7pt}]
+  % left panel: 2-to-1
+  \node[font=\sffamily\small\bfseries] at (1.4,0.55) {projection ($2$-to-$1$)};
+  \foreach \i in {1,...,6} \node[la] (a\i) at (0,-\i*0.5) {};
+  \foreach \j in {1,2,3} \node[lb] (b\j) at (2.8,-\j+0.25) {};
+  \draw[->,thick] (a1)--(b1); \draw[->,thick] (a2)--(b1);
+  \draw[->,thick] (a3)--(b2); \draw[->,thick] (a4)--(b2);
+  \draw[->,thick] (a5)--(b3); \draw[->,thick] (a6)--(b3);
+  \node at (0,-3.5) {$\Sigma_U$}; \node at (2.8,-3.5) {$\Sigma_W$};
+  % right panel: bijection
+  \begin{scope}[xshift=7.2cm]
+  \node[font=\sffamily\small\bfseries] at (1.4,0.55) {unique (bijection)};
+  \foreach \i in {1,...,4} \node[la] (c\i) at (0,-\i*0.75+0.25) {};
+  \foreach \j in {1,...,4} \node[lb] (d\j) at (2.8,-\j*0.75+0.25) {};
+  \draw[->,thick] (c1)--(d3); \draw[->,thick] (c2)--(d1);
+  \draw[->,thick] (c3)--(d4); \draw[->,thick] (c4)--(d2);
+  \node at (0,-3.5) {$[k]$}; \node at (2.8,-3.5) {$[k]$};
+  \end{scope}
+\end{tikzpicture}
+\caption{A constraint $\pi_e$ between the label sets of two vertices.  In a projection game (left) a label
+of $w$ has several preimages; in a Unique Game (right) the constraint is a perfect matching.}
+\label{fig:uniq}
+\end{figure}
+
+\begin{bigpicture}{The two barriers behind Khot's conjecture}
+\textbf{(1) The two-query barrier.}  H\aa stad's optimal results for \sat{Max-E3-SAT} and \sat{Max-E3-Lin} come
+from PCPs that read \emph{three} bits.  A problem such as \sat{Max-Cut}, \sat{Vertex Cover} or
+\sat{Min-2SAT-Deletion} has constraints on \emph{two} variables, so a PCP proving its hardness
+must use only \emph{two} queries---and two-query tests are intrinsically much weaker.
+Label Cover is the natural two-query starting point, with alphabet as long as we please.
+\textbf{(2) The many-to-one barrier.}  Roughly speaking, a hardness reduction from Label Cover replaces every vertex
+by a code (the \emph{long code}) and every constraint $\pi_e$ by a local test between two codewords;
+the analysis of a cheating prover must \emph{decode} the code tables back into a labeling of the
+Label Cover instance.  When $\pi_e$ is $d$-to-$1$ with large $d$, the decoding can only recover the label of $w$
+up to a list of $d$ candidates for $u$, and the loss in soundness is too large to reach
+the thresholds of Table~\ref{tab:scoreboard}.  When $\pi_e$ is a bijection there is no such
+loss.  Khot's insight \citep{Khot02} is that one can hope that a \emph{unique} Label Cover is just as hard as general Label Cover,
+once completeness is relaxed to $1-\eps$, and that this hypothesis---the UGC---would then imply tight
+hardness for two-variable problems.  (We make all of this precise in Lectures 8 and 9.)
+\end{bigpicture}
+
+\subsection{Evidence for and against}
+
+Nobody knows whether the UGC is true.  The state of the evidence, up to this
+writing, is a mixture of three things.
+
+\begin{itemize}
+  \item \emph{Algorithms.}  If $\val\ge1-\eps$, one can find in polynomial time a labeling of value $1-O(\sqrt{\eps\log k})$
+        \citep{CMM06}, and in time $\exp(n^{\eps^{\Omega(1)}})$ a labeling of value $1-\eps^{\Omega(1)}$ \citep{ABS15}.
+        No algorithm contradicts the conjecture, but the subexponential algorithm shows that Unique Games
+        is not as hard as $3$SAT is believed to be (Lecture~12).
+  \item \emph{Integrality gaps.}  The semidefinite program that powers the algorithms above cannot
+        refute the conjecture: it has integrality gaps \citep{KhotVishnoi15} (Lecture~10).
+  \item \emph{Partial hardness.}  The $2$-to-$2$ Games Conjecture, a weakened version of the UGC in
+        which each constraint is $2$-to-$2$ instead of a bijection, is a \emph{theorem}
+        \citep{KMS17,DKKMS18,KMS18}; see \citet{Khot19} for an exposition.  It already implies
+        $\NP$-hardness of approximating \sat{Vertex Cover} within $\sqrt2-\eps$, the best-known (Lectures~13--15).
+\end{itemize}
+
+
+%% ===========================================================================
+\section{The map of the territory}
+\label{sec:map}
+%% ===========================================================================
+
+Figure~\ref{fig:map} places the main results of this course on a single page; Table~\ref{tab:timeline}
+gives the chronology.  Read an arrow as ``is used to prove'' (or ``builds on'').  One item on the map
+needs a health warning.
+
+\begin{figure}[p]
+\centering
+\makebox[\textwidth][c]{%
+\hyphenpenalty=10000 \exhyphenpenalty=10000
+\begin{tikzpicture}[x=1cm,y=1cm,
+   every node/.style={font=\footnotesize},
+   box/.style={draw,rounded corners=3pt,align=center,inner sep=5pt,fill=accent!7,
+               text width=4.3cm,minimum height=1.7cm},
+   side/.style={box,text width=4.5cm},
+   boxw/.style={box,fill=warn!10,draw=warn,thick},
+   boxc/.style={side,fill=claim!7,draw=claim},
+   arr/.style={-{Stealth[length=2.2mm]},thick,accent!80!black},
+   darr/.style={{Stealth[length=2.2mm]}-{Stealth[length=2.2mm]},thick,dashed,warn},
+   carr/.style={-{Stealth[length=2.2mm]},thick,dashed,claim}]
+  % spine
+  \node[box] (cook) at (0,0)    {\textbf{$3$SAT is $\NP$-complete}\\ Cook, Levin, Karp 1971--72};
+  \node[box] (pcp)  at (0,-3.0) {\textbf{PCP theorem}\\ $\Gap{1}{1-\eps_0}{3SAT}$ is $\NP$-hard\\
+       Arora--Safra, ALMSS 1992;\\ Dinur 2006\\ \emph{Lectures 3, 4, 6}};
+  \node[box] (lc)   at (0,-6.0) {\textbf{Label Cover with}\\ \textbf{tiny soundness}\\
+       Raz 1995: parallel repetition\\ \emph{Lectures 2, 5}};
+  \node[boxw] (ugc) at (0,-9.0) {\textbf{Unique Games}\\ \textbf{Conjecture}\\ Khot 2002\\ \emph{Lecture 8}};
+  \node[box,minimum height=3.0cm] (cons) at (0,-12.6) {\textbf{If the UGC holds}\\
+       \sat{Max-Cut} is tight \emph{(L9)}\\ \sat{Vertex Cover}: $2-\eps$ \emph{(L9)}\\
+       integrality gaps \emph{(L10)}\\ every CSP \emph{(L11)}};
+  % left column
+  \node[side] (has) at (-6.0,-9.0)  {\textbf{Optimal $3$-bit PCPs}\\ H\aa stad 1997\\
+       \sat{Max-E3-SAT}, \sat{Max-E3-Lin}\\ \emph{Lecture 7}};
+  \node[side] (two) at (-6.0,-12.6) {\textbf{$2$-to-$2$ Games theorem}\\ reduction from H\aa stad's $3$-Lin\\
+       a ``half-way'' UGC\\ \sat{Vertex Cover}: $\sqrt2-\eps$\\ \emph{Lectures 13--15}};
+  % right column
+  \node[boxc] (oai) at (6.0,-6.0)  {\textbf{Claimed proof of the UGC}\\ OpenAI manuscript, 23 Sep.\ 2026\\
+       \emph{not independently verified}\\ \emph{Lecture 16}};
+  \node[side] (abs) at (6.0,-9.0)  {\textbf{Subexponential algorithm}\\ \textbf{for Unique Games}\\
+       Arora--Barak--Steurer 2010\\ in tension with the UGC\\ \emph{Lecture 12}};
+  % arrows
+  \draw[arr] (cook)--(pcp);
+  \draw[arr] (pcp)--(lc);
+  \draw[arr] (lc)--(ugc);
+  \draw[arr] (lc.west) -| (has.north);
+  \draw[arr] (ugc)--(cons);
+  \draw[arr] (has)--(two);
+  \draw[darr] (ugc.east)--(abs.west);
+  \draw[carr] (oai.south west)--(ugc.north east);
+\end{tikzpicture}}
+\caption{The route from $\NP$-completeness to Unique Games.  Solid blue arrows are established
+implications.  The orange double arrow records a \emph{tension}: a subexponential algorithm for
+Unique Games sits uneasily next to a conjecture asserting $\NP$-hardness.  The dashed wine-red arrow
+marks a claim whose status is explained in the box below.  \emph{L$n$} abbreviates ``Lecture~$n$''.}
+\label{fig:map}
+\end{figure}
+
+\begin{statusbox}{the 2026 claim}
+On 23~September~2026 OpenAI released a manuscript \emph{The Unique Games Theorem} \citep{OpenAI26}.  Its abstract
+reads: ``We prove the Unique Games Conjecture.  For every fixed $\eps,\delta\in(0,1/2)$, we give a
+deterministic polynomial-time reduction from $3$SAT to Unique Games over a fixed finite alphabet, with
+completeness at least $1-\eps$ and soundness at most $\delta$.''
+
+\smallskip
+\textbf{Status.}  At the time of writing we know of no independent expert verification of the proof, and no
+refutation; we have not verified it ourselves.  Conjecture~\ref{conj:ugc} is therefore treated as
+open, and every statement labelled ``assuming the UGC'' in these notes is \emph{conditional}.  Lecture~16
+compares the manuscript's main theorem with the classical formulations and discusses what a careful
+verification would have to check.  Until then we keep apart results established by the community,
+results in a complete but unrefereed paper, and claims published by their authors only.
+\end{statusbox}
+
+\begin{table}[H]
+\centering\small
+\renewcommand{\arraystretch}{1.22}
+\begin{tabular}{@{}r p{11.2cm}@{}}
+\toprule
+Year & Event\\
+\midrule
+1971--72 & Cook, Levin, Karp: $\NP$-completeness \citep{Cook71,Levin73,Karp72}\\
+1974 & Johnson: systematic study of approximation algorithms \citep{Johnson74}\\
+1988 & Ben-Or, Goldwasser, Kilian, Wigderson: multi-prover interactive proofs \citep{BGKW88}\\
+1990 & Babai, Fortnow, Lund: $\mathsf{NEXP}=\mathsf{MIP}$ \citep{BFL91}\\
+1991 & Feige, Goldwasser, Lov\'asz, Safra, Szegedy: PCPs imply hardness of \sat{Clique} \citep{FGLSS96}\\
+1992 & Arora--Safra and Arora--Lund--Motwani--Sudan--Szegedy: the PCP theorem \citep{AroraSafra98,ALMSS98};
+         Feige--Lov\'asz: two-prover one-round proof systems \citep{FeigeLovasz92}\\
+1994 & Goemans--Williamson: $0.878$-approximation for \sat{Max-Cut} \citep{GW95}\\
+1995 & Raz: parallel repetition \citep{Raz98}; Bellare--Goldreich--Sudan: the long code \citep{BGS98}\\
+1996 & H\aa stad: \sat{Clique} is hard within $n^{1-\eps}$ \citep{Hastad99}\\
+1997 & H\aa stad: optimal inapproximability for \sat{Max-E3-SAT} and \sat{Max-E3-Lin} \citep{Hastad01}\\
+2002 & Khot: the Unique Games Conjecture \citep{Khot02}\\
+2003 & Khot--Regev: \sat{Vertex Cover} is hard within $2-\eps$ under the UGC \citep{KhotRegev08}\\
+2004--05 & Khot--Kindler--Mossel--O'Donnell: \sat{Max-Cut} \citep{KKMO07}; Khot--Vishnoi: integrality gaps \citep{KhotVishnoi15}\\
+2006 & Dinur: the PCP theorem by gap amplification \citep{Dinur07}\\
+2008 & Raghavendra: every CSP \citep{Raghavendra08}\\
+2010 & Arora--Barak--Steurer: subexponential algorithm for Unique Games \citep{ABS15}\\
+2017--18 & Khot--Minzer--Safra, Dinur--Khot--Kindler--Minzer--Safra: $2$-to-$2$ Games \citep{KMS17,DKKMS18,KMS18}\\
+2026 & OpenAI manuscript claiming the UGC \citep{OpenAI26}\\
+\bottomrule
+\end{tabular}
+\caption{A timeline of the main results (conference years; journal versions are later).  Many important
+contributions are missing.}
+\label{tab:timeline}
+\end{table}
+
+
+%% ===========================================================================
+\section*{Exercises}
+\addcontentsline{toc}{section}{Exercises}
+%% ===========================================================================
+
+\begin{exercise}[\stars{$\star$}]\label{ex:derand}
+Derandomize the three random-assignment algorithms of Example~\ref{ex:random} with the method of
+conditional expectations: fix the variables one at a time, always choosing the value that does not
+decrease the conditional expected number of satisfied constraints.  Why is this efficiently computable?
+\end{exercise}
+
+\begin{exercise}[\stars{$\star$}]\label{ex:minimization}
+State and prove the analogue of Lemma~\ref{lem:gap-approx} for minimization problems, where YES
+instances have $\OPT\le c$ and NO instances have $\OPT>s$ with $c<s$.  What is the
+inapproximability ratio?
+\end{exercise}
+
+\begin{exercise}[\stars{$\star$}]\label{ex:gauss}
+Show that $\Gap{1}{s}{Max-E3-Lin}$ is in $\Ptime$ for every $s<1$.  (Hence H\aa stad's theorem
+cannot have perfect completeness.)  Why does the same argument not apply to $\Gap{1}{\tfrac78+\eps}{Max-E3-SAT}$?
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:fglss}
+Let $V$ be a PCP verifier with $r$ random bits and $q$ queries, and input $x$.  Build a graph $H_x$ whose vertices are
+the pairs $(\rho,a)$ with $\rho\in\{0,1\}^r$ and $a\in\{0,1\}^q$ satisfying $P_\rho(a)=1$, and in which
+$(\rho,a)$ and $(\rho',a')$ are adjacent if $\rho\ne\rho'$ and the two answer vectors do not contradict each other on
+positions queried by both.  Prove that the largest clique of $H_x$ has size $2^r\cdot\max_\pi\Pr_\rho[V^\pi(x)\text{ accepts}]$.
+Conclude, using the PCP theorem, that it is $\NP$-hard to approximate \sat{Max-Clique} within some constant factor.
+(Amplifying this to a polynomial factor needs randomness-efficient repetition; \citealp{FGLSS96}.)
+\end{exercise}
+
+\begin{exercise}[\stars{$\star$}]\label{ex:repeat}
+Let $V$ be a one-oracle verifier with soundness $s$.  Prove that its $k$-fold independent repetition has soundness $s^k$.
+Identify exactly where the argument uses that there is one fixed proof $\pi$, and explain why the same
+argument breaks for parallel repetition of two-prover games.
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:oddcycle}
+Prove that the odd cycle game has value exactly $1-\tfrac1{2\ell}$.
+\emph{Hint: for the lower bound, let both provers color the cycle with a single monochromatic edge.  For the
+upper bound, write the strategies as colorings $f_A,f_B$ of the vertices and build a graph on the $2\ell$ vertices
+$(v,A),(v,B)$ with ``$\ne$'' edges $(u,A)\!-\!(v,B)$ for every oriented edge $(u,v)$ of the cycle, and ``$=$'' chords
+$(v,A)\!-\!(v,B)$.  The ``$\ne$'' edges form a single even cycle of length $2\ell$, and the two endpoints of any chord are
+at odd distance $\ell$ along it.  So each chord together with either arc of length~$\ell$ forms a cycle ($2\ell$ of them
+in total) that no coloring can satisfy completely.  Every ``$\ne$'' edge has probability $\tfrac1{4\ell}$ and lies in $\ell$
+of these cycles, every chord has probability $\tfrac1{2\ell}$ and lies in $2$ of them; give each cycle weight
+$\tfrac1{4\ell^2}$.}
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:fortnow}
+\emph{Repetition can beat the product.}  Consider the following game $G$.  Alice and Bob receive independent
+uniform bits $x$ and $y$ and answer with bits $a$ and $b$.  They win iff $(x,y)=(0,0)$ and $a\ne b$, or
+$(x,y)\in\{(0,1),(1,0)\}$ and $a=b=0$.  (For $(x,y)=(1,1)$ they always lose.)
+Show that $\val(G)=\tfrac12$ but $\val(G^{\otimes2})\ge\tfrac38>\val(G)^2=\tfrac14$.
+\emph{Hint: in $G^{\otimes 2}$ let both players use the same strategy, answering the pair $(a_1,a_2)$ as a function of
+their input pair: $00\mapsto00$, $01\mapsto10$, $10\mapsto01$, $11\mapsto00$.}
+\end{exercise}
+
+\begin{exercise}[\stars{$\star$}]\label{ex:not-ug}
+(a) Prove that \sat{Max-3-Cut} is not a Unique Game.  (b) Prove that a Unique Game with $\val=1$ and a
+Label Cover instance with $\val=1$ can differ in complexity by explaining, using results of this lecture,
+why the first is in $\Ptime$ and the second is $\NP$-hard.
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:quant}
+Which of the following statements implies the UGC, which is implied by it, and which is neither?
+(a) For every $\eps,\delta>0$ and \emph{every} $k\ge k_0(\eps,\delta)$, $\Gap{1-\eps}{\delta}{UG}_k$ is $\NP$-hard.
+(b) There exist $\eps,\delta>0$ such that for all $k$, $\Gap{1-\eps}{\delta}{UG}_k$ is $\NP$-hard.
+(c) For every $\eps$ there is $\delta>0$ and $k$ such that $\Gap{1-\eps}{\delta}{UG}_k$ is $\NP$-hard.
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:reading}
+\emph{Reading.}  Read the definition of Unique Games in Section~2 of \citet{Khot10} and the
+statement of Theorem~1.1 in \citet{OpenAI26}.  List all differences in the formulation (type of graph,
+type of constraint, alphabet, role of determinism, order of quantifiers).  For each difference, decide
+whether it is a cosmetic restatement, a strengthening, or a weakening of the classical conjecture.
+\end{exercise}
+
+
+%% ===========================================================================
+\section*{Notes and further reading}
+\addcontentsline{toc}{section}{Notes and further reading}
+%% ===========================================================================
+
+\paragraph{Where this lecture comes from.}
+The equivalence of the two PCP formulations is standard; see Lecture~1 of \citet{Harsha07}, or
+Lecture~1 and Lecture~3 of \citet{Trevisan06}, and Chapter~11 of \citet{AroraBarak09}.  That the formulas produced by
+Cook's theorem are ``fragile''---they are almost satisfiable even for NO instances, so a
+gap cannot be created by such a reduction---is the starting point of \citeauthor{Trevisan06}'s first lecture;
+the gap-problem formalism of Section~\ref{sec:gap} follows \citet{Harsha07}.  The DIMACS tutorial notes \citep{DIMACS10} are an excellent
+companion for Lectures 1--9.  For the Unique Games Conjecture, the survey of \citet{Khot10} and the
+Bulletin article of \citet{Trevisan12} are the primary references.
+
+\paragraph{On attributions.}
+The $n^{1-\eps}$ hardness of \sat{Max-Clique} is due to \citet{Hastad99}, and was proved under the
+assumption $\NP\not\subseteq\mathsf{ZPP}$; the assumption was removed by \citet{Zuckerman07}.  It is a different
+paper from the one containing the $\tfrac78$ and $\tfrac12$ results \citep{Hastad01}.  The first
+examples of games whose parallel repetition does not behave like a product were due to Fortnow and to Feige;
+the odd cycle game and its tilings of space are studied by \citet{FKO07} and \citet{Raz11}.
+
+\paragraph{What is not covered.}
+We have not defined the \emph{long code}, nor discussed the SDP relaxations of Unique Games, nor
+the connection between the UGC and the \emph{Small-Set Expansion} problem.  They enter in later lectures.  Lecture~2 develops the formalism of games and Label Cover that we have only sketched.

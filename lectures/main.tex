@@ -1,0 +1,82 @@
+\documentclass[11pt,a4paper,oneside]{book}
+\input{preamble}
+
+\title{From the PCP Theorem to Unique Games\\[4pt]
+  \Large Proofs, Algorithms and Geometry of Hardness of Approximation}
+\author{Lecture notes}
+\date{Draft of \today}
+
+\begin{document}
+\frontmatter
+
+% ---------------------------------------------------------------- title page
+\begin{titlepage}
+  \centering
+  \vspace*{3.2cm}
+  {\sffamily\color{accent}\large\bfseries LECTURE NOTES\par}
+  \vspace{1.2cm}
+  {\sffamily\bfseries\fontsize{30}{36}\selectfont From the PCP Theorem\\to Unique Games\par}
+  \vspace{0.8cm}
+  {\color{accent}\rule{0.55\textwidth}{1.2pt}\par}
+  \vspace{0.8cm}
+  {\sffamily\Large Proofs, algorithms and geometry\\of hardness of approximation\par}
+  \vfill
+  {\sffamily\small\color{softgray}
+   Sixteen lectures from \emph{proof checking} to the \emph{Unique Games Conjecture}\\[2pt]
+   Draft of \today\par}
+  \vspace{1.5cm}
+\end{titlepage}
+
+% ---------------------------------------------------------------- about
+\chapter*{About these notes}
+\addcontentsline{toc}{chapter}{About these notes}
+
+These notes retrace one of the most fruitful lines of research in theoretical computer
+science: how the question \emph{``is there a proof of this statement?''} turned into the
+question \emph{``how well can this optimization problem be approximated?''}, and how the
+second question, in turn, led to a single conjecture---the \emph{Unique Games
+Conjecture} (UGC)---that seems to explain the answer for a startlingly large family of
+problems.  The plan is one lecture per paper-sized idea: the language of games and the PCP theorem
+(Lectures 1--4), amplification by parallel repetition and by Dinur's gap amplification (5--6),
+Håstad's optimal inapproximability (7), the UGC and its consequences in analysis, geometry and
+semidefinite programming (8--12), the $2$-to-$2$ Games theorem (13--15), and a critical reading
+of the 2026 claim of a full proof of the UGC (16).
+
+\paragraph{Prerequisites.}
+Undergraduate algorithms and the basics of $\NP$-completeness.  Everything else
+(approximation ratios, gap problems, games, \dots) is defined when first needed.
+
+\paragraph{How to read the boxes.}
+\begin{itemize}
+  \item \textbf{Blue boxes} summarize the big picture or a key idea; if you are
+        short on time, read the blue boxes and the statements of the theorems.
+  \item \textbf{Orange boxes} flag common misconceptions.
+  \item \textbf{Wine-red boxes} state the \emph{epistemic status} of a result.  Whenever
+        a claim has not been independently verified, we say so there and nowhere do we
+        treat it as established.
+\end{itemize}
+
+\paragraph{How results are labelled.}
+A result with an attribution in its heading, \eg ``Theorem (PCP theorem;
+Arora--Safra, Arora--Lund--Motwani--Sudan--Szegedy)'', is quoted from the literature; we
+give a proof only if one follows the statement, and otherwise point to where the proof
+can be found.  Statements that
+depend on an unproven conjecture carry that conjecture in their name, \eg
+``Theorem (assuming the UGC)''.
+
+\paragraph{Exercises.}
+Each lecture ends with exercises marked \stars{$\star$} (routine),
+\stars{$\star\star$} (needs an idea) or \stars{$\star\star\star$} (substantial).
+Several exercises come with a hint.
+
+\tableofcontents
+
+% ---------------------------------------------------------------- lectures
+\mainmatter
+\input{lecture01}
+
+% ---------------------------------------------------------------- bibliography
+\bibliographystyle{abbrvnat}
+\bibliography{references}
+
+\end{document}

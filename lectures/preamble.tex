@@ -1,0 +1,132 @@
+% ---------------------------------------------------------------------------
+% preamble.tex -- packages, theorem environments, boxes and macros shared by
+% all lectures.  Only packages that ship with the local TinyTeX are used.
+% ---------------------------------------------------------------------------
+
+% ---- fonts and encoding ---------------------------------------------------
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}                   % Latin Modern text, sans, typewriter and math
+\linespread{1.04}
+\setlength{\emergencystretch}{2em}
+% Latin Modern has no italic small caps: fall back to upright small caps silently
+\input{t1lmr.fd}   % declare the family now so that the shape below can be added
+\DeclareFontShape{T1}{lmr}{m}{scit}{<->ssub * lmr/m/sc}{}
+
+% ---- mathematics ----------------------------------------------------------
+\usepackage{amsmath,amssymb,amsthm,mathtools,bm}
+
+% ---- layout ---------------------------------------------------------------
+\usepackage[a4paper,left=3.1cm,right=3.1cm,top=3cm,bottom=3.2cm]{geometry}
+\usepackage{booktabs,array,enumitem,float}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\setlist{itemsep=2pt,topsep=4pt,parsep=0pt}
+
+\definecolor{accent}{HTML}{1B4F8A}     % deep blue
+\definecolor{warn}{HTML}{B5470B}       % burnt orange
+\definecolor{claim}{HTML}{8E1B3A}      % wine red, for unverified claims
+\definecolor{softgray}{HTML}{666666}
+
+% ---- headings -------------------------------------------------------------
+\renewcommand{\chaptername}{Lecture}
+\titleformat{\chapter}[display]
+  {\sffamily\bfseries}
+  {\color{accent}\large\MakeUppercase{\chaptertitlename}\ \thechapter}
+  {4pt}
+  {\raggedright\Huge}
+  [\vspace{5pt}{\color{accent}\titlerule[1.2pt]}]
+\titlespacing*{\chapter}{0pt}{-14pt}{22pt}
+\titleformat{\section}
+  {\sffamily\Large\bfseries\color{accent}}{\thesection}{0.7em}{}
+\titleformat{\subsection}
+  {\sffamily\large\bfseries\color{accent}}{\thesubsection}{0.7em}{}
+\titleformat{\subsubsection}[runin]
+  {\sffamily\bfseries}{}{0pt}{}[.]
+\titlespacing*{\section}{0pt}{3.2ex plus 1ex minus .3ex}{1.4ex plus .2ex}
+\titlespacing*{\subsection}{0pt}{2.6ex plus .8ex minus .3ex}{1ex plus .2ex}
+\titlespacing*{\subsubsection}{0pt}{1.6ex plus .5ex}{0.8em}
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{1}
+\pagestyle{plain}
+
+% ---- theorem environments (one shared counter, numbered within a lecture) -
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+\newtheorem*{observation}{Observation}
+
+\theoremstyle{definition}
+\newtheorem{exercise}{Exercise}[chapter]
+
+% ---- boxes ----------------------------------------------------------------
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric,fit,backgrounds,decorations.pathreplacing}
+\usepackage[skins,breakable]{tcolorbox}
+
+\tcbset{
+  notebox/.style={
+    enhanced, breakable, frame hidden, boxrule=0pt, arc=1.5pt,
+    left=10pt, right=8pt, top=6pt, bottom=6pt,
+    fonttitle=\sffamily\bfseries\small, coltitle=black, attach boxed title to top left={yshift=-2mm,xshift=0mm},
+    before skip=10pt, after skip=10pt
+  }
+}
+\newtcolorbox{bigpicture}[2][]{notebox, #1, colback=accent!6, colframe=accent,
+  borderline west={2.6pt}{0pt}{accent}, title={\color{accent}#2}, before upper={\small\noindent}}
+\newtcolorbox{pitfall}[2][]{notebox, #1, colback=warn!7, colframe=warn,
+  borderline west={2.6pt}{0pt}{warn}, title={\color{warn}Pitfall: #2}}
+\newtcolorbox{statusbox}[1]{notebox, colback=claim!6, colframe=claim,
+  borderline west={2.6pt}{0pt}{claim}, title={\color{claim}Status note: #1}}
+\newtcolorbox{goalbox}[1]{notebox, colback=black!4, colframe=black!50,
+  borderline west={2.6pt}{0pt}{black!50}, title={#1}}
+
+% ---- bibliography ---------------------------------------------------------
+\usepackage[round,authoryear]{natbib}
+\setlength{\bibsep}{3pt}
+
+% ---- hyperlinks (load last) -----------------------------------------------
+\usepackage[colorlinks=true,linkcolor=accent,citecolor=accent!70!black,urlcolor=accent,
+            pdfusetitle,bookmarksnumbered]{hyperref}
+
+% ---------------------------------------------------------------------------
+% macros
+% ---------------------------------------------------------------------------
+\newcommand{\NP}{\mathsf{NP}}
+\newcommand{\Ptime}{\mathsf{P}}
+\newcommand{\coNP}{\mathsf{coNP}}
+\newcommand{\PCP}{\mathsf{PCP}}
+\newcommand{\BPP}{\mathsf{BPP}}
+\newcommand{\poly}{\operatorname{poly}}
+\newcommand{\polylog}{\operatorname{polylog}}
+\newcommand{\eps}{\varepsilon}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\F}{\mathbb{F}}
+\newcommand{\bits}{\{0,1\}}
+\DeclareMathOperator*{\E}{\mathbb{E}}
+\DeclareMathOperator{\OPT}{OPT}
+\DeclareMathOperator{\val}{val}
+\DeclareMathOperator{\Acc}{Acc}
+\newcommand{\Sig}{\Sigma}
+\newcommand{\UG}{\textsc{UG}}
+\newcommand{\LC}{\textsc{LabelCover}}
+\newcommand{\sat}[1]{\textsc{#1}}
+\newcommand{\ie}{i.e.\ }
+\newcommand{\eg}{e.g.\ }
+\newcommand{\defn}[1]{\emph{#1}}
+
+% Gap_{c,s}-Problem
+\newcommand{\Gap}[3]{\textsc{Gap}_{#1,#2}\text{-}\textsc{#3}}
+
+% a "star" difficulty marker for exercises
+\newcommand{\stars}[1]{\textsf{\small\color{softgray}[#1]}}
