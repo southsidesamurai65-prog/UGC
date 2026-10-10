@@ -1,0 +1,711 @@
+\chapter{Games, Label Cover, and the Language of PCPs}
+\label{lec:games}
+
+{\sffamily\large\color{softgray}One object with four names, and the price of every translation\par}
+\vspace{0.5em}
+
+\noindent
+Lecture~\ref{lec:why} introduced four characters: a PCP verifier, a constraint satisfaction
+problem, a two-prover game, and a Label Cover instance.  Table~\ref{tab:dict} asserted that they are
+one and the same object seen from four sides.  That is true, but only up to constants, and in hardness of
+approximation constants are exactly what we cannot afford to lose track of: the difference between
+soundness $1-\eps_0$ and soundness $1-\eps_0/3$ is invisible to the PCP theorem and decisive for a reduction
+that must end with soundness $\tfrac12+\eps$.
+
+This lecture turns every arrow of the dictionary into a theorem and records what it costs.  Three prices
+will appear: a factor $2$ in value when we pass from one oracle to two provers (Section~\ref{sec:oracle}), a
+factor $q$ in the gap when we pass from $q$-ary to binary constraints (Section~\ref{sec:cv}), and a blow-up
+of the alphabet.  Once the prices are known, statements such as ``Label Cover with soundness $\delta$ over
+an alphabet of size $\poly(1/\delta)$'' or ``$2$-to-$2$ Games over $\F_2^\ell$'' can be read at a glance.
+We end with the oldest customer of this language, the reduction of
+\citet{FGLSS96} from PCPs to \sat{Max-Clique}.  Its proof fits on one page and contains the idea behind
+every later reduction in this course: \emph{turn the consistency of local views of a proof into the structure of a graph}.
+
+\begin{goalbox}{After this lecture you should be able to\ldots}
+\begin{enumerate}[leftmargin=*,label=(\arabic*)]
+  \item write any PCP verifier, CSP, game or Label Cover instance as a constraint graph, and compute
+        the value of a small one by hand (Sections~\ref{sec:lang}, \ref{sec:cv});
+  \item say which constraint types---general, projection, $2$-to-$2$, unique---a given instance has, and
+        what each type buys and costs (Section~\ref{sec:ladder});
+  \item convert between a one-oracle and a two-prover view of the same instance, and state exactly how
+        much value is lost (Proposition~\ref{prop:cover});
+  \item prove that the clause--variable game of any $q$-ary CSP has soundness $1-\eps/q$ (Theorem~\ref{thm:cv});
+  \item build the FGLSS graph of a verifier and prove that its clique number is $2^r$ times the best
+        acceptance probability (Theorem~\ref{thm:fglss}).
+\end{enumerate}
+\end{goalbox}
+
+
+%% ===========================================================================
+\section{Constraint graphs: one language for everything}
+\label{sec:lang}
+%% ===========================================================================
+
+We begin with the most general object and specialize.
+
+\begin{definition}[Constraint satisfaction instance]\label{def:csp}
+An instance $\Phi$ of a \defn{constraint satisfaction problem} consists of a finite set $X$ of
+\emph{variables}, a finite alphabet $\Sigma_x$ for every $x\in X$, and a finite multiset $\mathcal C$ of
+\emph{constraints}.  A constraint $c=(S_c,P_c)$ has a \emph{scope} $S_c\subseteq X$ and a
+\emph{predicate} $P_c\colon\prod_{x\in S_c}\Sigma_x\to\{0,1\}$.  The \emph{arity} of $\Phi$ is $q=\max_c|S_c|$.
+An \emph{assignment} $\sigma$ gives every variable $x$ a value $\sigma(x)\in\Sigma_x$, and
+\[
+  \val(\Phi)\;=\;\max_{\sigma}\ \Pr_{c\sim\mathcal C}\bigl[P_c(\sigma|_{S_c})=1\bigr].
+\]
+\end{definition}
+
+\noindent
+(Lecture~\ref{lec:why} wrote $\OPT$ for the optimum of a Max-CSP; from now on we write $\val$, which is also
+the name for the value of a game.)  The problems of Lecture~\ref{lec:why} all fit.
+
+\begin{table}[t]
+\centering\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.3cm}
+                   >{\raggedright\arraybackslash}p{2.1cm}
+                   c
+                   >{\raggedright\arraybackslash}p{3.7cm}
+                   >{\raggedright\arraybackslash}p{2.2cm}@{}}
+\toprule
+Problem & Alphabet & Arity & Predicate & Random assignment\\
+\midrule
+\sat{Max-E3-SAT} & $\{0,1\}$ & $3$ & OR of three literals & $\tfrac78$\\
+\sat{Max-E3-Lin}$(\F_2)$ & $\{0,1\}$ & $3$ & $x+y+z=b$ & $\tfrac12$\\
+\sat{Max-Cut} & $\{0,1\}$ & $2$ & $x\ne y$ & $\tfrac12$\\
+\sat{Max-3-Cut} & $\{0,1,2\}$ & $2$ & $x\ne y$ & $\tfrac23$\\
+Linear Unique Games & $\Z_k$ & $2$ & $x-y=c$ & $\tfrac1k$\\
+Label Cover (projection) & $\Sigma_U,\Sigma_W$ & $2$ & $b=\pi(a)$ & $\tfrac1{|\Sigma_W|}$\\
+$2$-to-$2$ Games & $[k]$ & $2$ & $\pi(a)=\pi'(b)$ & $\tfrac2k$\\
+\bottomrule
+\end{tabular}
+\caption{A zoo of constraint satisfaction problems.  The last column is the fraction of constraints satisfied
+by a \emph{uniformly random assignment}; it is the ``trivial'' threshold that approximation algorithms must beat.}
+\label{tab:zoo}
+\end{table}
+
+The last column of Table~\ref{tab:zoo} is not a coincidence of the examples.  It is an expectation.
+
+\begin{lemma}[Random assignment]\label{lem:random-asg}
+Let the \defn{density} of a constraint $c$ be $\delta(c)=|P_c^{-1}(1)|\big/\prod_{x\in S_c}|\Sigma_x|$.  Then
+$\val(\Phi)\ge\E_{c\sim\mathcal C}\,\delta(c)$.
+\end{lemma}
+\begin{proof}
+For a uniformly random assignment $\sigma$ and a fixed constraint $c$, the restriction $\sigma|_{S_c}$ is uniform on
+$\prod_{x\in S_c}\Sigma_x$, so $c$ is satisfied with probability $\delta(c)$.  By linearity of expectation
+the expected fraction of satisfied constraints is $\E_c\,\delta(c)$, and some assignment does at least as well.
+\end{proof}
+
+\noindent
+This is the baseline of the scoreboard in Table~\ref{tab:scoreboard}: the first two rows say that for
+\sat{Max-E3-SAT} and \sat{Max-E3-Lin} nothing efficient beats the density of the predicate, unless $\Ptime=\NP$.
+
+\subsection{Binary constraints: constraint graphs}
+
+From here on the arity is almost always $2$.
+
+\begin{definition}[Constraint graph]\label{def:cg}
+A \defn{constraint graph} is a CSP instance of arity $2$.  Concretely it is a finite multigraph $G=(V,E)$,
+alphabets $\Sigma_v$ for $v\in V$, and, for every edge, oriented arbitrarily as $e=(u,v)$, a
+\defn{relation} $C_e\subseteq\Sigma_u\times\Sigma_v$.  A \emph{labeling} $\ell$ gives each vertex $v$ a label
+$\ell(v)\in\Sigma_v$; it \emph{satisfies} $e=(u,v)$ if $(\ell(u),\ell(v))\in C_e$, and
+\[
+  \val(G)\;=\;\max_{\ell}\ \Pr_{e=(u,v)\sim E}\bigl[(\ell(u),\ell(v))\in C_e\bigr].
+\]
+If $G$ is bipartite, $G=(U,W,E)$ with every edge oriented from $U$ to $W$, we call it a \defn{game}; this is
+Definition~\ref{def:game}, and $\val(G)$ is the value of the game.
+\end{definition}
+
+\noindent
+When an edge $e=(u,v)$ carries a projection we write $\pi_{uv}\colon\Sigma_u\to\Sigma_v$ so that
+$C_e=\{(a,\pi_{uv}(a))\}$, and the value reads
+$\val(G)=\max_\ell\Pr_{(u,v)\sim E}[\pi_{uv}(\ell(u))=\ell(v)]$, the formula we shall use throughout.
+Unique Games (Definition~\ref{def:ug}) are the case where every $\pi_{uv}$ is a bijection of $[k]$.
+
+The word ``Label Cover'' is attached to this optimization problem---find a labeling of maximum value---and
+usually, though not always, refers to projection constraints.  We shall say \emph{Label Cover} for the
+general problem and specify the constraint type when it matters.
+
+\begin{definition}[Types of constraints]\label{def:types}
+Let $C\subseteq\Sigma\times\Sigma'$ be the relation on an edge $(u,v)$, with $\Sigma=\Sigma_u$ and $\Sigma'=\Sigma_v$.
+\begin{itemize}
+  \item $C$ is a \defn{projection} if $C=\{(a,\pi(a))\}$ for a function $\pi\colon\Sigma\to\Sigma'$: every left label has
+        exactly one partner.  It is \defn{$d$-to-$1$} if moreover every fibre $\pi^{-1}(b)$ has exactly $d$ elements.
+  \item $C$ is \defn{unique} if it is the graph of a bijection, \ie a perfect matching between $\Sigma$ and $\Sigma'$.
+  \item $C$ is \defn{$2$-to-$2$} if there are a set $\Gamma$ and two $2$-to-$1$ maps $\pi\colon\Sigma\to\Gamma$,
+        $\pi'\colon\Sigma'\to\Gamma$ with $C=\{(a,b):\pi(a)=\pi'(b)\}$.  Every label then has exactly two partners,
+        and the bipartite graph of $C$ is a disjoint union of copies of $K_{2,2}$.
+\end{itemize}
+An instance \emph{is} of a given type if all its constraints are.
+\end{definition}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,every node/.style={font=\small},
+   la/.style={circle,fill=accent,inner sep=1.6pt}, lb/.style={circle,fill=warn,inner sep=1.6pt},
+   ed/.style={thick,black!70}]
+  % (a) arbitrary relation
+  \begin{scope}
+    \node[font=\sffamily\footnotesize\bfseries] at (0.95,0.75) {arbitrary};
+    \foreach \i in {1,...,4} {\node[la] (pa\i) at (0,-\i*0.6+0.6) {}; \node[lb] (pb\i) at (1.9,-\i*0.6+0.6) {};}
+    \draw[ed] (pa1)--(pb1) (pa1)--(pb2) (pa1)--(pb3) (pa2)--(pb2) (pa3)--(pb1) (pa3)--(pb4);
+    \node[font=\footnotesize] at (0.95,-2.3) {general relation};
+  \end{scope}
+  % (b) projection 2-to-1
+  \begin{scope}[xshift=4.0cm]
+    \node[font=\sffamily\footnotesize\bfseries] at (0.95,0.75) {projection};
+    \foreach \i in {1,...,4} \node[la] (qa\i) at (0,-\i*0.6+0.6) {};
+    \node[lb] (qb1) at (1.9,-0.3) {}; \node[lb] (qb2) at (1.9,-1.5) {};
+    \draw[ed] (qa1)--(qb1) (qa2)--(qb1) (qa3)--(qb2) (qa4)--(qb2);
+    \node[font=\footnotesize] at (0.95,-2.3) {here $2$-to-$1$};
+  \end{scope}
+  % (c) 2-to-2: two matchings
+  \begin{scope}[xshift=8.0cm]
+    \node[font=\sffamily\footnotesize\bfseries] at (0.95,0.75) {2-to-2};
+    \foreach \i in {1,...,4} {\node[la] (ra\i) at (0,-\i*0.6+0.6) {}; \node[lb] (rb\i) at (1.9,-\i*0.6+0.6) {};}
+    \draw[accent,thick] (ra1)--(rb1) (ra2)--(rb2) (ra3)--(rb3) (ra4)--(rb4);
+    \draw[warn,thick,dashed] (ra1)--(rb2) (ra2)--(rb1) (ra3)--(rb4) (ra4)--(rb3);
+    \node[font=\footnotesize] at (0.95,-2.3) {two matchings in one};
+  \end{scope}
+  % (d) unique
+  \begin{scope}[xshift=12.0cm]
+    \node[font=\sffamily\footnotesize\bfseries] at (0.95,0.75) {unique};
+    \foreach \i in {1,...,4} {\node[la] (sa\i) at (0,-\i*0.6+0.6) {}; \node[lb] (sb\i) at (1.9,-\i*0.6+0.6) {};}
+    \draw[ed] (sa1)--(sb3) (sa2)--(sb1) (sa3)--(sb4) (sa4)--(sb2);
+    \node[font=\footnotesize] at (0.95,-2.3) {perfect matching};
+  \end{scope}
+\end{tikzpicture}
+\caption{The four constraint types of Definition~\ref{def:types} as bipartite graphs between $\Sigma_u$
+(left, blue) and $\Sigma_v$ (right, orange).  In a unique constraint each label determines its partner
+\emph{and} vice versa; in a projection, only one direction is determined; in a $2$-to-$2$ constraint each label
+leaves two candidates.  The $2$-to-$2$ relation of panel~(c) is the union of the solid and the dashed
+perfect matching (Lemma~\ref{lem:split}).}
+\label{fig:types}
+\end{figure}
+
+Lemma~\ref{lem:random-asg} immediately quantifies how many labels a type forces on us.
+
+\begin{corollary}[Alphabets cannot be small]\label{cor:alph}
+For a projection game, $\val(G)\ge1/|\Sigma_W|$; for a Unique Game with $k$ labels, $\val(G)\ge1/k$;
+for a $2$-to-$2$ game with $k$ labels on both sides, $\val(G)\ge 2/k$.  Hence a hardness result with soundness $\delta$ needs
+alphabets of size at least $1/\delta$, $1/\delta$ and $2/\delta$, respectively.
+\end{corollary}
+\begin{proof}
+A projection has $|C|=|\Sigma|$ pairs, hence density $|\Sigma|/(|\Sigma||\Sigma'|)=1/|\Sigma'|$; a $2$-to-$2$ constraint has
+$|C|=2|\Sigma|$ pairs and, when $|\Sigma|=|\Sigma'|=k$, density $2/k$.  Apply Lemma~\ref{lem:random-asg}.
+\end{proof}
+
+\begin{example}[Unique Games on a cycle]\label{ex:cycle}
+Let $G$ be a cycle on vertices $0,1,\dots,\ell-1$ with the linear constraints $x_{i+1}-x_i=c_i\pmod k$ on the edges
+$(i,i+1)$ (indices modulo $\ell$).  If $\sum_ic_i\equiv0$, set $x_0=0$ and propagate: all $\ell$ equations hold.
+Otherwise summing all the equations would give $0\equiv\sum_ic_i\not\equiv0$, so at least one equation fails; but
+deleting one edge leaves a path, which can always be satisfied.  Hence $\val(G)=1-\tfrac1\ell$.
+\emph{A cycle is satisfiable iff the constraints compose to the identity around it}; this is the whole
+obstruction to perfect completeness in a Unique Game, and checking it along a spanning tree is what the algorithm
+of Proposition~\ref{prop:ug-easy} does.
+\end{example}
+
+
+%% ===========================================================================
+\section{One oracle or two provers?}
+\label{sec:oracle}
+%% ===========================================================================
+
+A PCP verifier that makes two queries reads two positions of \emph{one} proof.  In a game the referee sends two
+questions to \emph{two} provers who answer independently.  A constraint graph on a general graph is the first,
+a game the second.  The two differ in one respect: a single proof is automatically consistent with itself, whereas
+two provers may give contradictory answers to the same question.
+
+\begin{definition}[Double cover]\label{def:cover}
+Let $G=(V,E)$ be a constraint graph with relations $C_e$.  Its \defn{double cover} $G^{\times2}$ is the game with left
+vertices $v_A$ (Alice's questions) and right vertices $v_B$ (Bob's questions), one pair $(v_A,v_B)$ for
+every $v\in V$, both with alphabet $\Sigma_v$, and for every edge $e=(u,v)$ of $G$ the two edges
+$(u_A,v_B)$ with relation $C_e$ and $(v_A,u_B)$ with the transposed relation $C_e^{\top}=\{(b,a):(a,b)\in C_e\}$.
+In words: the referee picks an edge of $G$ and a random orientation of it, and asks the two endpoints to the two provers.
+\end{definition}
+
+\begin{proposition}[Value of the double cover]\label{prop:cover}
+For every constraint graph $G$,
+\[
+  \val(G)\;\le\;\val(G^{\times2})\;\le\;2\,\val(G),
+\]
+and both inequalities can be tight.
+\end{proposition}
+\begin{proof}
+For the first inequality let $\ell$ be an optimal labeling of $G$ and let Alice and Bob both use it:
+$\ell_A(v_A)=\ell_B(v_B)=\ell(v)$.  Whatever orientation the referee picks, the two answers are the labels of the two endpoints, so
+the acceptance probability is $\val(G)$.
+
+For the second, let $(\ell_A,\ell_B)$ be an optimal strategy in $G^{\times2}$ with value $p$.  Define a labeling of
+$G$ at random: for every vertex $v$, independently and uniformly pick a side $s(v)\in\{A,B\}$ and set
+$\ell(v)=\ell_{s(v)}(v)$.  Fix an edge $e=(u,v)$.  With probability $\tfrac14$ we have $s(u)=A$ and $s(v)=B$;
+then $\ell$ satisfies $e$ iff the edge $(u_A,v_B)$ of $G^{\times2}$ is satisfied by $(\ell_A,\ell_B)$.  With probability
+$\tfrac14$ we have $s(v)=A$ and $s(u)=B$, and $\ell$ satisfies $e$ iff the edge $(v_A,u_B)$ is satisfied.  These two events are
+disjoint, so
+\[
+  \Pr[\ell\text{ satisfies }e]\ \ge\ \tfrac14\bigl(\mathbf 1[(u_A,v_B)\text{ sat.}]+\mathbf 1[(v_A,u_B)\text{ sat.}]\bigr).
+\]
+Averaging over a uniform edge $e$ of $G$, the right-hand side has expectation $\tfrac14\cdot2p=p/2$, since the $2|E|$ edges of
+$G^{\times2}$ are the two orientations of the edges of $G$.  Hence some labeling has value at least $p/2$, \ie
+$\val(G)\ge\val(G^{\times2})/2$.
+
+For tightness of the first inequality take any satisfiable $G$.  For the second take \sat{Max-Cut} on the complete graph $K_n$:
+the best cut contains a $\tfrac{\lceil n/2\rceil\lfloor n/2\rfloor}{\binom n2}\to\tfrac12$ fraction of the edges, but in the double
+cover Alice answers $0$ everywhere and Bob $1$ everywhere, and all constraints $a\ne b$ hold (Figure~\ref{fig:cover}).
+\end{proof}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,every node/.style={font=\small},
+   al/.style={circle,draw,fill=accent!22,minimum size=0.75cm,inner sep=0pt},
+   bo/.style={circle,draw,fill=warn!22,minimum size=0.75cm,inner sep=0pt},
+   pl/.style={circle,draw,fill=black!6,minimum size=0.7cm,inner sep=0pt}]
+  % triangle
+  \node[pl] (u) at (0,1.5) {$u$};
+  \node[pl] (v) at (-1.3,-0.5) {$v$};
+  \node[pl] (w) at (1.3,-0.5) {$w$};
+  \draw[thick] (u)--(v)--(w)--(u);
+  \node[align=center,font=\footnotesize] at (0,-1.7) {\sat{Max-Cut} on a triangle\\ $\val=\tfrac23$};
+  \draw[-{Stealth[length=2.2mm]},thick] (2.5,0.5)--(4.1,0.5) node[midway,above,font=\footnotesize] {double cover};
+  % hexagon
+  \begin{scope}[xshift=7.4cm,yshift=0.35cm]
+    \node[al] (uA) at (90:1.55) {$u_A$};
+    \node[bo] (vB) at (30:1.55) {$v_B$};
+    \node[al] (wA) at (-30:1.55) {$w_A$};
+    \node[bo] (uB) at (-90:1.55) {$u_B$};
+    \node[al] (vA) at (-150:1.55) {$v_A$};
+    \node[bo] (wB) at (150:1.55) {$w_B$};
+    \draw[thick] (uA)--(vB)--(wA)--(uB)--(vA)--(wB)--(uA);
+    \node[align=center,font=\footnotesize] at (0,-2.05) {the induced game\\ $\val=1$: Alice says $0$, Bob says $1$};
+  \end{scope}
+\end{tikzpicture}
+\caption{The double cover of a triangle is a hexagon, which is bipartite.  Self-consistency of a single labeling is what
+the triangle tests; the two provers of the hexagon need not be consistent with each other, and they win with probability~$1$.}
+\label{fig:cover}
+\end{figure}
+
+\begin{remark}
+The factor~$2$ is harmless when the soundness we care about is small: a hardness result for constraint graphs with completeness $c$ and soundness $s$
+gives one for games with completeness $c$ and soundness $2s$.  It is fatal when $s\ge\tfrac12$.  This is why the PCP theorem is converted into a game by the
+clause--variable construction of Section~\ref{sec:cv} (soundness $1-\eps/q$) and \emph{not} by the double cover
+(soundness $2(1-\eps)$, which exceeds $1$ and says nothing as soon as $\eps<\tfrac12$).  For fixed orientations the loss is a factor $4$ instead of~$2$, which is the
+bound quoted in \citet{Khot10}.
+\end{remark}
+
+A game is conversely a perfectly good PCP.
+
+\begin{lemma}[Answer tables]\label{lem:tables}
+Let $G=(U,W,E)$ be a game with alphabets $\Sigma_U,\Sigma_W$ of size at most $\sigma$.  Consider the verifier $V_G$ whose proof is a
+pair of tables $A\colon U\to\Sigma_U$ and $B\colon W\to\Sigma_W$, that picks a uniformly random edge $(u,w)$, reads $A(u)$ and $B(w)$, and accepts
+iff $(A(u),B(w))\in C_{(u,w)}$.  Then $\max_{A,B}\Pr[V_G\text{ accepts}]=\val(G)$.  If proofs must be binary strings, each label
+is written with $\lceil\log_2\sigma\rceil$ bits, and the verifier makes $2\lceil\log_2\sigma\rceil$ binary queries, uses $\log_2|E|$ random bits
+and has the same completeness and soundness.
+\end{lemma}
+\begin{proof}
+A proof $(A,B)$ is exactly a labeling of $G$, and the acceptance probability is the fraction of satisfied edges.
+\end{proof}
+
+\noindent
+So $\Gap{1}{\delta}{LabelCover}_\sigma$ is a PCP with $O(\log\sigma)$ queries and soundness~$\delta$.  Is that better than what we
+could already do?  By Lemma~\ref{lem:tables} and Theorem~\ref{thm:lc} the parameters are $O(\log(1/\delta))$ queries and
+soundness~$\delta$ with $O(\log n)$ random bits---and independent repetition of the plain verifier of Proposition~\ref{prop:pcp-equiv}
+achieves the very same trade-off.  The point of games is not their parameters but their \emph{structure}: the $2$ queries
+come in two groups, and the answer in one group is a function of the answer in the other.  This is the structure that the long-code
+tests of Lectures~7--11 exploit.
+
+\begin{proposition}[Two binary queries are not enough]\label{prop:2sat}
+If a language $L$ has a PCP verifier with $r=O(\log n)$ random bits, \emph{two} binary queries, perfect completeness and soundness $s<1$,
+then $L\in\Ptime$.  Hence, unless $\Ptime=\NP$, a two-query PCP for $\NP$ with perfect completeness needs alphabets of growing size.
+\end{proposition}
+\begin{proof}
+On input $x$ enumerate the $2^r=\poly(n)$ random strings $\rho$.  Each defines a predicate $P_\rho$ on two Boolean proof bits,
+and every Boolean predicate on two variables is a $2$-CNF (forbid each rejected pair of values by one clause of width $2$).
+So the verifier defines a $2$-CNF $\psi_x$ of polynomial size.  If $x\in L$ the honest proof satisfies $\psi_x$; if $x\notin L$ every
+proof is rejected for some $\rho$, so $\psi_x$ is unsatisfiable.  $2$SAT is in $\Ptime$.
+\end{proof}
+
+
+%% ===========================================================================
+\section{From verifiers and CSPs to games}
+\label{sec:cv}
+%% ===========================================================================
+
+Lecture~\ref{lec:why} turned the clauses of a $3$-CNF into a game by asking one prover about a clause and the other
+about a variable of it.  The construction works for every CSP, and its analysis is the same one-paragraph argument.
+
+\begin{definition}[Constraint--variable game]\label{def:cvgame}
+Let $\Phi$ be a CSP instance of arity $q$.  The \defn{constraint--variable game} $G_\Phi$ is the following game.  The referee draws a
+uniformly random constraint $c$ and a uniformly random variable $x\in S_c$, and sends $c$ to Alice and $x$ to Bob.  Alice
+answers an assignment $a\in\prod_{y\in S_c}\Sigma_y$ to the scope of $c$, Bob answers a symbol $b\in\Sigma_x$, and they win iff
+$P_c(a)=1$ and $a_x=b$.
+\end{definition}
+
+\noindent
+(The edge $(c,x)$ has weight $\tfrac1{|\mathcal C||S_c|}$; weights are harmless since we may repeat edges.  If every predicate is satisfiable we restrict
+Alice's alphabet to the satisfying assignments of $c$, which changes nothing since a non-satisfying answer loses outright.  Then $G_\Phi$ is a \emph{projection game}:
+$\pi_{(c,x)}(a)=a_x$, with $|\Sigma_U|\le\max_x|\Sigma_x|^q$ and $\Sigma_W=\Sigma_x$.)
+
+\begin{theorem}[Soundness of the constraint--variable game]\label{thm:cv}
+For every CSP instance $\Phi$ of arity $q$,
+\[
+  \val(\Phi)\ \le\ \val(G_\Phi)\ \le\ 1-\frac{1-\val(\Phi)}{q}.
+\]
+In particular $\val(\Phi)=1$ iff $\val(G_\Phi)=1$, and if every assignment violates an $\eps$-fraction of the constraints, then
+$\val(G_\Phi)\le1-\eps/q$.
+\end{theorem}
+\begin{proof}
+\emph{Lower bound.}  Let $\sigma$ be an optimal assignment of $\Phi$.  Bob answers $\sigma(x)$; Alice, for a constraint $c$ that $\sigma$
+satisfies, answers $\sigma|_{S_c}$, and for a constraint it violates, anything.  On every constraint satisfied by $\sigma$ the provers win
+for every $x\in S_c$, hence the winning probability is at least $\val(\Phi)$.
+
+\emph{Upper bound.}  Fix deterministic strategies.  Bob's answers define an assignment $b$ of $\Phi$ with $b(x)=\ell_W(x)$.
+Let $c$ be a constraint violated by $b$, and let $a=\ell_U(c)$ be Alice's answer.  If $P_c(a)=0$ the provers lose on every
+edge at~$c$.  Otherwise $a\ne b|_{S_c}$ (because $P_c(b|_{S_c})=0$), so there is some $x\in S_c$ with $a_x\ne b(x)$, and the referee
+asks that $x$ with probability at least $1/|S_c|\ge1/q$.  So the provers lose at $c$ with probability at least $1/q$.  Since $b$ violates at
+least a $1-\val(\Phi)$ fraction of the constraints, the total losing probability is at least $(1-\val(\Phi))/q$.
+\end{proof}
+
+\noindent
+This is Proposition~\ref{prop:cv} for $q=3$ and a CNF.  The bound is attained, \eg for the formula below.
+
+\begin{example}[A formula and its game]\label{ex:phi0}
+Let $\varphi_0$ have the four clauses $C_1=(x_1\vee x_2)$, $C_2=(\neg x_1\vee x_2)$, $C_3=(\neg x_2\vee x_3)$, $C_4=(\neg x_2\vee\neg x_3)$.
+If $x_2=1$ then $C_1,C_2$ hold and exactly one of $C_3,C_4$ does; if $x_2=0$ then $C_3,C_4$ hold and exactly one of $C_1,C_2$ does.
+So \emph{every} assignment satisfies exactly three of the four clauses: $\val(\varphi_0)=\tfrac34$.  Theorem~\ref{thm:cv} with $q=2$ gives
+$\val(G_{\varphi_0})\le1-\tfrac{1/4}{2}=\tfrac78$.  This is tight: let Bob answer any assignment $b$, say $b=(0,0,0)$, which violates $C_1$ only; Alice answers $b|_{S_c}$ on $C_2,C_3,C_4$ and
+$(x_1,x_2)=(1,0)$ on $C_1$, a satisfying assignment that still agrees with $b$ on $x_2$.  The provers lose only if the referee picks $C_1$ and then the variable $x_1$, an event of
+probability $\tfrac14\cdot\tfrac12=\tfrac18$.
+\end{example}
+
+\begin{corollary}[Every verifier is a game]\label{cor:verifier-game}
+Let $V$ be a PCP verifier with $r$ random bits and $q$ queries, perfect completeness and soundness~$s$ on a language~$L$.  Let $\Phi_V(x)$ be the CSP with one
+constraint per random string~$\rho$ (scope: the positions queried at~$\rho$, predicate: $P_{x,\rho}$).  Then the game
+$G_{\Phi_V(x)}$, in which Alice is asked a random string $\rho$ and Bob a position queried at $\rho$, is a projection game with $|\Sigma_U|\le2^q$, $|\Sigma_W|=2$, and
+\[
+  x\in L\ \Rightarrow\ \val=1,\qquad x\notin L\ \Rightarrow\ \val\le1-\frac{1-s}{q}.
+\]
+\end{corollary}
+\begin{proof}
+$\val(\Phi_V(x))$ is the best acceptance probability over proofs, which is $1$ or at most $s$; apply Theorem~\ref{thm:cv}.
+\end{proof}
+
+\noindent
+Combined with $\NP=\PCP[O(\log n),O(1)]$, Corollary~\ref{cor:verifier-game} says that it is $\NP$-hard to distinguish projection games of value $1$ from games of value at most $1-\eps_1$, for a constant $\eps_1>0$:
+the PCP theorem in the language of games, stated without mentioning $3$SAT.
+
+Table~\ref{tab:price} collects the translations between the four columns of the dictionary and what each costs.
+
+\begin{table}[t]
+\centering\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.8cm}
+                   >{\raggedright\arraybackslash}p{4.1cm}
+                   >{\raggedright\arraybackslash}p{4.6cm}@{}}
+\toprule
+Translation & Effect on the value & Price\\
+\midrule
+verifier $\to$ CSP & $\val(\Phi_V)=\max_\pi\Pr[V^\pi\text{ acc.}]$ exactly & none; $2^r$ constraints\\
+CSP $\to$ verifier & the same, exactly & none (pick a random constraint)\\
+constraint graph $\to$ game (double cover, Prop.~\ref{prop:cover}) & $\val(G)\le\val(G^{\times2})\le2\val(G)$ & soundness at most doubles\\
+game $\to$ verifier (answer tables, Lemma~\ref{lem:tables}) & exactly the value of the game & $2\lceil\log\sigma\rceil$ binary queries\\
+$q$-ary CSP $\to$ projection game (Thm.~\ref{thm:cv}) & $1-\frac{1-\val(\Phi)}q\ge\val(G_\Phi)\ge\val(\Phi)$ & gap shrinks by a factor $q$; alphabet $|\Sigma|^q$\\
+verifier $\to$ clique (Thm.~\ref{thm:fglss}) & $\omega(H_x)=2^r\max_\pi\Pr[V^\pi\text{ acc.}]$ & $2^{r+q}$ vertices\\
+\bottomrule
+\end{tabular}
+\caption{The price of every translation in the dictionary of Table~\ref{tab:dict}.}
+\label{tab:price}
+\end{table}
+
+
+%% ===========================================================================
+\section{The ladder of constraint types}
+\label{sec:ladder}
+%% ===========================================================================
+
+Why are we so careful about the type of a constraint?  Because it determines both what an algorithm can do and what a hardness reduction needs.
+We saw in Proposition~\ref{prop:ug-easy} that the \emph{unique} type makes perfect completeness easy: a label on one vertex forces the label on its neighbours in both
+directions, so a satisfying labeling is found by propagation along a spanning tree.  For a projection the forcing goes in one direction only, and for a general relation in neither.
+A $2$-to-$2$ constraint sits exactly between: after one step of propagation \emph{two} candidates remain, after $t$ steps up to $2^t$.
+
+This is the right way to read the hierarchy of conjectures and theorems that organizes the rest of the course.  Every row of Table~\ref{tab:ladder} is a
+statement about the complexity of a gap problem for constraint graphs of this type.
+
+\begin{table}[t]
+\centering\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.6cm}
+                   >{\raggedright\arraybackslash}p{3.6cm}
+                   >{\raggedright\arraybackslash}p{3.3cm}
+                   >{\raggedright\arraybackslash}p{2.9cm}@{}}
+\toprule
+Constraints & Gap problem & Status & Main use\\
+\midrule
+projection (large alphabet) & $\Gap{1}{\delta}{LabelCover}$, every $\delta>0$ & theorem (Thm.~\ref{thm:lc}) & H\aa stad's tight $3$-bit results (Lecture~7)\\
+$2$-to-$2$ & $\Gap{1-\eps}{\eps}{2-to-2}_k$ for some $k=k(\eps)$ & theorem \citep{KMS17,DKKMS18,KMS18} & \sat{Vertex Cover} within $\sqrt2-\eps$ (Lectures~13--15)\\
+unique & $\Gap{1-\eps}{\delta}{UG}_k$ for some $k=k(\eps,\delta)$ & conjecture \citep{Khot02}; claimed in \citep{OpenAI26}, not verified & tight bounds for \sat{Max-Cut}, \sat{Vertex Cover}, every CSP (Lectures~8--11)\\
+unique, completeness $1$ & $\Gap{1}{\delta}{UG}$ & in $\Ptime$ (Prop.~\ref{prop:ug-easy}) & ---\\
+\bottomrule
+\end{tabular}
+\caption{The ladder of constraint types.  Moving down the table the constraints become more rigid and the hardness
+results become stronger \emph{per label}, but harder to prove.}
+\label{tab:ladder}
+\end{table}
+
+The $2$-to-$2$ theorem is called ``half-way'' to the UGC for a reason that can be proved in a few lines, and the proof is a good test of the language we have built.
+
+\begin{lemma}[A $2$-to-$2$ relation is two bijections]\label{lem:split}
+Let $C\subseteq\Sigma\times\Sigma'$ be a relation in which every label of $\Sigma$ and every label of $\Sigma'$ has exactly two partners; in particular
+$C$ may be a $2$-to-$2$ constraint in the sense of Definition~\ref{def:types}.  Then $C$ is the disjoint union $M\sqcup M'$ of two perfect matchings, \ie of the graphs of two bijections.
+\end{lemma}
+\begin{proof}
+The bipartite graph $(\Sigma\sqcup\Sigma',C)$ is simple and $2$-regular, hence a disjoint union of cycles, each of even length at least~$4$.  Colour the edges of each cycle alternately red and blue.
+Every vertex lies on exactly one red and one blue edge, so the red edges form a perfect matching $M$ and the blue edges another one, $M'$.
+\end{proof}
+
+\begin{corollary}[Splitting a $2$-to-$2$ game]\label{cor:half}
+Let $G$ be a constraint graph whose relations are all as in Lemma~\ref{lem:split}.  Let $\mathcal U_G$ be the Unique Games instance on the same vertices
+in which every edge $e$ of $G$ is replaced by two parallel edges, one carrying each of the two bijections of $C_e$.  Then for every labeling $\ell$, the fraction of edges of $\mathcal U_G$
+satisfied by $\ell$ is exactly \emph{half} the fraction of edges of $G$ satisfied by $\ell$.  Consequently $\val(\mathcal U_G)=\tfrac12\val(G)$.
+\end{corollary}
+\begin{proof}
+A labeling $\ell$ satisfies $e=(u,v)$ in $G$ iff $(\ell(u),\ell(v))\in C_e=M_e\sqcup M'_e$, \ie iff it satisfies exactly one of the two parallel edges of $\mathcal U_G$ (the matchings
+are disjoint, so never both); otherwise it satisfies neither.  So $\ell$ satisfies as many edges of $\mathcal U_G$ as of $G$, while $\mathcal U_G$ has twice as many edges.
+\end{proof}
+
+\noindent
+Parallel edges are harmless: they only change the weights.  Hence the $2$-to-$2$ theorem gives the following unconditional
+statement, which differs from the Unique Games Conjecture only in the \emph{completeness}.
+
+\begin{corollary}[A half-way Unique Games Conjecture, from Table~\ref{tab:ladder}]\label{cor:halfway}
+For every $\eps>0$ there is a $k=k(\eps)$ such that it is $\NP$-hard to distinguish Unique Games instances with $k$ labels and $\val\ge\tfrac{1-\eps}2$ from those with $\val\le\tfrac\eps2$.
+\end{corollary}
+
+\noindent
+This is the sense in which the $2$-to-$2$ theorem proves the UGC ``half-way'' \citep{Khot19}: completeness $\approx\tfrac12$ instead of $1-\eps$.  Khot remarks that the arguments usually cited as evidence against the UGC apply to this
+version too.  The claim of \citet{OpenAI26} is a claim to supply the missing half; we treat it as unverified (Lecture~16).
+
+\begin{remark}[Max-3-Cut is $2$-regular]
+The relation $x\ne y$ on three labels has exactly two partners for every label, so Lemma~\ref{lem:split} applies: it is the union of the two translations $y=x+1$ and $y=x+2$ modulo~$3$.
+(It is not a union of $K_{2,2}$'s, since the bipartite graph is a $6$-cycle, so it is not $2$-to-$2$ in the sense of Definition~\ref{def:types}; see Exercise~\ref{ex:3cut}.)
+\end{remark}
+
+
+%% ===========================================================================
+\section{From PCPs to cliques: the FGLSS graph}
+\label{sec:fglss}
+%% ===========================================================================
+
+All of the above treated the proof as an oracle to be queried.  The reduction of \citet{FGLSS96} does something different: it turns the \emph{set of everything the verifier might see} into a
+graph, and lets consistency do the work.  We fix a verifier $V$ as in Definition~\ref{def:pcp}, and an input $x$.  For $\rho\in\{0,1\}^r$ write $I_\rho=(i_1(\rho),\dots,i_q(\rho))$ for the positions it queries (possibly with repetitions).
+
+\begin{definition}[FGLSS graph]\label{def:fglss}
+A \defn{local view} is a pair $(\rho,a)$ with $\rho\in\{0,1\}^r$ and $a\in\{0,1\}^q$ such that $P_{x,\rho}(a)=1$ and $a_j=a_{j'}$ whenever $i_j(\rho)=i_{j'}(\rho)$.
+Two local views $(\rho,a)$ and $(\rho',a')$ are \defn{compatible} if $\rho\neq\rho'$ and $a_j=a'_{j'}$ whenever $i_j(\rho)=i_{j'}(\rho')$.  The \defn{FGLSS graph} $H_x$ has the local views as vertices and an edge between
+any two compatible views.  It has at most $2^{r+q}$ vertices.
+\end{definition}
+
+In words: a vertex says ``on random string $\rho$, the proof contained the accepting answers $a$''; two vertices are adjacent when they could both occur in one and the same proof.
+
+\begin{theorem}[FGLSS]\label{thm:fglss}
+$\displaystyle\omega(H_x)\;=\;2^r\cdot\max_{\pi\in\{0,1\}^N}\Pr_\rho\bigl[V^\pi(x)\text{ accepts}\bigr].$
+\end{theorem}
+\begin{proof}
+($\ge$) Fix a proof $\pi$ and let $R=\{\rho:V^\pi(x)\text{ accepts on }\rho\}$.  For $\rho\in R$ the pair $(\rho,\pi|_{I_\rho})$ is a local view (accepting, and
+consistent since it is read from the single string $\pi$).  Any two of these views agree with $\pi$ and have different $\rho$, so they are compatible: a clique of size $|R|=2^r\Pr_\rho[V^\pi\text{ accepts}]$.
+
+($\le$) Let $K$ be a clique.  Adjacent vertices have different $\rho$, so $K$ contains at most one view per~$\rho$.  Define a proof $\pi$ by setting $\pi_i=a_j$ whenever $(\rho,a)\in K$ and $i_j(\rho)=i$, and $\pi_i=0$ for unconstrained positions.
+This is well defined: two occurrences of position $i$ within one view agree by the consistency condition of a local view, and two occurrences in different views agree by compatibility.
+Now for every $(\rho,a)\in K$ we have $\pi|_{I_\rho}=a$, so $P_{x,\rho}(\pi|_{I_\rho})=P_{x,\rho}(a)=1$: $V^\pi$ accepts on~$\rho$.  Hence $V^\pi$ accepts on at least $|K|$ random strings.
+\end{proof}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,every node/.style={font=\small},
+   vtx/.style={circle,draw=black!70,minimum size=0.78cm,inner sep=0pt,font=\footnotesize\ttfamily}]
+  \node[vtx,fill=accent!22] (n001) at (111.00:3.00) {01};
+  \node[vtx,fill=accent!22] (n010) at (135.00:3.00) {10};
+  \node[vtx,fill=accent!22] (n011) at (159.00:3.00) {11};
+  \node[vtx,fill=warn!22] (n100) at (21.00:3.00) {00};
+  \node[vtx,fill=warn!22] (n101) at (45.00:3.00) {01};
+  \node[vtx,fill=warn!22] (n111) at (69.00:3.00) {11};
+  \node[vtx,fill=claim!18] (n200) at (-69.00:3.00) {00};
+  \node[vtx,fill=claim!18] (n201) at (-45.00:3.00) {01};
+  \node[vtx,fill=claim!18] (n211) at (-21.00:3.00) {11};
+  \node[vtx,fill=black!14] (n300) at (-159.00:3.00) {00};
+  \node[vtx,fill=black!14] (n301) at (-135.00:3.00) {01};
+  \node[vtx,fill=black!14] (n310) at (-111.00:3.00) {10};
+  \begin{scope}[on background layer]
+    \draw[black!35] (n001)--(n101);
+    \draw[black!35] (n001)--(n211);
+    \draw[black!35] (n001)--(n310);
+    \draw[black!35] (n010)--(n200);
+    \draw[black!35] (n010)--(n201);
+    \draw[black!35] (n010)--(n300);
+    \draw[black!35] (n010)--(n301);
+    \draw[black!35] (n011)--(n211);
+    \draw[black!35] (n100)--(n200);
+    \draw[black!35] (n100)--(n201);
+    \draw[black!35] (n100)--(n300);
+    \draw[black!35] (n100)--(n301);
+    \draw[black!35] (n101)--(n211);
+    \draw[black!35] (n101)--(n310);
+    \draw[black!35] (n111)--(n211);
+    \draw[black!35] (n200)--(n300);
+    \draw[black!35] (n201)--(n301);
+  \end{scope}
+  \draw[accent!85!black,line width=1.8pt] (n011)--(n111);
+  \draw[accent!85!black,line width=1.8pt] (n011)--(n310);
+  \draw[accent!85!black,line width=1.8pt] (n111)--(n310);
+  \node[vtx,fill=accent!22,draw=accent!85!black,line width=1.4pt] at (n011) {11};
+  \node[vtx,fill=warn!22,draw=accent!85!black,line width=1.4pt] at (n111) {11};
+  \node[vtx,fill=black!14,draw=accent!85!black,line width=1.4pt] at (n310) {10};
+  \node[align=center,font=\footnotesize] at (135:4.55) {$\rho=1$: $x_1\vee x_2$\\ answers $x_1x_2$};
+  \node[align=center,font=\footnotesize] at (45:4.55)  {$\rho=2$: $\neg x_1\vee x_2$\\ answers $x_1x_2$};
+  \node[align=center,font=\footnotesize] at (-45:4.55) {$\rho=3$: $\neg x_2\vee x_3$\\ answers $x_2x_3$};
+  \node[align=center,font=\footnotesize] at (-135:4.55){$\rho=4$: $\neg x_2\vee\neg x_3$\\ answers $x_2x_3$};
+\end{tikzpicture}
+\caption{The FGLSS graph of the verifier for $\varphi_0$ (Example~\ref{ex:phi0}) that picks one of the four clauses and reads its two variables.
+Each group of three vertices contains the three satisfying answers of its clause; edges join compatible views.  The heavy triangle is a maximum clique: it consists of the views
+of $\rho=1,2,4$ that agree with the assignment $x=(1,1,0)$, which satisfies $C_1,C_2,C_4$ and violates $C_3$.
+No view of $\rho=3$ is compatible with all three.}
+\label{fig:fglss}
+\end{figure}
+
+\begin{example}[The FGLSS graph of $\varphi_0$]\label{ex:fglss}
+Take $V$ to be the verifier that expects an assignment $\pi\in\{0,1\}^3$ of $\varphi_0$ (Example~\ref{ex:phi0}), picks one of the four clauses ($r=2$) and reads its two variables ($q=2$).
+Each clause has three satisfying answers, so $H_x$ has $4\cdot3=12$ vertices and (by direct count) $20$ edges; Figure~\ref{fig:fglss}.  Every assignment satisfies exactly three of
+the four clauses, so $\max_\pi\Pr[\text{accept}]=\tfrac34$ and Theorem~\ref{thm:fglss} predicts $\omega(H_x)=4\cdot\tfrac34=3$, as one finds by inspection (there are $8$ maximum cliques, one for each
+assignment).
+\end{example}
+
+\begin{pitfall}[unbreakable]{a clique is a consistent set, not just an accepting one}
+Two vertices of $H_x$ may both be accepting views and still be non-adjacent: they disagree about one position of the proof.  A clique does not say that many random strings accept
+\emph{somewhere}; it says that they accept \emph{the same proof}.  This is the same idea as the difference between the two provers of a game, who need not be consistent, and a single proof, which is:
+Theorem~\ref{thm:fglss} is the one-oracle statement, and it is exact; no factor $2$ appears.
+\end{pitfall}
+
+\begin{corollary}[Constant-factor hardness for Clique]\label{cor:clique-const}
+Unless $\Ptime=\NP$, no polynomial-time algorithm outputs, for every graph, a clique of more than half the maximum size.
+\end{corollary}
+\begin{proof}
+By Theorem~\ref{thm:pcp1} there is a verifier for $\sat{3SAT}$ with $r=O(\log n)$, $q=O(1)$, perfect completeness and soundness $\tfrac12$.  Build $H_x$ in time polynomial in $n$ ($2^{r+q}=\poly(n)$ vertices).
+If $x\in\sat{3SAT}$ then $\omega(H_x)=2^r$; otherwise $\omega(H_x)\le2^{r-1}$.  By Lemma~\ref{lem:gap-approx} no polynomial-time algorithm achieves ratio $\alpha>\tfrac12$ unless $\Ptime=\NP$.
+\end{proof}
+
+To pass from the constant $2$ to larger factors we amplify the gap.  Here graph products do exactly what independent repetition does for proofs.  The \defn{strong product} $G\boxtimes H$ has vertex set $V(G)\times V(H)$, and
+two distinct vertices $(g,h)$, $(g',h')$ are adjacent iff ($g=g'$ or $g\sim g'$) and ($h=h'$ or $h\sim h'$).
+
+\begin{proposition}[Clique number is multiplicative]\label{prop:product}
+$\omega(G\boxtimes H)=\omega(G)\,\omega(H)$.
+\end{proposition}
+\begin{proof}
+If $A\subseteq V(G)$ and $B\subseteq V(H)$ are cliques then $A\times B$ is a clique, giving $\ge$.  Conversely let $K$ be a clique of $G\boxtimes H$ and let $A$ and $B$ be its
+projections to $V(G)$ and $V(H)$.  Two distinct elements of $A$ come from two vertices of $K$ that are adjacent, and since their first coordinates differ they must be adjacent in $G$; so $A$ is a clique, and likewise $B$.
+Since $K\subseteq A\times B$ we get $|K|\le|A||B|\le\omega(G)\omega(H)$.
+\end{proof}
+
+\begin{corollary}[Hardness of Clique at larger factors]\label{cor:clique-quasi}
+(a) For every constant $c$, it is $\NP$-hard to find a clique of size at least $1/c$ times the maximum.
+(b) For every $\eps>0$, if on $N$-vertex graphs one can find in polynomial time a clique of size at least $2^{-(\log N)^{1-\eps}}$ times the maximum, then $\NP\subseteq\mathsf{DTIME}(2^{\polylog n})$.
+\end{corollary}
+\begin{proof}
+Let $H=H_x$ be the graph of Corollary~\ref{cor:clique-const}, with $M=\poly(n)$ vertices, say $M\le n^{a}$.  The $k$-fold power $H^{\boxtimes k}$ has $M^k$ vertices and clique number $2^{rk}$ (YES) or at most $2^{(r-1)k}$ (NO), by Proposition~\ref{prop:product}: a gap of $2^k$.
+For (a) take $k=\lceil\log_2c\rceil+1$, a constant.  For (b) take $k=\lceil(\log n)^{1/\eps}\rceil$: the graph has $N=n^{O(k)}$ vertices, is built in time $\poly(N)=2^{O((\log n)^{1+1/\eps})}$, and since
+$\log N=\Theta(k\log n)$ the gap is $2^k=2^{\Theta((\log N)^{1/(1+\eps)})}$, which exceeds $2^{(\log N)^{1-\eps}}$ for large $n$ because $\tfrac1{1+\eps}>1-\eps$.  An algorithm as in (b) would therefore decide $\sat{3SAT}$ in quasi-polynomial time.
+\end{proof}
+
+\noindent
+This is the shape of the argument of \citet{FGLSS96}, who had a PCP for $\NP$ with randomness and queries $O(\log n\log\log n)$ rather than $O(\log n)$ and $O(1)$; Theorem~\ref{thm:fglss}
+applied to their proof system gives graphs with $n^{O(\log\log n)}$ vertices, and hence hardness under the assumption $\NP\not\subseteq\mathsf{DTIME}(n^{O(\log\log n)})$.  The PCP theorem removes the loss.
+
+\begin{bigpicture}{Where the polynomial factors come from}
+Corollary~\ref{cor:clique-quasi} reaches $2^{(\log N)^{1-\eps}}$ but not $N^{\Omega(1)}$, because $k$ independent repetitions cost $rk$ random bits, and $2^{rk}$ vertices is quasi-polynomial once $k$ grows with $n$.  The remedy is
+\emph{randomness-efficient repetition}: replace the $k$ independent random strings by a $k$-step random walk on a constant-degree expander, which needs only $r+O(k)$ random bits and still drives the soundness down
+exponentially in $k$ (Exercise~\ref{ex:expander}).  With $k=\Theta(\log n)$ one gets graphs of polynomial size and gap $N^{\Omega(1)}$, which is the conclusion of Theorem~6 of \citet{ALMSS98} (we do not claim that their proof proceeds this way).
+The exponent was improved by the \emph{free bit} analysis of \citet{BGS98} and finally to $N^{1-\eps}$ by \citet{Hastad99}; the latter proof uses Label Cover, parallel repetition and the long code, the toolkit of Lectures~5 and~7.
+\end{bigpicture}
+
+
+%% ===========================================================================
+\section{What Label Cover is for}
+\label{sec:for}
+%% ===========================================================================
+
+The FGLSS reduction reads a PCP and builds a graph.  For problems with a rigid local structure---\sat{Max-E3-SAT}, \sat{Max-E3-Lin}, and later \sat{Max-Cut}---a different recipe is needed, and Label Cover is its first ingredient.
+
+\begin{bigpicture}{The recipe of the next lectures}
+\textbf{Step 1 (Lectures 1--2, 5).}  Prove that a Label Cover instance (projection constraints, soundness $\delta$, alphabet $\poly(1/\delta)$) is $\NP$-hard to approximate.
+This is the \emph{outer verifier}.
+\textbf{Step 2 (Lecture 7).}  Replace every vertex $v$ of the instance by a table $f_v$ that is supposed to be the \emph{long-code} encoding of the label of~$v$, and every edge $e=(u,v)$ by a
+\emph{local test} between $f_u$ and $f_v$ that reads very few entries; this is the \emph{inner verifier}.  The tests have the shape of the target problem: three bits for \sat{Max-E3-Lin}, two bits for \sat{Max-Cut}.
+\textbf{Step 3 (analysis).}  If the Label Cover instance has a labeling of value~$1$, encoding it passes all tests (completeness).  If a family of tables passes the tests with
+probability above the claimed soundness, \emph{decode} each table into a short list of candidate labels; a random choice from the lists is a labeling that satisfies many edges, contradicting the soundness of
+Label Cover.  The decoding is where the \emph{type} of the constraints matters: a projection lets the table at $v$ be read from the table at $u$, and the \emph{unique} type of the UGC lets decoding lose nothing
+when the two tables are asked only two bits.
+\end{bigpicture}
+
+Label Cover is also the source of hardness for problems that look nothing like constraint satisfaction.  The same two-step recipe gives the logarithmic hardness of \sat{Set Cover}
+\citep{LundYannakakis94,Feige98,DinurSteurer14}; and Label Cover under its original name was introduced in the context of lattice and code problems \citep{ABSS97}.
+
+
+%% ===========================================================================
+\section*{Exercises}
+\addcontentsline{toc}{section}{Exercises}
+%% ===========================================================================
+
+\begin{exercise}[\stars{$\star$}]\label{ex:holonomy}
+Let $G$ be a connected graph with linear constraints $x_v-x_u=c_e\pmod k$ on the edges $e=(u,v)$.  Prove that $\val(G)=1$ iff around every cycle the signed sum of the $c_e$ is $0$ mod $k$ (an edge traversed against
+its orientation contributes $-c_e$).  \emph{Hint: spanning tree.}  Use this to give another proof of Proposition~\ref{prop:ug-easy} for linear constraints.
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:cover-tight}
+Compute $\val(G)$ and $\val(G^{\times2})$ for \sat{Max-Cut} on $K_n$ and show $\val(G^{\times2})/\val(G)=2-\tfrac2n$ for even $n$.  Show that for \sat{Max-Cut} on an odd cycle $C_\ell$ the ratio is $\tfrac\ell{\ell-1}$.  Conclude that the factor $2$ in Proposition~\ref{prop:cover} cannot be replaced by any constant smaller than~$2$.
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:cv-tight}
+(a) Let $\varphi$ be the $3$-CNF consisting of all eight clauses on three variables (every sign pattern).  Show that $\val(\varphi)=\tfrac78$ and $\val(G_\varphi)=\tfrac{23}{24}=1-\tfrac{1/8}3$, so the bound of Theorem~\ref{thm:cv} is tight.
+(b) Show that the bound is also tight for \sat{Max-Cut} on a triangle, viewed as a CSP of arity $2$: $\val(\Phi)=\tfrac23$ and $\val(G_\Phi)=\tfrac56$.
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:dreg}
+Show that a relation $C\subseteq\Sigma\times\Sigma'$ in which every label of both sides has exactly $d$ partners is a disjoint union of $d$ perfect matchings.  \emph{Hint: Hall's theorem; remove one perfect matching and induct.}
+Deduce the analogue of Corollary~\ref{cor:half}: from a $d$-to-$d$ game with $\val=1-\eps$ one gets a Unique Game with $\val=(1-\eps)/d$ on the same graph, with every edge repeated $d$ times.
+\end{exercise}
+
+\begin{exercise}[\stars{$\star$}]\label{ex:3cut}
+(a) Verify that $x\ne y$ on $\Z_3$ is $2$-regular but not a disjoint union of copies of $K_{2,2}$.  (b) Write it as the union of the Unique constraints $y=x+1$ and $y=x+2$.  (c) For \sat{Max-3-Cut} on $K_4$ compute $\val(G)$ and the value of
+the split Unique Games instance of Corollary~\ref{cor:half}.
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star\star$}]\label{ex:expander}
+\emph{Randomness-efficient repetition.}  Let $A$ be the normalized adjacency matrix of a $d$-regular graph on the vertex set $\{0,1\}^r$ with second largest eigenvalue in absolute value at most $\lambda$, and let $B\subseteq\{0,1\}^r$ have density $\mu$.
+(a) Prove that $\|P_BAP_B\|\le\mu+\lambda$, where $P_B$ is the coordinate projection onto $B$.  \emph{Hint: write a vector supported on $B$ as $\alpha\mathbf1/\sqrt{2^r}+y$ with $y\perp\mathbf1$ and bound $\alpha^2\le\mu\|u\|^2$ by Cauchy--Schwarz.}
+(b) Deduce that a uniformly started random walk $\rho_1,\dots,\rho_k$ stays inside $B$ throughout with probability at most $\mu(\mu+\lambda)^{k-1}$.
+(c) Let $V$ be a verifier with perfect completeness and soundness $\tfrac12$ and suppose an explicit family of such expanders with $\lambda\le\tfrac14$ and constant degree~$d$ exists.  Define $V_k$ that reads the walk's $k$ random strings, makes all $kq$ queries and
+accepts iff all accept.  Show that $V_k$ uses $r+(k-1)\log d$ random bits and has soundness $(3/4)^{k-1}$, and conclude that with $k=\Theta(\log n)$ the FGLSS graph has $N=\poly(n)$ vertices and a gap $N^{\Omega(1)}$.
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:reading2}
+\emph{Reading.}  Section~2.3 of \citet{DIMACS10} reduces the PCP theorem to Label Cover by putting the random strings of the verifier on the left and the proof positions on the right.  Compare this reduction with Corollary~\ref{cor:verifier-game}.
+Apply both to the verifier that picks a random clause of a $3$-CNF and queries its three variables, and identify the games.
+\end{exercise}
+
+
+%% ===========================================================================
+\section*{Notes and further reading}
+\addcontentsline{toc}{section}{Notes and further reading}
+%% ===========================================================================
+
+\paragraph{Where this lecture comes from.}
+The dictionary between verifiers, CSPs and games is standard; we followed the treatment of the PCP theorem as a statement about Label Cover in Section~2.3 of the DIMACS notes \citep{DIMACS10}.  The name \emph{Label Cover}
+comes from \citet{ABSS97}; two-prover one-round proof systems are due to \citet{FeigeLovasz92}; the clause--variable game is the canonical example.  The $d$-to-$1$ constraints are from \citet{Khot02}, and the $2$-to-$2$ constraints and the
+``half-way'' remark are from \citet{Khot19}; the passage from a Unique Game to the bipartite two-prover game, with a loss of a factor of at most~$4$, is noted in \citet{Khot10}; we sharpened the factor to~$2$ for
+the symmetric double cover (Proposition~\ref{prop:cover}).
+
+\paragraph{On attributions.}
+The Clique reduction and the exact formula $\omega(H_x)=2^r\cdot\max_\pi\Pr[\text{accept}]$ are due to \citet{FGLSS96}.  The hardness of approximating Clique within $N^\eps$ for some $\eps>0$, assuming only $\Ptime\ne\NP$, is Theorem~6 of
+\citet{ALMSS98}, improving the $2^{\sqrt{\log N}}$ of \citet{AroraSafra98}; the factor $N^{1-\eps}$ is \citet{Hastad99}, as mentioned in Lecture~\ref{lec:why}.  The multiplicativity of the clique number under the strong
+product is folklore.
+
+\paragraph{What is not covered.}
+We have not proved any hardness result for Label Cover itself beyond what Lecture~\ref{lec:why} did, and we have not discussed the \emph{size} of Label Cover instances (the Projection Games Conjecture asks for a nearly linear size).
+Raz's theorem, which supplies the soundness, is proved in Lecture~5.

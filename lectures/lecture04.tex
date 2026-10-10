@@ -1,0 +1,750 @@
+\chapter{Constant Queries: Hadamard Codes, Parallelization and the ALMSS Proof}
+\label{lec:alm}
+
+{\sffamily\large\color{softgray}Reorder the compositions, and a wasteful verifier finishes the job\par}
+\vspace{0.5em}
+
+\noindent
+Lecture~\ref{lec:as} ended with a verifier that reads $\log^{1/2+\eps}n$ bits.  Its bottleneck was not the
+algebra but the bookkeeping of the composition lemma: composition shrinks \emph{symbols} but never the \emph{number}
+of symbols read, and the starting verifier reads $\Omega(m)=\Omega(\log n/\log h)$ of them.
+\citet{ALMSS98}, writing at the same time as Arora and Safra (both papers appeared at FOCS 1992), found a way
+around this by changing the \emph{order} of the operations.  Their theorem is the one that is usually meant by the PCP theorem.
+
+\begin{theorem}[Arora--Lund--Motwani--Sudan--Szegedy]\label{thm:alm}
+There is a constant $q$ such that $\NP=\bigcup_{c>0}\PCP\bigl[c\log n,\ q\bigr]$.
+\end{theorem}
+
+\noindent
+The proof has three ideas, and each gets a section of this lecture.
+\begin{enumerate}
+  \item \emph{A wasteful verifier with $O(1)$ bit queries.}  Encode the assignment with the \emph{Hadamard code} (all
+        parities) and its tensor square.  The proof has length $2^{\Theta(n^2)}$, but a verifier can check it with
+        $O(1)$ queries using the linearity test of Blum, Luby and Rubinfeld, self-correction, and a Freivalds-type test
+        (Sections~\ref{sec:had-code}--\ref{sec:had-ver}).  Used directly this is useless: the proof is exponential.
+        Used as the \emph{innermost} verifier of a composition, on a circuit of size $\polylog\log n$, the exponential is harmless.
+  \item \emph{Parallelization.}  Starting from the Arora--Safra verifier, which makes $\polylog n$ queries, collapse
+        all its queries into $O(1)$ queries by asking for the restriction of the encoded proof to a \emph{curve}
+        through the $\polylog n$ points, at the price of larger answers (Sections~\ref{sec:lines}--\ref{sec:par}).
+  \item \emph{Reorder the composition.}  Compose \emph{the parallelized verifier with itself} once (answer size
+        $\polylog n\to\polylog\log n$), then with the Hadamard verifier (answer size $\to1$).
+        Only two compositions are needed, so the constants do not compound (Section~\ref{sec:assemble}).
+\end{enumerate}
+
+\begin{goalbox}{After this lecture you should be able to\ldots}
+\begin{enumerate}[leftmargin=*,label=(\arabic*)]
+  \item state the outer/inner verifier formalism of ALMSS and prove its composition theorem, and say how it
+        relates to the normal form verifiers of Lecture~\ref{lec:as} (Section~\ref{sec:outin});
+  \item prove the linearity test of Blum--Luby--Rubinfeld by Fourier analysis, with the sharp bound
+        ``rejection probability $\ge$ distance to the nearest linear function'' (Section~\ref{sec:had-code});
+  \item prove the soundness of the Freivalds-type tensor test, and assemble the Hadamard verifier, computing its
+        number of queries and acceptance probabilities on a $5$-gate circuit (Section~\ref{sec:had-ver});
+  \item prove the properties of self-correction on lines and of the curve-check, and explain how a curve turns
+        $\polylog n$ queries into one (Sections~\ref{sec:lines}--\ref{sec:curves});
+  \item carry out the three-step parameter chase of Theorem~\ref{thm:alm} and say which ingredients we quote rather than prove (Section~\ref{sec:assemble}).
+\end{enumerate}
+\end{goalbox}
+
+
+%% ===========================================================================
+\section{Outer verifiers, inner verifiers, and composition again}
+\label{sec:outin}
+%% ===========================================================================
+
+\subsection{The formalism}
+
+Lecture~\ref{lec:as} proved the composition lemma for \emph{normal form verifiers}.  ALMSS use a formalism that
+separates the two roles more cleanly and states soundness in terms of decoding.  Both are the same idea, and we shall see
+precisely how they correspond.
+
+\begin{definition}[Outer verifier]\label{def:outer}
+An \defn{$(r,p,c,a)$ outer verifier} $V$ for inputs of length $n$ expects as proof an oracle $\pi$ whose entries are strings
+of $a(n)$ bits.  On input $x$ it (i)~draws $R\in\{0,1\}^{r(n)}$; (ii)~computes in time $\poly(n)$ a circuit $C_R$ of size $c(n)$ and
+$p(n)$ positions $q_1,\dots,q_{p(n)}$; (iii)~reads $a_i=\pi(q_i)$; (iv)~accepts iff $a_1\circ\cdots\circ a_p$ satisfies $C_R$.
+A language $L$ is in $\mathrm{RPCP}(r,p,c,a,e)$ if such a verifier accepts some oracle with probability~$1$ when $x\in L$ and every oracle with probability at
+most~$e$ when $x\notin L$.
+\end{definition}
+
+\noindent
+Since the verifier reads $p(n)\,a(n)$ bits, $\mathrm{RPCP}(r,p,c,a,\tfrac12)\subseteq\PCP[r,\,pa]$.  What distinguishes an outer verifier from an arbitrary verifier is
+\emph{succinctness}: its decision is a small circuit evaluated on the concatenated answers.  This is the interface through which an inner verifier is plugged in.
+
+An inner verifier must check ``the concatenation of the queried answers satisfies $C$'' \emph{without reading the answers}, so these must be given in an encoded form.
+
+\begin{definition}[Encoding scheme]\label{def:enc}
+An \defn{$(\ell,a)$ encoding scheme} is a family $E=\{E_m\}$ of maps $E_m\colon\{0,1\}^m\to\{f\colon[\ell(m)]\to\{0,1\}^{a(m)}\}$ together with a
+\defn{decoding} $E^{-1}_m$ in the other direction with $E^{-1}_m(E_m(x))=x$ for all $x$.  (Decoding is arbitrary on words that are not codewords.)
+\end{definition}
+
+\begin{definition}[Inner verifier system]\label{def:inner}
+A \defn{$(k;r,p,c,a;e)$ inner verifier system} is a triple $(V,E,E^{-1})$.  The input is a circuit $C$ of size $n$ with $km$ input nodes; the verifier expects a proof
+consisting of $k+1$ oracles $X_1,\dots,X_k$ and $\pi$, each with answer size $a(n)$.  It draws $r(n)$ random bits, computes a circuit $C'$ of size $c(n)$ and
+$p(n)$ positions in the oracles, reads them, and accepts iff the concatenated answers satisfy $C'$.
+\begin{itemize}
+  \item \emph{Completeness.}  If $x_1\circ\cdots\circ x_k$ ($x_i\in\{0,1\}^m$) satisfies $C$, then there is $\pi$ such that $V$ accepts $(E(x_1),\dots,E(x_k),\pi)$ with probability~$1$.
+  \item \emph{Soundness.}  If for some oracles $X_1,\dots,X_k,\pi$ the verifier accepts with probability $>e$, then $E^{-1}(X_1)\circ\cdots\circ E^{-1}(X_k)$ satisfies $C$.
+\end{itemize}
+\end{definition}
+
+\noindent
+Compare with Definition~\ref{def:normal}: the $X_i$ are the pieces $z_i$ of the split-encoded assignment, $\pi$ is the auxiliary proof, and soundness here is the
+conjunction of the two soundness clauses there (``some piece is far from a codeword'' and ``the decoded assignment does not satisfy'') phrased through the \emph{decoding} map, whose behaviour on non-codewords is
+part of the scheme.  The number of queries is $p$, in place of $O(p+q)$.
+
+\begin{proposition}[An inner verifier is an outer verifier]\label{prop:in-out}
+If a $(k;r,p,c,a;e)$ inner verifier system exists then $\sat{CKT-SAT}\in\mathrm{RPCP}(r,p,c,a,e)$.
+\end{proposition}
+\begin{proof}
+Concatenate $X_1,\dots,X_k,\pi$ into one oracle.  If $C$ is satisfiable, completeness gives a proof accepted with probability~$1$.  If a proof is accepted with probability $>e$, soundness shows that
+$C$ is satisfiable.  Hence for unsatisfiable $C$ every proof is accepted with probability $\le e$.
+\end{proof}
+
+\begin{proposition}[Repetition]\label{prop:rep}
+From a $(k;r,p,c,a;e)$ inner verifier system one obtains, for every $l\ge1$, a $(k;lr,lp,lc,a;e^l)$ inner verifier system.
+\end{proposition}
+\begin{proof}
+Run $V$ $l$ times with independent random strings and accept iff all runs accept.  For fixed oracles the runs are independent, so the acceptance probability is the $l$-th power of that of a single run:
+if it is $\ge e^l$ then a single run accepts with probability $\ge e$, and soundness of $V$ applies.  Completeness is unchanged.  (ALMSS write $la$ for the answer size; $a$ suffices, since the same oracles are queried.)
+\end{proof}
+
+\subsection{Composition}
+
+\begin{theorem}[Composition; ALMSS Theorem~13, after Arora--Safra]\label{thm:compose}
+Suppose a $(p;r_1,p_1,c_1,a_1;e_1)$ inner verifier system exists.  Then for all functions $r,c,a$ and $0<e<1$,
+\[
+  \mathrm{RPCP}\bigl(r,\,p,\,c,\,a,\,e\bigr)\ \subseteq\ \mathrm{RPCP}\bigl(r+r_1(c),\ p_1(c),\ c_1(c),\ a_1(c),\ e+e_1-ee_1\bigr).
+\]
+\end{theorem}
+
+\begin{proof}
+Let $V_1$ be an $(r,p,c,a)$ outer verifier for $L$ and $(V_2,E,E^{-1})$ the inner system.  Fix $x$ of length $n$ and let $Y$ be the number of entries of $V_1$'s oracle.
+The new verifier $V$ expects an oracle $\pi$ that consists of $Y+2^{r(n)}$ \emph{sub-oracles}: $\pi[1],\dots,\pi[Y]$ (supposedly $E(\pi'(1)),\dots,E(\pi'(Y))$ for a proof $\pi'$ of $V_1$) and $\pi[Y+R]$ for every $R\in\{0,1\}^{r(n)}$ (an auxiliary proof for the run $R$).
+
+\emph{Program.}  Draw $R\in\{0,1\}^{r(n)}$ and simulate steps (i)--(ii) of $V_1$, obtaining a circuit $C_R$ of size $c(n)$ and positions $Q_1,\dots,Q_p$.  Draw $R_2\in\{0,1\}^{r_1(c(n))}$ and run $V_2$ on input $C_R$ with random string $R_2$ and oracles
+$X_i=\pi[Q_i]$ ($i\le p$) and $\pi_{\rm aux}=\pi[Y+R]$.  Accept iff $V_2$ accepts.  The number of random bits is $r(n)+r_1(c(n))$, and all other parameters are those of $V_2$ on an input of size $c(n)$; in particular the verdict is a circuit of size $c_1(c(n))$ of the $p_1(c(n))$ answers.
+
+\emph{Completeness.}  Let $\pi'$ be accepted by $V_1$ with probability~$1$ and set $\pi[j]=E(\pi'(j))$.  For each $R$ the answers $\pi'(Q_1)\circ\cdots\circ\pi'(Q_p)$ satisfy $C_R$, so by completeness of $V_2$ there is an auxiliary proof for $R$ which we place in $\pi[Y+R]$; then $V$ accepts with probability~$1$.
+
+\emph{Soundness.}  Suppose $x\notin L$ and $V$ accepts some $\pi$ with probability $>e+e_1-ee_1$.  Define $\pi'(j)=E^{-1}(\pi[j])$ for $j\le Y$.  Let
+$\mathcal R=\{R:\Pr_{R_2}[V\text{ accepts on }(R,R_2)]>e_1\}$ and $\rho=|\mathcal R|/2^{r(n)}$.  Then $\Pr[V\text{ accepts}]\le\rho+(1-\rho)e_1$, which is increasing in $\rho$; if $\rho\le e$ this is at most $e+(1-e)e_1=e+e_1-ee_1$, a contradiction.
+So $\rho>e$.  For $R\in\mathcal R$, the inner verifier $V_2$ accepts the oracles $\pi[Q_1],\dots,\pi[Q_p],\pi[Y+R]$ with probability $>e_1$, so by its soundness
+$E^{-1}(\pi[Q_1])\circ\cdots\circ E^{-1}(\pi[Q_p])=\pi'(Q_1)\circ\cdots\circ\pi'(Q_p)$ satisfies $C_R$, \ie $V_1$ accepts $\pi'$ on $R$.  Hence $V_1$ accepts $\pi'$ with probability $>e$, contradicting soundness of $V_1$.
+\end{proof}
+
+\noindent
+Two observations.  First, the soundness arithmetic is slightly different from Lemma~\ref{lem:compose} ($e+e_1-ee_1$ versus $p_1+(1-p_1)\tfrac14$); both say ``the cheater either fools the outer verifier or fools the inner verifier on the runs where the outer verifier rejects''.  Second, the roles of the parameters:
+the number of queries of the composed verifier is $p_1(c)$, that of the \emph{inner} verifier on the \emph{small} circuit.  This is what changes the game: if the \emph{inner} verifier has $O(1)$ queries,
+so does the composition, whatever the outer verifier's query count $p$ was.  In Lecture~\ref{lec:as} the inner verifiers were algebraic verifiers whose query count $q(\tau)$ grew with $\tau$ (as $\sqrt{\log\tau}$, and as $\log\tau/\log\log\tau$ for $V_{\rm savior}$).
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,every node/.style={font=\small},
+   st/.style={draw,rounded corners=3pt,minimum width=3.15cm,minimum height=1.35cm,align=center,fill=accent!7,font=\footnotesize},
+   ar/.style={-{Stealth[length=2.2mm]},thick,accent!80!black}]
+  \node[st] (a) at (0,0)    {\textbf{Arora--Safra}\\ $\log^{c_2}n$ queries\\ $\log^{c_3}n$-bit answers};
+  \node[st] (b) at (3.8,0)  {\textbf{parallelized}\\ $O(1)$ queries\\ $\polylog n$-bit answers};
+  \node[st] (c) at (7.6,0)  {\textbf{composed with}\\ \textbf{itself}\\ $O(1)$ queries\\ $\polylog\log n$-bit answers};
+  \node[st,fill=warn!12] (d) at (11.4,0) {\textbf{composed with}\\ \textbf{Hadamard}\\ $O(1)$ queries\\ $1$-bit answers};
+  \draw[ar] (a)--(b);
+  \draw[ar] (b)--(c);
+  \draw[ar] (c)--(d);
+  \node[font=\footnotesize,accent!80!black] at (1.9,-1.05) {\S\ref{sec:par}};
+  \node[font=\footnotesize,accent!80!black] at (5.7,-1.05) {Thm~\ref{thm:compose}};
+  \node[font=\footnotesize,accent!80!black] at (9.5,-1.05) {Thm~\ref{thm:compose}};
+\end{tikzpicture}
+\caption{The architecture of the ALMSS proof.  Random bits stay $O(\log n)$ throughout; only the \emph{answer size} and the
+\emph{decision circuit} are shrunk by the compositions, and the number of queries is made constant once and for all in the first arrow.}
+\label{fig:alm-arch}
+\end{figure}
+
+
+%% ===========================================================================
+\section{The Hadamard code and its local tests}
+\label{sec:had-code}
+%% ===========================================================================
+
+Throughout this section all arithmetic is over $\F_2$ and $z\cdot y=\sum_iz_iy_i$.
+
+\begin{definition}[Hadamard / parity encoding]\label{def:hadamard}
+For $z\in\F_2^n$ let $L_z\colon\F_2^n\to\F_2$, $L_z(y)=z\cdot y$.  The \defn{Hadamard encoding} of $z$ is the table of all $2^n$ values of $L_z$.
+Decoding maps a function $f\colon\F_2^n\to\F_2$ to the string $z$ minimizing $\Delta(f,L_z)$.
+\end{definition}
+
+\noindent
+Every linear function $\F_2^n\to\F_2$ is some $L_z$.  For $z\ne z'$ the function $L_z+L_{z'}=L_{z+z'}$ is a nonzero linear function, hence equals~$1$ on exactly half of $\F_2^n$:
+the code has relative distance $\tfrac12$, so a function within distance $<\tfrac14$ of a codeword decodes to it.
+This is the code with the \emph{worst rate} one could imagine ($2^n$ bits for $n$) and the \emph{best local structure}.
+
+\subsection{Fourier analysis over $\F_2^n$ in one page}
+
+Write a function $F\colon\F_2^n\to\F_2$ as $f=(-1)^F\colon\F_2^n\to\{\pm1\}$, and for $S\in\F_2^n$ let $\chi_S(x)=(-1)^{S\cdot x}$, so that $\chi_S=(-1)^{L_S}$.  Define
+\[
+  \widehat f(S)\;=\;\E_{x}\bigl[f(x)\chi_S(x)\bigr]\;=\;1-2\Delta(F,L_S).
+\]
+(The second equality: $f\chi_S=+1$ where $F=L_S$ and $-1$ elsewhere.)
+
+\begin{lemma}[Orthonormality and Parseval]\label{lem:fourier}
+(a)~$\E_x[\chi_S\chi_T]=\mathbf 1[S=T]$.  (b)~$f=\sum_S\widehat f(S)\chi_S$.  (c)~$\sum_S\widehat f(S)^2=\E[f^2]=1$.
+\end{lemma}
+\begin{proof}
+(a) $\chi_S\chi_T=\chi_{S+T}$, and for $U\ne0$ the function $x\mapsto U\cdot x$ takes each value on half of $\F_2^n$, so $\E[\chi_U]=0$.
+(b) The $2^n$ functions $\chi_S$ are orthonormal for the inner product $\langle g,h\rangle=\E[gh]$ on the $2^n$-dimensional space of real functions, hence a basis, and the coefficient of $\chi_S$ in $f$ is $\langle f,\chi_S\rangle$.
+(c) Expand $\E[f^2]$ using (a) and~(b).
+\end{proof}
+
+\subsection{Linearity testing}
+
+\begin{definition}[Linearity test; Blum--Luby--Rubinfeld]\label{def:blr}
+Given $F\colon\F_2^n\to\F_2$: choose $x,y\in\F_2^n$ uniformly and independently; accept iff $F(x)+F(y)=F(x+y)$.  (Three queries, $2n$ random bits.)
+\end{definition}
+
+\begin{theorem}[Linearity test, sharp form]\label{thm:blr}
+If $F$ is linear the test accepts with probability~$1$.  In general
+\begin{gather*}
+  \Pr[\text{accept}]\;=\;\frac12+\frac12\sum_S\widehat f(S)^3,\\
+  \min_{S}\Delta(F,L_S)\ \le\ \Pr[\text{reject}]\ \le\ 3\min_S\Delta(F,L_S).
+\end{gather*}
+\end{theorem}
+\begin{proof}
+Since $f(x)f(y)f(x+y)=1$ iff the test accepts, $\Pr[\text{accept}]=\tfrac12+\tfrac12\E[f(x)f(y)f(x+y)]$.  Expanding each factor by Lemma~\ref{lem:fourier}(b),
+\[
+  \E_{x,y}\bigl[f(x)f(y)f(x+y)\bigr]=\sum_{S,T,U}\widehat f(S)\widehat f(T)\widehat f(U)\,\E_x[\chi_S\chi_U(x)]\,\E_y[\chi_T\chi_U(y)]=\sum_S\widehat f(S)^3,
+\]
+using $\chi_U(x+y)=\chi_U(x)\chi_U(y)$ and Lemma~\ref{lem:fourier}(a).  For the lower bound on rejection: $\widehat f(S)^3=\widehat f(S)\cdot\widehat f(S)^2\le\max_T\widehat f(T)\cdot\widehat f(S)^2$, so by Parseval $\sum_S\widehat f(S)^3\le\max_T\widehat f(T)$ and
+\[
+  \Pr[\text{reject}]=\frac12-\frac12\sum_S\widehat f(S)^3\ \ge\ \frac{1-\max_T\widehat f(T)}2=\min_T\Delta(F,L_T).
+\]
+For the upper bound, let $L$ be a nearest linear function; if $F(x)+F(y)\ne F(x+y)$ then one of $F(x),F(y),F(x+y)$ differs from $L$, and each of these three points is uniform, so $\Pr[\text{reject}]\le3\Delta(F,L)$.
+\end{proof}
+
+\begin{remark}
+\citet{ALMSS98} quote the theorem of \citet{BLR90} in the weaker form ``rejection probability $\delta<2/9$ implies $2\delta$-close to linear'' and remark that the exact constant may differ from the original;
+the Fourier-analytic argument above, from the later literature on linearity testing \citep{BCHKS96}, gives $\delta$-closeness for \emph{every} $\delta$, which improves the soundness constants below.
+Exhaustively, over all $2^8$ functions on $\F_2^3$ and all $2^{16}$ on $\F_2^4$ the identity above holds exactly and the largest ratio $\min_S\Delta/\Pr[\text{reject}]$ is $2/3$ and $8/9$ respectively.
+\end{remark}
+
+\subsection{Self-correction and concatenation}
+
+A function that is $\eps$-close to linear is correct on most points but the verifier needs its value at \emph{specific} points (for instance a coefficient vector of a circuit).
+Linearity lets us turn an arbitrary point into two uniform ones.
+
+\begin{proposition}[Self-correction; BLR]\label{prop:selfcorr}
+If $F$ is $\eps$-close to the linear function $L$ then for \emph{every} $x\in\F_2^n$, $\Pr_{y}\bigl[F(x+y)+F(y)\ne L(x)\bigr]\le2\eps$.
+\end{proposition}
+\begin{proof}
+Both $x+y$ and $y$ are uniformly distributed, so $F(x+y)=L(x+y)$ and $F(y)=L(y)$ each fail with probability $\le\eps$, and when both hold $F(x+y)+F(y)=L(x)+L(y)+L(y)=L(x)$.
+\end{proof}
+
+\noindent
+Self-correction is why the verifier may be given a \emph{wrong} table: it never queries the table at a point of its own choosing, only at points that are individually uniform.  This is the same principle as in Section~\ref{sec:poly}.
+
+A linear function on $\F_2^{n_1+\cdots+n_k}$ is the same thing as a $k$-tuple of linear functions: $L(x_1,\dots,x_k)=\sum_iL_i(x_i)$ with $L_i(u)=L(0,\dots,u,\dots,0)$ ($u$ in the $i$-th block).
+This is the \emph{concatenation} we need to compare an oracle $A$ for the whole assignment with oracles $X_i$ for its pieces.
+
+\begin{proposition}[Concatenation test]\label{prop:linconcat}
+Let $f\colon\F_2^{n_1+\dots+n_k}\to\F_2$ and $f'\colon\F_2^{n_i}\to\F_2$ be $\eps$-close to linear $g,g'$ respectively.  Test: choose $u\in\F_2^{n_i}$ and $y\in\F_2^{n_1+\dots+n_k}$ uniformly,
+let $\iota_i(u)$ be $u$ placed in block $i$, and accept iff $f(\iota_i(u)+y)+f(y)=f'(u)$.  Then (a)~if $g_i=g'$ the test accepts with probability~$1$ when $f=g$, $f'=g'$; (b)~if $g_i\ne g'$ it accepts with probability at most $\tfrac12+3\eps$.
+\end{proposition}
+\begin{proof}
+(b) Since $g_i$ and $g'$ are distinct linear functions, $g(\iota_i(u))=g_i(u)\ne g'(u)$ for half of all $u$.  Accepting requires that this event fails, or that self-correction of $f$ at $\iota_i(u)$ returns a wrong value (probability $\le2\eps$ by Proposition~\ref{prop:selfcorr}), or that $f'(u)\ne g'(u)$ (probability $\le\eps$).
+\end{proof}
+
+
+%% ===========================================================================
+\section{Verifying a circuit with Hadamard codes}
+\label{sec:had-ver}
+%% ===========================================================================
+
+\subsection{A circuit as a system of quadratic equations}
+
+Let $C$ be an algebraic circuit (gates $+$ and $\cdot$ over $\F_2$, fan-in~$2$) with $n$ gates numbered $1,\dots,n$ and $km$ input nodes $1,\dots,km$; gate $n$ is the output.  For an input $x\in\F_2^{km}$ let
+$z=C\text{-aug}(x)\in\F_2^n$ be the vector of all gate values (so the first $km$ coordinates are $x$).  Associate to every non-input gate $j$ with input gates $j_1,j_2$ the equation
+\[
+  P_j(z)=z_{j_1}+z_{j_2}+z_j=0\ (\text{addition}),\qquad P_j(z)=z_{j_1}z_{j_2}+z_j=0\ (\text{multiplication}),
+\]
+and add $P_{\rm out}(z)=z_n+1=0$.  These are $n-km+1$ polynomials of degree $\le2$.
+
+\begin{lemma}\label{lem:aug}
+$C(x)=1$ iff there is $z\in\F_2^n$ with $z_{1..km}=x$ and $P_j(z)=0$ for all $j$.  Moreover then $z=C\text{-aug}(x)$.
+\end{lemma}
+\noindent(Immediate: the gate equations force $z$ to be the gate-value vector, and $P_{\rm out}$ says the output is~$1$.)
+
+Because $z_a^2=z_a$ over $\F_2$, every polynomial of degree $\le2$ is $P(z)=\sum_{a,b}c_{ab}z_az_b+c_0$, \ie
+\begin{equation}\label{eq:quad}
+  P(z)=\bigl\langle z\otimes z,\ c\bigr\rangle+c_0,\qquad(z\otimes z)_{ab}=z_az_b,\quad c\in\F_2^{n^2}.
+\end{equation}
+This is the key observation: \emph{evaluating every quadratic function of $z$ is a single linear query to the Hadamard encoding $L_{z\otimes z}$ of $z\otimes z\in\F_2^{n^2}$.}
+The proof therefore consists of $L_z$ (to compare with the input pieces) and $L_{z\otimes z}$ (to evaluate the equations); what must be tested is that the second really is the tensor square of the first.
+
+\begin{lemma}[Tensor test; Freivalds]\label{lem:freivalds}
+Let $M\in\F_2^{n\times n}$ be nonzero.  For uniform $u,v\in\F_2^n$, $\Pr[u^{\top}Mv=1]\ge\tfrac14$.  (In fact it equals $\tfrac12-2^{-\mathrm{rank}(M)-1}$; Exercise~\ref{ex:frank}.)
+\end{lemma}
+\begin{proof}
+The map $v\mapsto Mv$ is linear and nonzero, so $Mv\ne0$ with probability $\ge\tfrac12$.  For a fixed nonzero vector $w$, $u^\top w$ is a uniform bit.  Multiply.
+\end{proof}
+
+\subsection{The verifier $V^{\oplus}$}
+
+\begin{definition}[Hadamard verifier]\label{def:vplus}
+Input: a circuit $C$ as above.  Proof: functions $X_1,\dots,X_k\colon\F_2^m\to\F_2$, $A\colon\F_2^n\to\F_2$ and $B\colon\F_2^{n^2}\to\F_2$.  (Expected: $X_i=L_{x_i}$, $A=L_z$, $B=L_{z\otimes z}$ for $z=C\text{-aug}(x_1\circ\cdots\circ x_k)$.)
+The verifier performs \emph{all} of the following tests with independent randomness, and accepts iff all pass.
+\begin{enumerate}
+  \item \emph{Linearity:} the test of Definition~\ref{def:blr} on $A$, on $B$ and on each $X_i$.
+  \item \emph{Concatenation:} for $i=1,\dots,k$ the test of Proposition~\ref{prop:linconcat} on $(A,X_i)$, with block $i$ the $i$-th chunk of $m$ input coordinates.
+  \item \emph{Tensor:} draw $z_1,z_2\in\F_2^n$ and $w\in\F_2^{n^2}$ uniformly; check $A(z_1)A(z_2)=B(z_1\otimes z_2+w)+B(w)$.
+  \item \emph{Circuit:} draw $r\in\F_2^{n-km+1}$ and $w\in\F_2^{n^2}$ uniformly; let $c=\sum_jr_jc^{(j)}$ and $c_0=\sum_jr_jc^{(j)}_0$ be the coefficients, in the sense of~\eqref{eq:quad}, of $\sum_jr_jP_j$; check $B(c+w)+B(w)=c_0$.
+\end{enumerate}
+\end{definition}
+
+\begin{theorem}[The Hadamard inner verifier; ALMSS Theorem~15]\label{thm:vplus}
+$(V^\oplus,E^\oplus,(E^\oplus)^{-1})$ is a $(k;\,r,\,6k+12,\,O(k),\,1;\,\tfrac{19}{20})$ inner verifier system with $r=4n^2+(k+5)n+2km+1$ random bits.
+\end{theorem}
+\begin{proof}
+\emph{Resources.}  Linearity: $3(k+2)$ queries; concatenation: $3k$; tensor: $4$; circuit: $2$; total $6k+12$.  Random bits: $(2n+2n^2+2km)+k(m+n)+(2n+n^2)+(n-km+1+n^2)=4n^2+(k+5)n+2km+1$.
+The verdict is the AND of $O(k)$ parity checks of the answer bits, a circuit of size $O(k)$.
+
+\emph{Completeness.}  If $x_1\circ\cdots\circ x_k$ satisfies $C$, put $z=C\text{-aug}(\cdot)$, $X_i=L_{x_i}$, $A=L_z$, $B=L_{z\otimes z}$.  Linearity and (since $\iota_i(u)\cdot z=u\cdot x_i$) concatenation tests hold; the tensor test holds as $L_z(z_1)L_z(z_2)=(z\cdot z_1)(z\cdot z_2)=\langle z\otimes z,z_1\otimes z_2\rangle$;
+the circuit test holds as $\langle z\otimes z,c\rangle=\sum_jr_jP_j(z)+c_0=c_0$ by Lemma~\ref{lem:aug}.
+
+\emph{Soundness.}  Suppose the proof is accepted with probability $>\tfrac{19}{20}$.  The tests use independent randomness, so each individual test accepts with probability $>\tfrac{19}{20}$.
+\begin{enumerate}[label=(\roman*)]
+  \item By Theorem~\ref{thm:blr} each of $X_1,\dots,X_k,A,B$ is $\eps$-close, for some $\eps<\tfrac1{20}$, to a linear function, say $L_{x_i}$, $L_z$, $L_b$, with $b\in\F_2^{n^2}$ regarded as an $n\times n$ matrix $M$.
+  \item \emph{Tensor.}  Suppose $M\ne zz^\top$.  By Lemma~\ref{lem:freivalds} applied to $M+zz^\top$, with probability $\ge\tfrac14$ over $z_1,z_2$ we have $L_z(z_1)L_z(z_2)\ne L_b(z_1\otimes z_2)$.  The test accepts only if this event fails, or $A(z_1)$ or $A(z_2)$ is wrong (probability $\le\eps$ each, both points uniform), or self-correction of $B$ at $z_1\otimes z_2$ is wrong ($\le2\eps$).  So it accepts with probability $\le\tfrac34+4\eps<\tfrac{19}{20}$, a contradiction.  Hence $L_b=L_{z\otimes z}$.
+  \item \emph{Circuit.}  Let $z_1,\dots,z_k$ be the consecutive $m$-bit blocks of the first $km$ coordinates of $z$.  If some $P_j(z)\ne0$ then for uniform $r$ we have $\sum_jr_jP_j(z)=1$ with probability exactly $\tfrac12$, \ie $\langle z\otimes z,c\rangle\ne c_0$ with probability $\tfrac12$; the test accepts only if this event fails or the self-correction of $B$ at $c$ errs ($\le2\eps$): at most $\tfrac12+2\eps<\tfrac{19}{20}$, a contradiction.  So $P_j(z)=0$ for all $j$, and by Lemma~\ref{lem:aug} $C$ accepts $z_1\circ\cdots\circ z_k$ and $z=C\text{-aug}(z_1\circ\cdots\circ z_k)$.
+  \item \emph{Concatenation.}  By Proposition~\ref{prop:linconcat}(b) and $\tfrac12+3\eps<\tfrac{19}{20}$, the $i$-th block function of $L_z$ equals $L_{x_i}$, \ie $z_i=x_i$.  Since $\eps<\tfrac14$, $(E^\oplus)^{-1}(X_i)=x_i$.
+\end{enumerate}
+Therefore $(E^\oplus)^{-1}(X_1)\circ\cdots\circ(E^\oplus)^{-1}(X_k)=z_1\circ\cdots\circ z_k$ satisfies $C$.
+\end{proof}
+
+\begin{remark}
+\citet{ALMSS98} obtain soundness $\tfrac{35}{36}$ with the weaker linearity theorem (closeness $2\delta$ for rejection $\delta<\tfrac29$); with Theorem~\ref{thm:blr} the same argument gives $\tfrac{19}{20}$, as above.  Both are constants less than~$1$, which is all that is used.
+\end{remark}
+
+\begin{example}[Two circuits on five gates]\label{ex:had}
+Take $k=1$, $m=2$ (inputs $z_1,z_2$), $n=5$.  The proof has $|X_1|=4$, $|A|=2^5=32$ and $|B|=2^{25}=33{,}554{,}432$ bits, the verifier reads $18$ of them and uses $4\cdot25+6\cdot5+2\cdot2+1=135$ random bits.
+
+\smallskip\noindent\emph{(a) A satisfiable circuit.}  Gates $3=1\cdot2$, $4=1+2$, $5=3+4$, output $5$: $C(x)=x_1\vee x_2$.  Its equations are $z_3+z_1z_2$, $z_4+z_1+z_2$, $z_5+z_3+z_4$, $z_5+1$.  For $x=(1,0)$ the augmented vector is $z=(1,0,0,1,1)$, and the honest proof is accepted with probability~$1$.
+
+\smallskip\noindent\emph{(b) An unsatisfiable circuit.}  Gates $3=1+2$, $4=1\cdot2$, $5=3\cdot4$, output $5$.  Over $\F_2$, $(x_1+x_2)x_1x_2=x_1x_2+x_1x_2=0$, so $C\equiv0$; the equations are $z_3+z_1+z_2$, $z_4+z_1z_2$, $z_5+z_3z_4$, $z_5+1$.
+No $z$ satisfies all four, and some $z$ violates exactly one.  We now find the best cheating proof \emph{among linear oracles} ($X_1=L_x$, $A=L_z$, $B=L_b$), for which every test can be computed exactly.
+Take $X_1$ the prefix of $z$ (so the concatenation test passes) and let $M$ be the matrix of $b$.  With $N=M+zz^\top$, the tensor test accepts with probability $\tfrac12+2^{-\mathrm{rank}N-1}$ (Exercise~\ref{ex:frank}), and the circuit test accepts with probability $1$ if
+$\langle M,c^{(j)}\rangle=c^{(j)}_0$ for all four equations, and with probability exactly $\tfrac12$ otherwise.
+\begin{itemize}
+  \item $\mathrm{rank}\,N=0$ ($B$ is honest): tensor $1$; but for every $z$ some equation fails, so circuit $\tfrac12$.  Total $\tfrac12$.
+  \item $\mathrm{rank}\,N=1$: tensor $\tfrac34$.  An exhaustive search over all $32\cdot31\cdot31$ choices of $(z,u,v)$ with $N=uv^\top$ finds the circuit test passing with probability $1$ for, \eg, $z=0$, $u=e_3+e_5$, $v=e_4+e_5$: then $u^\top C^{(j)}v=(0,0,0,1)=c^{(j)}_0$.  Total $\tfrac34$.
+  \item $\mathrm{rank}\,N\ge2$: tensor $\le\tfrac58$.
+\end{itemize}
+So the best linear cheating proof is accepted with probability exactly $\tfrac34$, well below the guarantee $\tfrac{19}{20}$ of Theorem~\ref{thm:vplus}.  Note \emph{which} test it cheats on: $B$ is not the tensor square of $A$ at all (here $A\equiv0$), and passes the circuit test by being a rank-one tensor that happens to solve the four linear conditions.  Without the tensor test the verifier would accept the unsatisfiable circuit with probability~$1$.
+\end{example}
+
+\begin{bigpicture}{Why this verifier is a good \emph{inner} verifier and a useless outer one}
+The proof has length $2^{n^2}$ and the verifier uses $\Theta(n^2)$ random bits, where $n$ is the size of the circuit.  For $n=\poly(N)$ this is exponential, so $V^\oplus$ can not be used as a PCP for $\sat{3SAT}$ of size $N$.
+It reads \emph{six bits per piece} regardless of $n$, and is exact about what it needs: the input is a \emph{split-encoded} assignment ($X_1,\dots,X_k$), exactly the interface demanded by Definition~\ref{def:inner}.
+So $V^\oplus$ is the ideal last verifier of a recursion, applied to circuits that are tiny: if the previous verifier has a decision circuit of size $\polylog\log N$, then $2^{n^2}$ is $2^{(\log\log N)^{O(1)}}=N^{o(1)}$.
+\end{bigpicture}
+
+
+%% ===========================================================================
+\section{\texorpdfstring{Lines: low-degree testing and correction with $O(1)$ queries}{Lines: low-degree testing and correction with O(1) queries}}
+\label{sec:lines}
+%% ===========================================================================
+
+For the rest of this lecture $\F$ is a finite field, and $\mathcal Q^m_d$ denotes the polynomials $\F^m\to\F$ of \emph{total} degree at most $d$.
+(In Lecture~\ref{lec:as} we used the per-variable degree $h$, for which total degree is $\le hm$.  A line sees the total degree, so that is the natural notion here.)
+
+\begin{lemma}[Schwartz--Zippel, total degree]\label{lem:sz-tot}
+Two distinct $p,p'\in\mathcal Q^m_d$ agree on at most a $d/|\F|$ fraction of $\F^m$.
+\end{lemma}
+\begin{proof}
+It suffices to show that a nonzero $p\in\mathcal Q^m_d$ has at most a $d/|\F|$ fraction of zeros.  For $m=1$ there are at most $d$ roots.  For $m>1$ write $p=\sum_{i\le k}x_m^ip_i(x_1,\dots,x_{m-1})$ with $p_k\ne0$, so $\deg p_k\le d-k$.
+By induction $p_k$ vanishes on at most a $(d-k)/|\F|$ fraction; for every other $(x_1..x_{m-1})$ the polynomial in $x_m$ has degree $k$ and at most $k$ roots.  Total: $\le(d-k)/|\F|+k/|\F|=d/|\F|$.
+\end{proof}
+
+\noindent
+In particular, if $d/|\F|\le\tfrac12$ and $\delta<\tfrac14$ then $f$ is $\delta$-close to at most one $p\in\mathcal Q^m_d$ (Remark~22 of ALMSS).
+
+\paragraph{The encoding.}  Let $H\subseteq\F$ with $|H|=h+1$ and let $n\le|H|^m$.  The proof of Lemma~\ref{lem:ext} works verbatim for any $H\subseteq\F$ with $|H|=h+1$: every function $s\colon H^m\to\F$, in particular every bit string $s\in\{0,1\}^n$ padded to length $|H|^m$,
+has an extension $\hat s$ of total degree $\le mh$.  The polynomial encoding $P_{n,m,H,\F}(s)=\hat s$ is the table of $\hat s$ on $\F^m$; the decoder
+returns, for $f\colon\F^m\to\F$, the values on $H^m$ of the nearest polynomial of $\mathcal Q^m_{d}$ ($d$ a degree bound specified by the verifier; $d\ge mh$), truncated to $n$ bits.  We need $|\F|\ge2d$ so that nearest polynomials are unique.
+
+\subsection{The low-degree test with a table of lines}
+
+The Arora--Safra test of Lecture~\ref{lec:as} reads $O(m)$ entries.  The test of \citet{RubinfeldSudan96}, as strengthened by Arora--Safra's bivariate lemma, reads $O(1)$.
+Its trick is to use \emph{all} lines, not only axis-parallel ones.  Let $\ell_{x,h}(t)=x+th$ be the line with base $x$ and direction $h\in\F^m$.  For $p\in\mathcal Q^m_d$ the restriction $t\mapsto p(x+th)$ is a univariate polynomial of degree $\le d$.
+
+\begin{definition}[Line table, Poly-test]\label{def:polytest}
+A \defn{line table} is a function $B\colon\F^{2m}\to\mathcal Q^1_d$ assigning to every pair $(x,h)$ a univariate polynomial $B(x,h)$ of degree $\le d$.  The honest line table of $p$ is $\mathrm{lines}_p(x,h)=p(x+t\,h)$ (as a polynomial in $t$).
+\emph{Poly-test}$(f,B)$: choose $x,h\in\F^m$ and $t\in\F$ uniformly; accept iff $f(x+th)=B(x,h)(t)$.  It makes two queries.
+\end{definition}
+
+\begin{theorem}[Low-degree test; ALMSS Theorem~45]\label{thm:polytest}
+There are constants $\delta_0>0$ and $\alpha<\infty$ such that for every $d$ and field with $|\F|\ge\alpha(d+1)^3$ and every $\delta\le\delta_0$: (1)~$\mathrm{Poly\text{-}test}(p,\mathrm{lines}_p)$ accepts with probability~$1$ for $p\in\mathcal Q^m_d$;
+(2)~if $\mathrm{Poly\text{-}test}(f,B)$ accepts with probability $\ge1-\delta$ for some $B$, then $f$ is $2\delta$-close to $\mathcal Q^m_d$.
+\end{theorem}
+
+\noindent
+We quote it.  Part~(1) is trivial; part~(2) is proved in Section~A of ALMSS by combining the analysis of \citet{RubinfeldSudan96} (whose number of queries is independent of $m$ but whose field size depends on more than $d$) with the bivariate lemma of Arora--Safra (the base case of Lemma~\ref{lem:robust}).
+The point to retain is the quantifiers: \emph{two} queries, independent of $m$, $d$ and $\delta$, in exchange for a field of size $\Omega(d^3)$.
+
+\subsection{Correcting a polynomial at a point}
+
+\begin{definition}[Poly-self-corr]\label{def:polycorr}
+\emph{Poly-self-corr}$(A,B,x)$ with $A\colon\F^m\to\F$ and a line table $B$: choose $h\in\F^m$ and $t\in\F\setminus\{0\}$ uniformly; let $q=B(x,h)$; if $q(t)\ne A(x+th)$ reject, else output $q(0)$.  Two queries.
+\end{definition}
+
+\begin{proposition}[ALMSS Proposition~46]\label{prop:polycorr}
+Let $p\in\mathcal Q^m_d$.  (1)~$\mathrm{Poly\text{-}self\text{-}corr}(p,\mathrm{lines}_p,x)$ outputs $p(x)$ with probability~$1$.  (2)~If $\Delta(A,p)=\eps$ then for every $x\in\F^m$ and \emph{every} line table $B$,
+\[
+  \Pr_{h,t}\bigl[\text{the procedure does not reject and its output is}\ne p(x)\bigr]\ \le\ 2\sqrt\eps+\frac d{|\F|-1}.
+\]
+\end{proposition}
+\begin{proof}
+(1) is clear.  (2) For fixed $x$ and $t\ne0$, the point $x+th$ is uniform when $h$ is uniform, so $\Pr_{h,t}[A(x+th)\ne p(x+th)]=\eps$.  Call $h$ \emph{bad} if $\Pr_t[A(x+th)\ne p(x+th)]>\sqrt\eps$; by Markov $\Pr_h[\text{bad}]<\sqrt\eps$.
+Fix a good $h$ and write $q=B(x,h)$.  If $q=p(x+\cdot\,h)$ then the output is $p(x)$ or the procedure rejects.  If $q\ne p(x+\cdot\,h)$ then the two degree-$\le d$ polynomials agree in at most $d$ values of $t$ (so for $d/(|\F|-1)$ of $t\ne0$), and a wrong output
+without rejection needs $q(t)=A(x+th)$, which happens when $A(x+th)=p(x+th)=q(t)$ (probability $\le d/(|\F|-1)$) or when $A(x+th)\ne p(x+th)$ (probability $\le\sqrt\eps$ since $h$ is good).  Summing, $\sqrt\eps+\sqrt\eps+d/(|\F|-1)$.
+\end{proof}
+
+\subsection{Concatenating polynomials}
+
+The analogue of Proposition~\ref{prop:linconcat} for polynomial encodings: from $p_1,\dots,p_k\in\mathcal Q^m_d$ build one polynomial in $m+1$ variables whose slices are the $p_i$.  Fix an enumeration $\zeta_1,\zeta_2,\dots$ of the elements of $\F$; the $\zeta_i$ serve as indices for the $k$ pieces.
+
+\begin{definition}[Concatenated polynomial]\label{def:polyconcat}
+For $k\le|\F|$ let $\mathrm{concat}_{p_1,\dots,p_k}(x,y)=\sum_{i=1}^k\lambda_i(y)p_i(x)\in\mathcal Q^{m+1}_{d+k-1}$, where $\lambda_i$ is the Lagrange polynomial of degree $k-1$ with $\lambda_i(\zeta_j)=\mathbf 1[i=j]$.  It satisfies $\mathrm{concat}(x,\zeta_i)=p_i(x)$.
+\end{definition}
+
+\begin{lemma}[Concatenation test; ALMSS Lemma~49]\label{lem:polyconcat}
+Let $A\colon\F^{m+1}\to\F$ be $\eps$-close to $p\in\mathcal Q^{m+1}_d$, let $p_i=p(\cdot,\zeta_i)$, and let $C\colon\F^m\to\F$.  \emph{Poly-corr-concat-test}$(\zeta_i,A,B,C)$: choose $x\in\F^m$; accept iff
+$\mathrm{Poly\text{-}self\text{-}corr}(A,B,(x,\zeta_i))$ does not reject and outputs $C(x)$.  (Three queries.)  (1)~If $A=p$, $B=\mathrm{lines}_p$, $C=p_i$ it accepts with probability~$1$.  (2)~If for some $B$ it accepts with probability $\rho$, then $\Delta(C,p_i)<1-\rho+2\sqrt\eps+d/(|\F|-1)$.
+\end{lemma}
+\begin{proof}
+(2) Let $\Delta=\Delta(C,p_i)$.  The test accepts only if $C(x)=p(x,\zeta_i)$ (probability $1-\Delta$ over $x$) or if the self-correction outputs something other than $p(x,\zeta_i)$ without rejecting; the latter has probability $\le2\sqrt\eps+d/(|\F|-1)$ for \emph{every} point, in particular for $(x,\zeta_i)$ (Proposition~\ref{prop:polycorr}).
+\end{proof}
+
+\noindent
+Note that the correction is performed at the \emph{non-uniform} points $(x,\zeta_i)$; this is why the line $\ell_{(x,\zeta_i),h}$ with random $h$ is used: the point actually queried in $A$ is uniform.
+
+
+%% ===========================================================================
+\section{\texorpdfstring{Curves: collapsing $l$ queries into one}{Curves: collapsing l queries into one}}
+\label{sec:curves}
+%% ===========================================================================
+
+The Arora--Safra verifier asks $l=\polylog n$ queries.  The $l$ query points $z_1,\dots,z_l\in\F^{w+1}$ are determined by the random string $R$, so we may pre-compute them, and ask for the values of the polynomial $p$ at all of them \emph{at once}.
+A line through two points is easy; through $l$ points in general position we need a curve of degree $l-1$.
+
+\begin{definition}[Curves]\label{def:curve}
+A \defn{curve of degree $s$} in $\F^m$ is a map $\mathcal C\colon\F\to\F^m$ whose coordinates are univariate polynomials of degree $\le s$.  Given points $z_1,\dots,z_l\in\F^m$ and the first $l$ elements $\zeta_1,\dots,\zeta_l$ of $\F$, let $\mathrm{curve}_{z_1..z_l}$ be the curve of degree $l-1$ obtained by Lagrange interpolation in every coordinate, so that $\mathrm{curve}(\zeta_j)=z_j$.
+\end{definition}
+
+\begin{proposition}\label{prop:curve-deg}
+If $p\in\mathcal Q^m_d$ and $\mathcal C$ is a curve of degree $s$ then $t\mapsto p(\mathcal C(t))$ is a univariate polynomial of degree $\le ds$.  In particular for $\mathcal C=\mathrm{curve}_{z_1..z_l}$ the degree is $\le d(l-1)$.
+\end{proposition}
+\begin{proof}
+Each monomial of $p$ has total degree $\le d$, and substituting polynomials of degree $\le s$ gives a polynomial of degree $\le ds$.
+\end{proof}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,every node/.style={font=\small},
+   pt/.style={circle,fill=accent,inner sep=1.6pt}]
+  \begin{scope}
+    \draw[rounded corners=6pt,fill=black!3] (-0.3,-1.9) rectangle (5.7,1.9);
+    \node[anchor=north west,font=\footnotesize] at (-0.2,1.85) {$\F^{w+1}$};
+    \node[pt,label=above:{$z_1$}] (a) at (0.6,0.6) {};
+    \node[pt,label=above:{$z_2$}] (b) at (1.9,-0.9) {};
+    \node[pt,label=above:{$z_3$}] (c) at (3.2,0.9) {};
+    \node[pt,label=above:{$z_l$}] (d) at (4.9,-0.4) {};
+    \node at (4.0,0.1) {$\cdots$};
+    \draw[warn,very thick] plot[smooth,tension=0.8] coordinates {(0.6,0.6) (1.2,-0.1) (1.9,-0.9) (2.6,-0.2) (3.2,0.9) (4.1,0.5) (4.9,-0.4)};
+    \node[warn,font=\footnotesize] at (2.9,-1.55) {$\mathrm{curve}_{z_1..z_l}$ (degree $l-1$)};
+  \end{scope}
+  \node[align=left,anchor=west,font=\footnotesize] at (6.2,0.8) {\textbf{Without curves:} $l$ queries $A(z_1),\dots,A(z_l)$,\\ each of which must itself be self-corrected.};
+  \node[align=left,anchor=west,font=\footnotesize] at (6.2,-0.55) {\textbf{With curves:} one query $q=O(z_1,\dots,z_l)$,\\ a polynomial of degree $d(l-1)$, then one random\\ $t$ and one self-corrected value at $\mathrm{curve}(t)$.\\ Output: $q(\zeta_1),\dots,q(\zeta_l)$.};
+\end{tikzpicture}
+\caption{Aggregating queries.  The oracle $O$ lists, for every tuple of points, the restriction of the (encoded) proof to the curve through them.  The verifier \emph{checks} this restriction at one random point of the curve, and \emph{reads off} the $l$ values it wanted from the coefficients.}
+\label{fig:curve}
+\end{figure}
+
+\begin{definition}[Curve-corr-check]\label{def:curvecheck}
+Given $A\colon\F^m\to\F$, a line table $B$, an oracle $O\colon\F^{ml}\to\mathcal Q^1_{d(l-1)}$ and points $z_1,\dots,z_l\in\F^m$: let $q=O(z_1,\dots,z_l)$; choose $t\in\F$ uniformly; if $q(t)\ne\mathrm{Poly\text{-}self\text{-}corr}(A,B,\mathrm{curve}_{z_1..z_l}(t))$ (including the case that the latter rejects) then reject; else output $(q(\zeta_1),\dots,q(\zeta_l))$.
+It makes three queries (one to $O$, two inside Poly-self-corr) independently of $l$.
+\end{definition}
+
+\begin{lemma}[ALMSS Lemma~57]\label{lem:curvecheck}
+Let $p\in\mathcal Q^m_d$ and $A$ be $\eps$-close to $p$.  (1)~If $B=\mathrm{lines}_p$ and $O(z_1..z_l)=p|_{\mathrm{curve}_{z_1..z_l}}$ then the output is $(p(z_1),\dots,p(z_l))$ with probability~$1$.
+(2)~For all $B$, $O$ and $z_1,\dots,z_l$,
+\[
+  \Pr\bigl[\text{no rejection and output}\ne(p(z_1),\dots,p(z_l))\bigr]\ \le\ 2\sqrt\eps+\frac d{|\F|-1}+\frac{d(l-1)}{|\F|}.
+\]
+\end{lemma}
+\begin{proof}
+(1) is clear since $q(\zeta_j)=p(\mathrm{curve}(\zeta_j))=p(z_j)$.  (2) Let $\mathcal C=\mathrm{curve}_{z_1..z_l}$ and $q=O(z_1..z_l)$.  If $q=p\circ\mathcal C$ then the output, if any, is $(p(z_j))_j$.  Otherwise $q$ and $p\circ\mathcal C$ are distinct polynomials of degree $\le d(l-1)$ and agree for at most $d(l-1)/|\F|$ of the $t$.
+Not rejecting requires $q(t)$ to equal the self-corrected value at $\mathcal C(t)$.  That value is $p(\mathcal C(t))$ except with probability $\le2\sqrt\eps+d/(|\F|-1)$ (Proposition~\ref{prop:polycorr}, which is valid at every point, in particular at $\mathcal C(t)$ for each fixed $t$).
+So non-rejection requires $q(t)=p(\mathcal C(t))$ (probability $\le d(l-1)/|\F|$) or a wrong self-correction.
+\end{proof}
+
+\begin{pitfall}{a curve is not a random point}
+A point $\mathrm{curve}(t)$ on a curve through \emph{given} points is not uniformly distributed in $\F^m$; it is determined by $z_1,\dots,z_l$.  An adversary who knows the verifier's program may corrupt $A$ exactly on the points that the verifier
+will want to read, and querying $A$ directly at $\mathrm{curve}(t)$ would give no protection from the $\eps$-fraction where $A$ is wrong.  This is why the check goes through Poly-self-corr, which replaces the point by $\mathrm{curve}(t)+t'h$ for a random direction $h$: a uniformly distributed point.
+\end{pitfall}
+
+
+%% ===========================================================================
+\section{The parallelized verifier}
+\label{sec:par}
+%% ===========================================================================
+
+The starting point is the Arora--Safra verifier in the inner-verifier formalism.
+
+\begin{theorem}[Arora--Safra, in the form of ALMSS Theorem~39; quoted]\label{thm:seq}
+For every constant $k$ there are constants $c_1,a,b$ and $e_{\rm seq}<1$ and an inner verifier system $V^{\rm seq}$ with parameters
+\[
+  (k;\ r,p,c,a;\ e)\;=\;(k;\ c_1\log n,\ \log^an,\ \log^bn,\ 1;\ e_{\rm seq}),
+\]
+\ie $c_1\log n$ random bits, $\log^an$ queries, a decision circuit of size $\log^bn$ and bit answers.
+\end{theorem}
+
+\noindent
+This is the verifier of Section~\ref{sec:normal} with $h=\Theta(\log n)$ and $m=\log n/\log\log n$ (the verifier $V_{\rm savior}$ of Section~\ref{sec:chase}), read as an inner verifier system: its encoding is the polynomial extension, it makes $O(k+m)=\polylog n$ queries, and its decision is a circuit of size $\poly(h)=\polylog n$.  (ALMSS write the exponents of the number of queries and of the circuit size as $c_2$ and $c_3$ in the statement but use $c_3$ for the number of queries in Section~7.5; we call them $a$ and $b$.)  Its oracles are bit strings of length $N\le\log^an\cdot2^{c_1\log n}=\poly(n)$.
+
+\paragraph{Parameters of $V^{\rm par}$.}  Let $w=\lceil\log N/\log\log N\rceil$, $H\subseteq\F$ with $|H|=\log N$ (so $|H|^w\ge N$ and the polynomial encodings have total degree at most $w(|H|-1)$), $d=w|H|+k$, and $|\F|=\log^sN$ with $s=\max\{7,a+3\}$.  Then $|\F|\ge\alpha(d+1)^3$ for large $n$ (as $d=O(\log^2N)$),
+and $d\,l/|\F|=o(1)$ where $l=\log^an$ is the number of queries of $V^{\rm seq}$.  The encoding of $V^{\rm par}$ is $E^{\rm par}=P_{N,w,H,\F}\circ E^{\rm seq}$ (first encode with $V^{\rm seq}$'s scheme, then as a polynomial).  Its decoder first finds the nearest polynomial of degree $\le d$
+(the degree bound against which the test certifies closeness; for codewords of degree $\le w|H|$ this changes nothing) and then applies $(E^{\rm seq})^{-1}$.
+
+\begin{definition}[The verifier $V^{\rm par}$]\label{def:vpar}
+The input is a circuit $C$ with $km$ input nodes.  The proof consists of $X_1,\dots,X_k\colon\F^w\to\F$ and of $X_{k+1}$ with four suboracles:
+\begin{center}\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}lll@{}}
+\toprule
+oracle & type & expected content\\
+\midrule
+$X_i$ ($i\le k$) & $\F^w\to\F$ & $P(E^{\rm seq}(x_i))$: encoding of the $i$-th piece\\
+$Z$ & $\F^w\to\F$ & $P(\pi)$: encoding of the auxiliary proof $\pi$ of $V^{\rm seq}$\\
+$A$ & $\F^{w+1}\to\F$ & $\mathrm{concat}_{X_1,\dots,X_k,Z}$\\
+$B$ & $\F^{2(w+1)}\to\mathcal Q^1_d$ & $\mathrm{lines}_A$ (to test and correct $A$)\\
+$O$ & $\F^{(w+1)l}\to\mathcal Q^1_{d(l-1)}$ & $A|_{\mathrm{curve}(\cdot)}$ (to aggregate queries)\\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{enumerate}
+  \item \emph{Low degree:} run Poly-test$(A,B)$.
+  \item \emph{Concatenation:} for $i=1,\dots,k$ run the test of Lemma~\ref{lem:polyconcat} for $(\zeta_i,A,B,X_i)$, and for $(\zeta_{k+1},A,B,Z)$.
+  \item \emph{Simulation of $V^{\rm seq}$:} draw $R\in\{0,1\}^{c_1\log n}$; let $(i_1,q_1),\dots,(i_l,q_l)$ be the queries of $V^{\rm seq}$ on $(C,R)$ (oracle $i_j$, position $q_j\in[N]$); let $\#\colon[N]\to H^w$ be the canonical map and $z_j=(\#(q_j),\zeta_{i_j})\in\F^{w+1}$.
+        Run Curve-corr-check$(A,B,O,z_1,\dots,z_l)$ to obtain $(a_1,\dots,a_l)$; reject if some $a_j\notin\{0,1\}$; reject if $V^{\rm seq}$'s decision circuit on $(C,R)$ rejects the answers $(a_1,\dots,a_l)$.
+\end{enumerate}
+Accept iff nothing rejects.
+\end{definition}
+
+\begin{theorem}[Parallelization; ALMSS Theorem~14]\label{thm:par}
+$V^{\rm par}$ is a $(k;\ O(\log n),\ 3k+8,\ \polylog n,\ \polylog n;\ e)$ inner verifier system for some constant $e<1$ depending on $k$.
+\end{theorem}
+\begin{proof}
+\emph{Resources.}  Queries: $2$ (Poly-test) $+\,3(k+1)$ (concatenation tests) $+\,3$ (curve check) $=3k+8$.  (ALMSS count $3k+5$, omitting the test for $Z$; this is immaterial.)
+Random bits: each test draws $O(w)$ field elements, \ie $O(w\log|\F|)=O(\log N)$ bits since $w\log|\F|=s\log N$, so the total is $O(k\log N)+r=O(\log n)$ for fixed $k$.  Answer sizes are those of the entries of $B$ and $O$: $O(dl\log|\F|)=\polylog n$ bits.
+Poly-test, the correction and the curve-check involve $\poly(d,l,m)$ field operations; the decision of $V^{\rm seq}$ is a circuit of size $\log^bn$; so the decision is a circuit of size $\polylog n$ of the answers.
+
+\emph{Completeness.}  Given $x_1\circ\cdots\circ x_k$ satisfying $C$, let $\pi$ be the proof of $V^{\rm seq}$ accepted with probability~$1$ and set the oracles to the expected contents of the table.  Every test is then an identity between polynomials, and in Step~3 the answers $a_j$ are exactly the bits $V^{\rm seq}$ would read, which it accepts.
+
+\emph{Soundness.}  Let $\eta=2\sqrt{0.002}+\frac d{|\F|-1}+\frac{dl}{|\F|}<0.1$ (for large $n$) and $e=\max\{0.999,\ 1-\delta_0,\ 1-(1-\eta)(1-e_{\rm seq})\}<1$.  Suppose $V^{\rm par}$ accepts $(X_1..X_k,Z,A,B,O)$ with probability $>e$.
+\begin{enumerate}[label=(\roman*)]
+  \item Step~1 accepts with probability $>\max\{0.999,1-\delta_0\}$, so by Theorem~\ref{thm:polytest} there is $p\in\mathcal Q^{w+1}_d$ with $\eps:=\Delta(A,p)<2\min\{0.001,\delta_0\}\le0.002$.
+  \item Each concatenation test accepts with probability $>0.999$, so by Lemma~\ref{lem:polyconcat} $\Delta(X_i,p_i)<0.001+2\sqrt{0.002}+o(1)<\tfrac14$ for $p_i=p(\cdot,\zeta_i)$ ($i\le k$) and likewise for $Z$ and $p_{k+1}$.  Since $d/|\F|\le\tfrac12$, $p_i$ is the unique polynomial of $\mathcal Q^w_d$ within $\tfrac14$ of $X_i$, so the decoder returns, from $X_i$, the string $Y_i$ of values of $p_i$ on $H^w$ (after $(E^{\rm seq})^{-1}$).  Let $Y_{k+1}$ be the values of $p_{k+1}$ on $H^w$.
+  \item Let $S$ be the set of $R$ for which the tuple $\bigl(p(z_j)\bigr)_{j\le l}$ is \emph{not} a tuple of bits accepted by the decision circuit of $V^{\rm seq}$ on $(C,R)$.  Since $p(\#(q_j),\zeta_{i_j})=p_{i_j}(\#(q_j))$ is the $q_j$-th value of $Y_{i_j}$, this tuple is what $V^{\rm seq}$ would read from $Y_1,\dots,Y_{k+1}$ on $R$ (replace non-bit entries of the $Y_i$ by~$0$ to obtain bit strings; this does not change the behaviour on $R\notin S$).  Fix $R\in S$.
+        By Lemma~\ref{lem:curvecheck}, Step~3 returns $(p(z_j))_j$ or rejects, except with probability $\le\eta$; and on $(p(z_j))_j$ Step~3(f) rejects since $R\in S$.  So Step~3 accepts with probability $\le\eta$ given $R\in S$.
+  \item Hence $\Pr[V^{\rm par}\text{ accepts}]\le\Pr[S]\,\eta+(1-\Pr[S])=1-(1-\eta)\Pr[S]$.  Since this exceeds $e\ge1-(1-\eta)(1-e_{\rm seq})$, we get $\Pr[S]<1-e_{\rm seq}$: $V^{\rm seq}$ accepts $Y_1,\dots,Y_{k+1}$ (as bit strings) with probability $>e_{\rm seq}$.
+        By its soundness $(E^{\rm seq})^{-1}(Y_1)\circ\cdots\circ(E^{\rm seq})^{-1}(Y_k)$ satisfies $C$, and this string is the decoding of $X_1,\dots,X_k$ under $E^{\rm par}$.\qedhere
+\end{enumerate}
+\end{proof}
+
+\begin{remark}[Where each technique is used]
+\emph{Low-degree test and concatenation tests} certify that the (arbitrary) tables $X_i,Z$ are close to polynomials that are the slices of one polynomial $p$: they play the role that linearity and concatenation play in Section~\ref{sec:had-ver}.
+\emph{Self-correction} is used so that every read of $A$ is at a uniform point.  \emph{Curves} are the new ingredient, absent from Lecture~\ref{lec:as}: they are the reason the number of queries is independent of $l$.
+\end{remark}
+
+
+%% ===========================================================================
+\section{Assembling the proof: three steps, constant parameters}
+\label{sec:assemble}
+%% ===========================================================================
+
+\begin{theorem}[ALMSS Theorem~17]\label{thm:alm17}
+There is a constant $C$ such that for every $L\in\NP$ there is a constant $c_L$ with $L\in\mathrm{RPCP}(c_L\log n,\ C,\ 2C,\ 1,\ \tfrac12)$.
+\end{theorem}
+
+\noindent
+Since an $(r,p,c,a)$ outer verifier reads $pa$ bits, Theorem~\ref{thm:alm17} gives $L\in\PCP[c_L\log n,C]$, which is Theorem~\ref{thm:alm}.
+
+\begin{proof}
+It suffices to treat $\sat{CKT-SAT}$, which is $\NP$-complete.  All inner verifiers below are brought to error $\tfrac1{16}$ by Proposition~\ref{prop:rep}; this multiplies each parameter by a constant.
+
+\medskip
+\noindent\textbf{Step 1: constant queries, large answers.}  Apply Theorem~\ref{thm:par} with $k=1$ (its proof starts from the verifier of Theorem~\ref{thm:seq}).  By Proposition~\ref{prop:in-out},
+\[
+  \sat{CKT-SAT}\in\mathrm{RPCP}\bigl(c_1\log n,\ p_1,\ \polylog n,\ \polylog n,\ \tfrac1{16}\bigr)\qquad(p_1\text{ a constant}).\tag{1}
+\]
+
+\medskip
+\noindent\textbf{Step 2: shrink the answers by composing with the same kind of verifier.}  Apply Theorem~\ref{thm:par} again, now with $k:=p_1$ \emph{the constant of Step~1}.  This gives a $(p_1;\,r_2,p_2,c_2,a_2;\tfrac1{16})$ inner system with $r_2=O(\log n)$, $p_2=O(1)$ and
+$c_2,a_2=\polylog n$.  Compose with~(1) (Theorem~\ref{thm:compose}); the circuit size to feed it is $c(n)=\polylog n$, so $r_2(c(n))=O(\log\log n)$ and $c_2(c(n)),a_2(c(n))=\polylog(\polylog n)=(\log\log n)^{O(1)}$:
+\[
+  \sat{CKT-SAT}\in\mathrm{RPCP}\bigl(c_1\log n+O(\log\log n),\ p_2,\ (\log\log n)^{O(1)},\ (\log\log n)^{O(1)},\ \tfrac18\bigr).\tag{2}
+\]
+
+\medskip
+\noindent\textbf{Step 3: shrink the answers to one bit with the Hadamard verifier.}  Apply Theorem~\ref{thm:vplus} with $k:=p_2$.  This gives a $(p_2;\,gn^2,h,2h,1;\tfrac1{16})$ inner system, with $g,h$ constants.  Compose with~(2); its circuit size is $c(n)=(\log\log n)^{O(1)}$, so the random bits become
+$c_1\log n+O(\log\log n)+g\,c(n)^2=c_1\log n+(\log\log n)^{O(1)}=O(\log n)$:
+\[
+  \sat{CKT-SAT}\in\mathrm{RPCP}\bigl(O(\log n),\ h,\ 2h,\ 1,\ \tfrac{3}{16}\bigr).
+\]
+The errors compose by $e\mapsto e+\tfrac1{16}-\tfrac e{16}$: from $\tfrac1{16}$ to $\tfrac{31}{256}<\tfrac18$ in step~2 and to $\tfrac{721}{4096}<\tfrac3{16}$ in step~3 (Exercise~\ref{ex:alm-reps}).  This is below $\tfrac12$; take $C=h$.
+\end{proof}
+
+\begin{table}[t]
+\centering\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{3.2cm}lll@{}}
+\toprule
+stage & random bits & queries & answer bits & decision circuit\\
+\midrule
+Thm~\ref{thm:seq} ($k=1$) & $c_1\log n$ & $\log^an$ & $1$ & $\log^bn$\\
+(1) parallelized & $O(\log n)$ & $p_1=O(1)$ & $\polylog n$ & $\polylog n$\\
+(2) composed with $V^{\rm par}_{k=p_1}$ & $O(\log n)+O(\log\log n)$ & $p_2=O(1)$ & $(\log\log n)^{O(1)}$ & $(\log\log n)^{O(1)}$\\
+(3) composed with $V^\oplus_{k=p_2}$ & $O(\log n)+(\log\log n)^{O(1)}$ & $h=O(1)$ & $1$ & $2h$\\
+\bottomrule
+\end{tabular}
+\caption{The parameter chase of Theorem~\ref{thm:alm17}.  Compare with Table~\ref{tab:chase}: there, \emph{every} composition kept $\sqrt{\log n}$ queries and shrank the exponent of the alphabet by half; here the queries are made constant before any composition, and two compositions suffice.}
+\label{tab:alm-chase}
+\end{table}
+
+\begin{bigpicture}{Why the order matters}
+In Lecture~\ref{lec:as} the number of queries after a composition is $O(Q+q(\tau))$: it never goes below the outer verifier's $Q$.  So the \emph{first} verifier must already have $O(1)$ queries,
+and parallelization achieves that at the price of larger answers.  The second observation is that the \emph{size} of the answer is irrelevant to the number of queries of the composed verifier, so large answers can be cut down later by inner verifiers of \emph{any} speed.
+Finally, because each inner verifier is fed an outer verifier with a constant number $p_i$ of queries, its parameter $k=p_i$ is a constant, so the constants $p_2$ and $h$ are \emph{independent of $n$}: nothing compounds.
+The Hadamard verifier closes the recursion because its exponential size is paid on a circuit of size $(\log\log n)^{O(1)}$.
+\end{bigpicture}
+
+\begin{remark}[Constructivity]
+Following the proofs one sees that, given a satisfying assignment, the accepted proof is computable in polynomial time, and conversely a satisfying assignment can be recovered in polynomial time from any proof accepted with probability $\ge\tfrac12$ (Remark~18 of ALMSS: decoding polynomial and Hadamard codes is efficient).
+This constructive form is what lets a PCP reduction be \emph{a Karp reduction with a witness map}, used in the Label Cover reductions of Lectures~5--7.
+\end{remark}
+
+\begin{remark}[How large is $q$?]
+The constant is not made explicit in the paper: it depends on $\delta_0$ and $\alpha$ of Theorem~\ref{thm:polytest}, which are not computed.  Section~8 of ALMSS reports that the smallest $q$ that can be obtained went, in subsequent work, from $29$ (Bellare--Goldwasser--Lund--Russell) to $22$ (Feige--Kilian) to $16$ (Bellare--Goldreich--Sudan) to at most $9$ (the best that can be inferred directly from H\aa stad's work); all of these are for soundness~$\tfrac12$.
+H\aa stad's optimal results (Lecture~7) concern \emph{three}-bit verifiers with soundness close to the trivial value: completeness $1-\eps$ and soundness $\tfrac12+\eps$ (accept iff a parity of the three bits equals a prescribed value), and perfect completeness with soundness $\tfrac78+\eps$ (accept iff a $3$-clause is satisfied).  They are tight because a random proof achieves $\tfrac12$, respectively $\tfrac78$.
+The Hadamard verifier of this lecture on its own reads $6k+12$ bits per run, and $55$ repetitions bring $\tfrac{19}{20}$ down to $\tfrac1{16}$ (Exercise~\ref{ex:alm-reps}); this is a first indication of where the constant comes from.
+\end{remark}
+
+
+%% ===========================================================================
+\section{Consequences, and the link to games}
+\label{sec:alm-cons}
+%% ===========================================================================
+
+\paragraph{Max-3SAT.}  By Proposition~\ref{prop:pcp-equiv} (hardness direction) the theorem gives a constant $\eps_0>0$ such that $\Gap{1}{1-\eps_0}{3SAT}$ is $\NP$-hard; with $q$ queries and soundness $\tfrac12$ one may take $\eps_0=1/(2(q-2)2^q)$, and ALMSS's own computation gives $1/(q\,2^{q+1})$ in their Theorem~3 (where they credit the idea to Arora--Motwani--Safra--Sudan--Szegedy).
+By the L-reductions of Papadimitriou and Yannakakis this transfers to every \sat{Max-SNP}-hard problem: none has a PTAS unless $\Ptime=\NP$.
+
+\paragraph{Max-Clique.}  Let $V$ be the verifier of Theorem~\ref{thm:alm} ($r=c\log n$ random bits, $q$ queries, soundness $\tfrac12$).  Replace it by the verifier $V_k$ that uses a $k$-step random walk on a constant-degree expander on $\{0,1\}^r$
+(Exercise~\ref{ex:expander}): $r+O(k)$ random bits, $kq$ queries, soundness $\le(\tfrac34)^{k-1}$.  Take $k=\lceil\log n\rceil$.  Then the FGLSS graph $H_x$ has $N=2^{r+O(k)+kq}=n^{O(1)}$ vertices and, by Theorem~\ref{thm:fglss}, clique number $2^{r'}$ if $x\in\sat{3SAT}$ and $\le2^{r'}(3/4)^{k-1}$ otherwise:
+a gap of $(4/3)^{k-1}=n^{\Omega(1)}=N^{\eps_1}$.  So approximating the clique number within $N^{\eps_1}$ is $\NP$-hard \citep[Theorem~6]{ALMSS98}.  This is exactly the route indicated by their Theorem~2 (FGLSS plus ``recycled'' randomness),
+and it supersedes Corollary~\ref{cor:as-clique}: the exponent is now polynomial.  H\aa stad's $N^{1-\eps}$ comes in Lecture~7.
+
+\paragraph{Label Cover.}  Apply Corollary~\ref{cor:verifier-game} to the verifier of Theorem~\ref{thm:alm}: the constraint--variable game is a projection game with $|\Sigma_U|\le2^q$, $|\Sigma_W|=2$ and
+\[
+  x\in\sat{3SAT}\Rightarrow\val=1,\qquad x\notin\sat{3SAT}\Rightarrow\val\le1-\tfrac1{2q}.
+\]
+This is the starting point of Theorem~\ref{thm:lc}: ALMSS point out (Section~1.2) that their Theorem~4 ``provides the first known construction of a $2$-prover $1$-round proof system that uses logarithmic random bits and constant number of communication bits''.
+Lecture~5 will show how Raz's theorem drives $1-\frac1{2q}$ to $\delta$ at the cost of an alphabet of size $\poly(1/\delta)$.
+
+\paragraph{Transparent proofs of mathematics.}  The set of pairs $(\varphi,1^n)$ such that $\varphi$ has a proof of length $n$ in ZFC is in $\NP$.  By Theorem~\ref{thm:alm} every theorem therefore has a ``proof'' that a verifier using $O(\log n)$ random bits checks by reading $O(1)$ bits, and by the constructive form of the remark above the transformation from an ordinary proof to such a proof is polynomial.
+This is the sense of the pitch in Lecture~\ref{lec:why} (``proofs that can be checked by reading only a few bits'').
+
+
+%% ===========================================================================
+\section{What the proof does not do, and what replaces it}
+\label{sec:alm-limits}
+%% ===========================================================================
+
+Three features of the proof are worth noticing before moving on.
+
+\begin{enumerate}
+  \item \emph{There is no mechanism that makes a gap grow, other than repetition.}  Each module---linearity, tensor, low-degree, concatenation, curve-check---detects a corrupted proof with some \emph{constant} probability, and soundness $\tfrac12$ is reached by independent repetition (Proposition~\ref{prop:rep}).  The final constants are those of the weakest module (here $\delta_0$ of Theorem~\ref{thm:polytest}).  A \emph{gap-amplifying} step, the heart of Lecture~6, is a different idea.
+  \item \emph{The only part with an explicit constant is the Hadamard verifier.}  The rest passes through the low-degree test with the field-size condition $|\F|\ge\alpha(d+1)^3$ and the non-explicit $\delta_0$.
+  \item \emph{The algebra is used twice, for two different reasons.}  Polynomials give \emph{local} testability with few queries (low-degree test, self-correction, curves).  Hadamard codes give \emph{constant-size} testability at the price of exponential length.
+\end{enumerate}
+
+\citet{Dinur07} (Lecture~6; see Figure~\ref{fig:map}) replaces all of the polynomial machinery by a combinatorial operation on constraint graphs that amplifies the gap by a constant factor at each step, using expander graphs and random walks, so that after $O(\log n)$ steps the gap is constant.
+The \emph{composition} step survives, but only with a verifier of \emph{constant} input size.  Dinur remarks that this one verifier can be found by exhaustive search, provided its existence has been established independently,
+and that one may use ``Long-code based or Hadamard-code based'' constructions for it; the Hadamard-type verifier of Section~\ref{sec:had-ver} is the prototype.  (Dinur composes with an \emph{assignment tester}, \ie a PCP of proximity, which is a slightly stronger notion than our inner verifier; Section~6 of her paper gives the long-code instance.)
+In short: Lecture~4 builds the theorem from algebra, Lecture~6 from combinatorics plus one small, constant-size verifier of the kind constructed in Section~\ref{sec:had-ver}.
+
+
+%% ===========================================================================
+\section*{Exercises}
+\addcontentsline{toc}{section}{Exercises}
+%% ===========================================================================
+
+\begin{exercise}[\stars{$\star$}]\label{ex:maj3}
+Let $F\colon\F_2^3\to\F_2$ be the majority function.  Compute all Fourier coefficients of $f=(-1)^F$, the acceptance probability of the linearity test via Theorem~\ref{thm:blr}, and the distance to the nearest linear function.  Check against a direct count of the $64$ pairs $(x,y)$.
+Compare $\Pr[\text{reject}]$ with the two bounds $\Delta$ and $3\Delta$ of the theorem.
+\end{exercise}
+
+\begin{exercise}[\stars{$\star$}]\label{ex:frank}
+Prove that for $M\in\F_2^{n\times n}$ of rank $r\ge1$, $\Pr_{u,v}[u^\top Mv=1]=\tfrac12-2^{-r-1}$.  \emph{Hint: change bases so that $M=\mathrm{diag}(1,\dots,1,0,\dots,0)$; then $u^\top Mv=\sum_{i\le r}u_iv_i$, and the bias of an inner product of $r$-bit strings is $2^{-r}$.}
+Conclude that Lemma~\ref{lem:freivalds} is tight for $r=1$.
+\end{exercise}
+
+\begin{exercise}[\stars{$\star$}]\label{ex:quadeq}
+Show that every $3$-CNF with $n$ variables and $m$ clauses can be written as a system of $2m$ quadratic equations over $\F_2$ in $n+m$ variables, each equation of the form $P(z)=0$ with $\deg P\le2$, which is satisfiable iff the formula is.
+\emph{Hint: the clause $\ell_1\vee\ell_2\vee\ell_3$ is violated iff $(1+\ell_1)(1+\ell_2)(1+\ell_3)=1$; introduce $y=(1+\ell_1)(1+\ell_2)$.}  Why does the verifier of Section~\ref{sec:had-ver} work for this input directly, without a circuit?
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:had-cheat}
+Return to Example~\ref{ex:had}(b).  (a)~List all $z\in\F_2^5$ that violate exactly one of the four equations.  (b)~Verify that $z=0$, $u=e_3+e_5$, $v=e_4+e_5$ and $B=L_{uv^\top}$ pass the circuit test with probability~$1$.
+(c)~Prove that no linear cheating proof (all of $X_1,A,B$ linear) is accepted with probability more than $\tfrac34$.  (d)~Find a \emph{non-linear} $A$ that is accepted with higher probability than your best linear cheating strategy, or explain why Theorem~\ref{thm:vplus} still guarantees at most $\tfrac{19}{20}$.
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:alm-reps}
+(a)~How many independent repetitions bring the error $\tfrac{19}{20}$ of $V^\oplus$ to at most $\tfrac1{16}$?  What is the resulting number of queries as a function of $k$?  (b)~By Theorem~\ref{thm:compose} the error after composing three verifiers each with error $\tfrac1{16}$ is $e+e_1-ee_1$ applied twice; compute it exactly.
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:oracle-size}
+The oracle $O$ of $V^{\rm par}$ is defined on $\F^{(w+1)l}$, a superpolynomial set.  Explain why the \emph{proof} is nevertheless of polynomial size.  How many entries of $O$ can be read, as a function of $n$?  Why is it legitimate for the soundness argument that $O$ is arbitrary on all other entries?
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:curve-line}
+Suppose we try to aggregate $l$ queries with a \emph{line} instead of a curve: ask for $p$ restricted to a line through $z_1$ and $z_2$ and so on.  (a)~Show that for $l$ points in general position no line contains them.  (b)~What do curves of degree $s$ cost in the degree of the restriction and in the soundness error $d s/|\F|$?  (c)~Why is it essential that $|\F|\gg dl$?
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star\star$}]\label{ex:alm-reading}
+\emph{Reading.}  Compare Lemma~\ref{lem:compose} (Lecture~\ref{lec:as}) with Theorem~\ref{thm:compose}.  Which soundness clause of Definition~\ref{def:normal} corresponds to ``$E^{-1}$ of the oracles satisfies $C$'' in Definition~\ref{def:inner}?  Where does the inner system of this lecture use \emph{decoding} while the normal-form verifier of Lecture~\ref{lec:as} used \emph{closeness}?
+Then identify, in the proof of Theorem~\ref{thm:par}, the single place where the unique-decoding radius is used, and what would break if $\Delta(X_i,p_i)$ could only be bounded by $\tfrac12+\eps$.
+\end{exercise}
+
+
+%% ===========================================================================
+\section*{Notes and further reading}
+\addcontentsline{toc}{section}{Notes and further reading}
+%% ===========================================================================
+
+\paragraph{Where this lecture comes from.}
+Everything is from \citet{ALMSS98}: the outer/inner formalism and composition are Sections~2.1; the Hadamard verifier is Sections~5--6; parallelization is Section~7; the \sat{Max-3SAT} consequence is Section~3.
+The linearity test and self-correction are due to \citet{BLR90}; the tensor test is a Freivalds-type matrix-product check \citep{Freivalds79}; the Fourier-analytic form of the linearity analysis follows the standard modern treatment, for which see the detailed study of the test in characteristic two by \citet{BCHKS96}.
+The low-degree test with a table of lines and its analysis combine \citet{RubinfeldSudan96} and the bivariate lemma of \citet{AroraSafra98}; the correction procedure goes back to Beaver--Feigenbaum and Lipton and, in the form with constant queries, to Gemmell--Lipton--Rubinfeld--Sudan--Wigderson, as cited in ALMSS.
+The numerical Example~\ref{ex:had} was computed for these notes.
+
+\paragraph{On attributions.}
+The conference versions of \citet{AroraSafra98} and \citet{ALMSS98} both appeared at FOCS~1992 (pp.~2--12 and 13--22).  The constant-query theorem is rightly credited to ALMSS, but its proof rests on the composition technique and the polylogarithmic verifier of Arora and Safra;
+ALMSS say so in their Section~1.2.  The \emph{linearity-testing / Hadamard} half of the proof was in turn inspired, as they note, by work on program checking.
+
+\paragraph{Small points in the text of \citet{ALMSS98} that we handled differently.}
+Five points, as we read the paper; none affects the theorem, and we list them so that a reader comparing with the original is not surprised.
+(i)~Step~4(c) of $V^\oplus$ compares the self-corrected value of $B$ at $\mathrm{coeff}_P$ with $0$, while $\mathrm{coeff}_p$ is defined only for $p(0)=0$ and the output polynomial (zero iff the output gate accepts, \ie $z_n+1$ over $\F_2$) has a constant term; we compare with the constant term of $\sum_jr_jP_j$ (Definition~\ref{def:vplus}), which repairs this.
+(ii)~The number of queries of $V^{\rm par}$ is stated as $3k+5$; counting the concatenation test for $Z$ gives $3k+8$.
+(iii)~The decoder of $E^{\rm par}$ is defined with the nearest polynomial of degree $mh$, whereas the soundness proof produces the nearest polynomial of the degree $d$ that Poly-test certifies; we define the decoder with degree $d$, which agrees with the original on all honest codewords.
+(iv)~The linearity theorem is quoted with closeness $2\delta$; the Fourier argument gives $\delta$, which we used to get soundness $\tfrac{19}{20}$ rather than $\tfrac{35}{36}$.
+(v)~In Section~7.5 the exponent $c_3$ is used both for the circuit size (as in the statement of Theorem~39) and for the number of queries $l$; the field size $\log^{\max\{2+c_3,6\}}N$ must dominate $dl$, so it is the exponent of the number of queries that matters.
+
+\paragraph{What is not covered.}
+We have not proved Theorem~\ref{thm:polytest} (the low-degree test with lines) or Theorem~\ref{thm:seq} beyond what Lecture~\ref{lec:as} gave, and we have not discussed the $\PCP[\log n,(\log\log n)^2]$ intermediate result.
+Lecture~5 turns to the \emph{soundness} side: Raz's parallel repetition theorem, which the constant-query PCP of this lecture feeds with a projection game of value $1-\frac1{2q}$.

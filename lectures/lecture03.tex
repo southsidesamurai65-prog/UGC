@@ -1,0 +1,866 @@
+\chapter{The Arora--Safra Route: Polynomials, Sum-Check and Composition}
+\label{lec:as}
+
+{\sffamily\large\color{softgray}How a global algebraic statement becomes a handful of local queries\par}
+\vspace{0.5em}
+
+\noindent
+Lectures~\ref{lec:why} and~\ref{lec:games} took the PCP theorem as a black box and asked what it gives us.
+This lecture opens the box---or rather, opens the first one, the proof of \citet{AroraSafra98}.  The second
+proof, the one that reaches $O(1)$ queries \citep{ALMSS98}, is Lecture~4; the third, combinatorial one is
+Lecture~6.
+
+Be warned about what Arora and Safra actually proved.  Their theorem is \emph{not} $\NP=\PCP[O(\log n),O(1)]$.  It is
+\[
+  \NP=\PCP[\log n,\log n]\qquad\text{and}\qquad
+  \NP=\PCP\bigl[\log n,\ \log^{1/2+\eps}n\bigr]\ \text{ for every fixed }\eps>0,
+\]
+a verifier that reads a \emph{sublogarithmic} number of proof bits.  The step from $\log^{1/2+\eps}n$ to $O(1)$ was taken
+soon afterwards by \citet{ALMSS98} (both papers appeared at FOCS 1992), using the same composition lemma and a sharper low-degree test (Section~\ref{sec:as-limits}).
+We therefore state precisely the theorem proved here, and we resist the common shorthand ``Arora--Safra proved the PCP theorem''.
+
+What makes the proof worth a full lecture is that it is built from \emph{modules} with clean interfaces, and we can
+state and prove most of them.  The cast:
+\begin{itemize}
+  \item a \emph{code}: low-degree polynomials, which turn ``$f$ is almost right everywhere'' into ``$f$ is exactly right at a random point'';
+  \item an \emph{arithmetization}: satisfiability of a $3$-CNF becomes ``a certain polynomial sums to $0$ over a cube'';
+  \item the \emph{sum-check}: a table that lets a verifier check such a sum by reading $O(m)$ entries;
+  \item the \emph{low-degree test}: a table that lets a verifier check that a function is close to a polynomial by reading $O(m)$ entries;
+  \item \emph{composition}: the lemma that lets a verifier with many queries to long symbols be rewritten as one that reads
+        fewer, shorter symbols.
+\end{itemize}
+Each module has an input, an output and a parameter change.  The point of the lecture is to track them.
+
+\begin{goalbox}{After this lecture you should be able to\ldots}
+\begin{enumerate}[leftmargin=*,label=(\arabic*)]
+  \item state exactly what \citet{AroraSafra98} proved and which constants separate it from the PCP theorem (Section~\ref{sec:as-land});
+  \item prove the Schwartz--Zippel lemma, and use it to decode a function that is close to a low-degree polynomial
+        (Section~\ref{sec:poly});
+  \item arithmetize a $3$-CNF as a vanishing condition on a cube, and compute the single nonzero point of $g_A$ on a
+        small example (Section~\ref{sec:arith});
+  \item prove the soundness $1-dl/q$ of the sum-check by induction and compute the cheating probability of a given table
+        (Section~\ref{sec:sumcheck});
+  \item prove that a function all of whose axis-parallel lines are low-degree is a polynomial, and explain why the real test
+        needs a \emph{robust} version of this fact (Section~\ref{sec:ldt});
+  \item prove the composition lemma, and carry out the parameter chase that ends at $\log^{1/2+\eps}n$ queried bits
+        (Sections~\ref{sec:compose}--\ref{sec:chase}).
+\end{enumerate}
+\end{goalbox}
+
+
+%% ===========================================================================
+\section{What was proved, and when}
+\label{sec:as-land}
+%% ===========================================================================
+
+Recall the notation of Definition~\ref{def:pcp}: $\PCP[r,q]$ is the class of languages with a non-adaptive verifier using
+$O(r)$ random bits and $O(q)$ queries, perfect completeness and soundness~$\tfrac12$.  Trivially
+$\PCP[r,q]\subseteq\mathsf{NTIME}\bigl(2^{O(r)}q+\poly(n)\bigr)$, so $\PCP[O(\log n),q]\subseteq\NP$ for every $q=\poly(n)$ (we used this in
+Section~\ref{sec:pcp}).  The whole question is how \emph{small} $q$ can be.
+
+\begin{table}[t]
+\centering\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.5cm}
+                   >{\raggedright\arraybackslash}p{4.4cm}
+                   >{\raggedright\arraybackslash}p{4.4cm}@{}}
+\toprule
+Result & Randomness and queries & Consequence for \sat{Max-Clique}\\
+\midrule
+$\NP=\PCP[0,\poly(n)]$ (definition) & none, all of the witness & none\\
+\citet{BFLS91} & $\NP\subseteq\PCP[\polylog n,\polylog n]$ (implicit) & ---\\
+\citet{FGLSS96} & $\PCP[\log n\log\log n,$\newline $\log n\log\log n]$ & hard within any constant unless $\NP\subseteq\mathsf{DTIME}(n^{O(\log\log n)})$\\
+\citet{AroraSafra98} & $\PCP[\log n,\log n]$ and\newline $\PCP[\log n,\log^{1/2+\eps}n]$ & within $2^{c\log^{1/2-\eps}N}$ is $\NP$-hard\\
+\citet{ALMSS98} & $\PCP[\log n,1]$ & within $N^{\eps_1}$ is $\NP$-hard\\
+\bottomrule
+\end{tabular}
+\caption{The race for the number of queries (all verifiers non-adaptive; $N$ is the number of vertices of the clique instance).
+The row of Arora and Safra is the subject of this lecture.  Each row implies the ones above it, since $\PCP[r,q]\subseteq\PCP[r',q']$ whenever $r\le r'$ and $q\le q'$.}
+\label{tab:race}
+\end{table}
+
+\noindent
+Two further statements from \citet{AroraSafra98} will be used.
+
+\begin{theorem}[Arora--Safra]\label{thm:as}
+For every fixed $\eps>0$, $\NP=\PCP\bigl[\log n,\ \log^{1/2+\eps}n\bigr]$.
+\end{theorem}
+
+\begin{corollary}[Arora--Safra]\label{cor:as-clique}
+For all constants $c,\eps>0$, if \sat{Max-Clique} on $N$-vertex graphs can be approximated within $2^{c\log^{1/2-\eps}N}$
+in polynomial time, then $\Ptime=\NP$.
+\end{corollary}
+
+\noindent
+Corollary~\ref{cor:as-clique} is the \emph{reason} the paper was written: it removes the ``almost'' from the title of \citet{FGLSS96}, who had
+shown that approximating Clique within any constant factor implies $\NP\subseteq\mathsf{DTIME}(n^{O(\log\log n)})$.  We derive it in Section~\ref{sec:clique}.
+
+\begin{pitfall}{three different statements share the name ``PCP theorem''}
+(1) $\NP=\PCP[\log n,\log n]$ and $\NP=\PCP[\log n,\log^{1/2+\eps}n]$: Arora--Safra, FOCS 1992.
+(2) $\NP=\PCP[\log n,1]$: Arora--Lund--Motwani--Sudan--Szegedy, FOCS 1992.  This is what Lecture~\ref{lec:why} called the PCP theorem
+(Theorem~\ref{thm:pcp1}); the \emph{approximation} consequences for \sat{Max-3SAT} need~(2), not~(1): through the reduction of Proposition~\ref{prop:pcp-equiv} the constant $\eps_0$ is $2^{-O(q)}$, so with
+$\log^{1/2+\eps}n$ queried bits one only gets a gap that shrinks with~$n$, not a constant (Arora and Safra, Section~6).
+(3) The combinatorial proof of the same statement as~(2) by \citet{Dinur07}.
+Arora and Safra's own Section~6 is explicit about this division of labour.
+\end{pitfall}
+
+
+%% ===========================================================================
+\section{Polynomials as codes}
+\label{sec:poly}
+%% ===========================================================================
+
+Fix a finite field $\F_q$.  For integers $h,m\ge1$ let
+\[
+  \mathcal P^m_h\;=\;\{\,p\in\F_q[x_1,\dots,x_m]\ :\ \deg_{x_i}p\le h\text{ for every }i\,\}
+\]
+be the polynomials of degree at most $h$ \emph{in each variable}, viewed as functions $\F_q^m\to\F_q$.  (Each $p\in\mathcal P^m_h$ has total degree at most $hm$.)
+For $f,g\colon\F_q^m\to\F_q$ write $\Delta(f,g)=\Pr_{x\in\F_q^m}[f(x)\ne g(x)]$ for their (normalized) distance, and say that $f$ is
+\defn{$\delta$-close} to $\mathcal P^m_h$ if $\Delta(f,p)\le\delta$ for some $p\in\mathcal P^m_h$.
+
+\begin{lemma}[Schwartz--Zippel]\label{lem:sz}
+A nonzero $p\in\mathcal P^m_d$ vanishes on at most a $dm/q$ fraction of the points of $\F_q^m$.
+\end{lemma}
+\begin{proof}
+Induction on $m$.  For $m=1$ a nonzero univariate polynomial of degree $\le d$ has at most $d$ roots.
+For $m>1$ write $p=\sum_{i=0}^{k}x_1^i\,p_i(x_2,\dots,x_m)$ with $k\le d$ and $p_k\ne0$.  By induction $p_k$ vanishes on at most a
+$d(m-1)/q$ fraction of $\F_q^{m-1}$.  For every point $(x_2,\dots,x_m)$ where $p_k\ne0$, the polynomial $p(\cdot,x_2,\dots,x_m)$ is a
+nonzero univariate polynomial of degree $k\le d$, hence vanishes for at most $k$ values of $x_1$.  So the fraction of zeros is at most
+$\frac{d(m-1)}q+\frac kq\le\frac{dm}q$.
+\end{proof}
+
+\begin{corollary}[Codes of large distance]\label{cor:dist}
+Distinct $p,p'\in\mathcal P^m_h$ satisfy $\Delta(p,p')\ge1-hm/q$.  If $hm<q/2$ and $f$ is $\delta$-close to $\mathcal P^m_h$ for some $\delta<\tfrac14$,
+then $f$ is $\delta$-close to a \emph{unique} $\tilde f\in\mathcal P^m_h$, and no other polynomial of $\mathcal P_h^m$ is within $\tfrac12-\delta$ of~$f$.
+\end{corollary}
+\begin{proof}
+The first claim is Lemma~\ref{lem:sz} applied to $p-p'$.  If $p,p'$ were both within $\delta$ of $f$, the triangle inequality would give
+$\Delta(p,p')\le2\delta<\tfrac12<1-hm/q$, a contradiction.  The last claim is the same computation with $\tfrac12-\delta$.
+\end{proof}
+
+\noindent
+Corollary~\ref{cor:dist} is the reason polynomials are used: a function that is $1\%$ wrong still \emph{determines} the polynomial it is trying to be.
+Next, how to turn a string into a polynomial.
+
+\begin{lemma}[Polynomial extension]\label{lem:ext}
+Let $h<q$, identify $\{0,1,\dots,h\}$ with the first $h+1$ elements of $\F_q$, and let $s\colon\{0,\dots,h\}^m\to\F_q$ be any function.  Then there is a \emph{unique}
+$\hat s\in\mathcal P^m_h$ with $\hat s=s$ on $\{0,\dots,h\}^m$, namely
+\[
+  \hat s(x)\;=\;\sum_{u\in\{0,\dots,h\}^m}s(u)\,\Lambda_u(x),\qquad
+  \Lambda_u(x)=\prod_{i=1}^m\lambda_{u_i}(x_i),\qquad
+  \lambda_a(x)=\prod_{b\in\{0..h\},\,b\ne a}\frac{x-b}{a-b}.
+\]
+\end{lemma}
+\begin{proof}
+Each $\lambda_a$ has degree $h$, equals $1$ at $a$ and $0$ at the other points of $\{0..h\}$; hence $\Lambda_u$ is $1$ at $u$ and $0$
+elsewhere on the cube, and $\hat s\in\mathcal P^m_h$ agrees with $s$ on the cube.  For uniqueness it suffices to show that $p\in\mathcal P^m_h$ vanishing on the cube is
+zero.  Write $p=\sum_{j\le h}x_m^jp_j(x_1,\dots,x_{m-1})$.  For every fixed $x'\in\{0..h\}^{m-1}$ the univariate polynomial $p(x',\cdot)$ has degree $\le h$ and $h+1$ roots,
+so it is zero, \ie $p_j(x')=0$ for all $j$.  Hence each $p_j$ vanishes on $\{0..h\}^{m-1}$ and by induction $p_j=0$.
+\end{proof}
+
+\begin{example}[The multilinear extension of XOR]\label{ex:xor}
+For $m=2$, $h=1$ and $s(0,0)=s(1,1)=0$, $s(1,0)=s(0,1)=1$, Lemma~\ref{lem:ext} gives
+\[
+  \hat s(x_1,x_2)=x_1(1-x_2)+(1-x_1)x_2=x_1+x_2-2x_1x_2 .
+\]
+Over $\F_7$ it takes the value $3+5-30\equiv6$ at $(3,5)$.  The function $s$ is determined by $4$ values; its extension is a table with $q^2=49$ entries, and two distinct such extensions differ on at least $1-2/7=5/7$ of the $49$ points
+(Corollary~\ref{cor:dist}), so even a corrupted table pins down $s$.
+\end{example}
+
+\noindent
+\textbf{Encoding strings.}  Let $n=(h+1)^m$.  Identify $\{1,\dots,n\}$ with the cube $\{0,\dots,h\}^m$ (base-$(h+1)$ digits) and encode $a\in\{0,1\}^n\subset\F_q^n$ by
+$\hat a\in\mathcal P^m_h$.  The encoding is injective, and the codeword is a table of $q^m$ field elements; if $q=\poly(h)$ then
+$q^m=h^{O(m)}=\poly(n)$ since $(h+1)^m=n$.  This is the sense in which the encoding is ``efficient''.
+
+\begin{pitfall}{a table that is close to a polynomial is not a polynomial}
+The verifier will not hold a polynomial; it holds a \emph{table} $f\colon\F_q^m\to\F_q$ supplied by an adversary.  The low-degree test (Section~\ref{sec:ldt}) can only certify that
+$f$ is $\delta$-close to some $\tilde f\in\mathcal P^m_h$ for a small constant~$\delta$.  Any later step that needs values of $\tilde f$ at a point $x$ reads $f(x)$ and is correct unless $x$
+lies in the $\delta$-fraction where $f\ne\tilde f$.  The design principle of the whole verifier is therefore: \emph{never evaluate $\tilde f$ at a point the adversary can predict.}
+Every point at which $f$ is read must be uniformly distributed, so that the error probability is $\le\delta$ per read.
+\end{pitfall}
+
+
+%% ===========================================================================
+\section{Arithmetization: satisfiability as a vanishing condition}
+\label{sec:arith}
+%% ===========================================================================
+
+Let $\varphi$ be a $3$-CNF with $n=(h+1)^m$ variables and $n$ clauses (pad with dummy variables and clauses).  Let $\mathbb K=\{0,1,\dots,h\}\subset\F_q$.  Identify variables and clauses with
+points of the cube $\mathbb K^m$.  Every clause $c\in\mathbb K^m$ has an ordered triple of variables $v_1(c),v_2(c),v_3(c)\in\mathbb K^m$ and signs
+$\varsigma_j(c)\in\{0,1\}$ ($\varsigma_j(c)=1$ if the $j$th literal is unnegated).  Define
+\[
+  \chi_j(c,v)=\begin{cases}1&\text{if }v=v_j(c)\\0&\text{otherwise}\end{cases}\quad\bigl(\mathbb K^m\times\mathbb K^m\to\{0,1\}\bigr),\qquad
+  \varsigma_j\colon\mathbb K^m\to\{0,1\},
+\]
+and let $\hat\chi_j\in\mathcal P^{2m}_h$, $\hat\varsigma_j\in\mathcal P^m_h$ be their polynomial extensions (Lemma~\ref{lem:ext}); they depend only on
+$\varphi$ and are computable in time $\poly(n,q^m)$.
+
+For $A\in\mathcal P^m_h$, which we think of as the extension of a Boolean assignment, define $g_A\colon\F_q^{4m}\to\F_q$ by
+\[
+  g_A(z,w_1,w_2,w_3)\;=\;\prod_{j=1}^3\hat\chi_j(z,w_j)\cdot\bigl(\hat\varsigma_j(z)-A(w_j)\bigr),\qquad z,w_1,w_2,w_3\in\F_q^m .
+\]
+
+\begin{lemma}[Algebraic view of $3$SAT]\label{lem:arith}
+Let $A\in\mathcal P^m_h$.
+\begin{enumerate}[label=(\alph*)]
+  \item If $a\in\{0,1\}^n$ satisfies $\varphi$ and $A=\hat a$, then $g_A(y)=0$ for every $y\in\mathbb K^{4m}=\{0,\dots,h\}^{4m}$.  If $a\in\{0,1\}^n$ does not satisfy $\varphi$, then $g_{\hat a}$
+        is nonzero at some point of $\mathbb K^{4m}$.
+  \item Conversely, for \emph{every} $A$: if $g_A$ vanishes on $\mathbb K^{4m}$ then $\varphi$ is satisfiable.  (The assignment $a'_v=\mathbf 1[A(v)=1]$ satisfies it.)
+  \item $g_A\in\mathcal P^{4m}_{6h}$, and evaluating $g_A$ at a point $(z,w_1,w_2,w_3)$ requires only the values of $A$ at the three points
+        $w_1,w_2,w_3\in\F_q^m$ (plus $\poly(n)$ work independent of $A$).  If the point is uniform in $\F_q^{4m}$ then each $w_j$ is uniform in $\F_q^m$.
+\end{enumerate}
+\end{lemma}
+\begin{proof}
+Fix $(c,v_1,v_2,v_3)\in\mathbb K^{4m}$.  On the cube the extensions $\hat\chi_j,\hat\varsigma_j$ equal $\chi_j,\varsigma_j$.  If $(v_1,v_2,v_3)\ne(v_1(c),v_2(c),v_3(c))$ then some $\chi_j(c,v_j)=0$ and $g_A=0$
+at this point.  Otherwise
+$g_A(c,v_1,v_2,v_3)=\prod_{j=1}^3\bigl(\varsigma_j(c)-A(v_j)\bigr)$, which vanishes iff $A(v_j)=\varsigma_j(c)$ for some $j$.
+
+(a) For Boolean $a$ and $A=\hat a$ we have $A(v_j)=a_{v_j}$, and $a_{v_j(c)}=\varsigma_j(c)$ says exactly that the $j$th literal of $c$ is true.  So $g_A$ vanishes at $(c,v_1(c),v_2(c),v_3(c))$ iff $a$ satisfies $c$.
+
+(b) If $A(v_j(c))=\varsigma_j(c)\in\{0,1\}$ then $a'_{v_j(c)}=\varsigma_j(c)$ (for $\varsigma_j=1$ because $A=1$; for $\varsigma_j=0$ because $A=0\ne1$).  So every clause has a literal made true by $a'$.
+
+(c) Each factor is a product of two polynomials of degree $\le h$ in every variable; the three factors share~$z$, so the degree is $\le6h$ in each $z_i$, and $\le2h$ in each $w_{j,i}$.  The rest is read off
+the formula; the $w_j$ are disjoint blocks of coordinates of a uniform point, hence uniform.
+\end{proof}
+
+\begin{pitfall}{the arithmetization certifies the \emph{rounded} assignment}
+Part~(b) says that a table $A$ with $g_A\equiv0$ on the cube is satisfiable-by-rounding, not that its values on the cube are bits.  Indeed take any satisfying $a$ and change $a_v$ to $5$ for a variable $v$ that
+occurs in clauses whose other literals are true: $g_A$ still vanishes on the cube.  This does no harm for the \emph{soundness} of a verifier for $\sat{3SAT}$ (an unsatisfiable $\varphi$ is rejected by every $A$, by (b)),
+but it matters in Section~\ref{sec:normal}, where the verifier will be asked about the \emph{decoded string} of~$A$.  There one needs the further vanishing condition $A(A-1)\equiv0$ on the cube, and one more sum-check.
+\citet{AroraSafra98} leave this implicit; the cost is a constant factor.
+\end{pitfall}
+
+\begin{example}[A formula, an assignment, one nonzero point]\label{ex:arith}
+Take $h=1$, $m=2$ (so $n=4$ variables $x_0,\dots,x_3$, named by their binary index, and $4$ clauses) and
+\[
+  C_0=x_3\vee\neg x_2\vee\neg x_1,\quad C_1=\neg x_3\vee x_2\vee x_0,\quad C_2=x_1\vee x_0\vee\neg x_2,\quad C_3=\neg x_0\vee\neg x_2\vee\neg x_3 .
+\]
+The assignment $a=(x_0,x_1,x_2,x_3)=(0,0,0,1)$ falsifies exactly $C_1$ (here $x_3=1$, $x_2=0$, $x_0=0$).  Computing $g_{\hat a}$ at all $2^8=256$ points of $\{0,1\}^{8}$
+over $\F_{31}$ gives a single nonzero value:
+\[
+  g_{\hat a}\bigl(\underbrace{(0,1)}_{C_1},\underbrace{(1,1)}_{x_3},\underbrace{(1,0)}_{x_2},\underbrace{(0,0)}_{x_0}\bigr)
+  \;=\;(0-1)(1-0)(1-0)\;=\;-1,
+\]
+the product of $\varsigma_j-a_{v_j}$ for the three false literals.  So a single violated clause becomes a single nonzero point of a $256$-point cube:
+a needle in a haystack.  We cannot hope to find it by sampling, and this is exactly why we multiply by the random \emph{zero-testers} of the next lemma, which turn
+``somewhere nonzero'' into ``the weighted sum is nonzero''.
+\end{example}
+
+\begin{lemma}[Zero-testers]\label{lem:zt}
+For $t=(t_1,\dots,t_{k})\in\F_q^{k}$ let $R_t\in\mathcal P^{k}_h$ be the polynomial $R_t(y)=\prod_{i=1}^{k}I_{t_i}(y_i)$,
+where $I_s\in\mathcal P^1_h$ is the polynomial with $I_s(a)=s^a$ for $a=0,\dots,h$ (Lemma~\ref{lem:ext}).  Then for every $f\colon\{0..h\}^{k}\to\F_q$ that is not identically zero,
+\[
+  \Pr_{t\in\F_q^{k}}\Bigl[\sum_{y\in\{0..h\}^{k}}R_t(y)f(y)=0\Bigr]\ \le\ \frac{hk}{q}.
+\]
+In particular this is less than $\tfrac18$ when $q>8hk$ ($q>32hm$ for $k=4m$).
+\end{lemma}
+\begin{proof}
+For $y\in\{0..h\}^{k}$ we have $R_t(y)=\prod_it_i^{y_i}$.  Hence $F(t):=\sum_yR_t(y)f(y)=\sum_yf(y)\prod_it_i^{y_i}$ is a polynomial in $t$ of degree $\le h$ in every variable, and it is
+nonzero because distinct $y$ give distinct monomials and some $f(y)\ne0$.  By Lemma~\ref{lem:sz}, $\Pr_t[F(t)=0]\le hk/q$.
+\end{proof}
+
+\begin{example}[Zero-testers on Example~\ref{ex:arith}]\label{ex:zt}
+Here $k=4m=8$ and $g_{\hat a}|_{\mathbb K^{4m}}$ has a single nonzero point, $y=(0,1\,|\,1,1\,|\,1,0\,|\,0,0)$ with value $-1$.  So $F(t)=-t_2t_3t_4t_5$ (the coordinates where $y$ has a~$1$), which vanishes iff one of these four
+coordinates of $t$ is $0$:
+\[
+  \Pr_t[F(t)=0]\;=\;1-\bigl(\tfrac{30}{31}\bigr)^4\;\approx\;0.123\ \ \le\ \frac{hk}q=\frac8{31}\approx0.258 .
+\]
+(A simulation with $2\cdot10^5$ samples gives $0.123$.)  The field is too small for the hypothesis $q>8hk=64$ of the lemma, but the bound $hk/q$ itself holds.  Note how sparse $F$ is: a single violated clause
+is a one-monomial polynomial, and the zero-tester detects it unless $t$ is unlucky in one of four coordinates.
+\end{example}
+
+\begin{corollary}[The summed polynomials $P_t$]\label{cor:P}
+For $t\in\F_q^{4m}$ and $A\in\mathcal P^m_h$ put $P^A_t=R_t\cdot g_A\in\mathcal P^{4m}_{7h}$ ($R_t$ the zero-testers with $k=4m$, $q>32hm$).  Then
+\begin{itemize}
+  \item if $A=\hat a$ for a satisfying assignment $a$, then $\sum_{y\in\mathbb K^{4m}}P^A_t(y)=0$ for \emph{every} $t$;
+  \item if $\varphi$ is \emph{unsatisfiable}, then for \emph{every} $A\in\mathcal P^m_h$ we have $\sum_{y\in\mathbb K^{4m}}P^A_t(y)\ne0$ for all but at most an $\tfrac18$ fraction of the $t$.
+\end{itemize}
+Moreover $P^A_t(y)$ at a uniformly random $y\in\F_q^{4m}$ is computed from three uniformly distributed values of $A$.
+\end{corollary}
+\begin{proof}
+First bullet: Lemma~\ref{lem:arith}(a).  Second bullet: by Lemma~\ref{lem:arith}(b), $g_A\not\equiv0$ on $\mathbb K^{4m}$ when $\varphi$ is unsatisfiable; apply Lemma~\ref{lem:zt} to $f=g_A|_{\mathbb K^{4m}}$.
+\end{proof}
+
+\begin{bigpicture}{What arithmetization buys}
+A $3$-CNF is a list of $n$ constraints, and a single violated clause is a needle in a haystack that a verifier reading $O(1)$ clauses cannot find.  After arithmetization the same fact is one equation,
+``$\sum_{y\in\mathbb K^{4m}}P^A_t(y)=0$'', about a single low-degree polynomial for a random~$t$.  The sum has $(h+1)^{4m}=n^4$ terms, but the polynomial has structure---low degree in every variable---and
+the \emph{sum-check} of the next section exploits that structure to verify the sum by evaluating the polynomial at \emph{one} random point.
+\end{bigpicture}
+
+
+%% ===========================================================================
+\section{The sum-check protocol, as a table}
+\label{sec:sumcheck}
+%% ===========================================================================
+
+The sum-check is due to \citet{LFKN92}; we give the non-adaptive, table-based form of \citet{AroraSafra98}.
+
+Let $B\in\mathcal P^{\ell}_d$ and $H\subseteq\F_q$.  For $1\le i\le\ell$ and $a_1,\dots,a_{i-1}\in\F_q$ put
+\[
+  B_{a_1,\dots,a_{i-1}}(x_i)\;=\;\sum_{x_{i+1},\dots,x_\ell\in H}B(a_1,\dots,a_{i-1},x_i,x_{i+1},\dots,x_\ell),
+\]
+a univariate polynomial of degree $\le d$ in $x_i$ (for $i=1$ we write $B_\varnothing(x_1)$).  A \defn{table of partial sums} is any assignment $g$ of a univariate polynomial
+$g_{a_1,\dots,a_{i-1}}$ of degree $\le d$ to every prefix $(a_1,\dots,a_{i-1})\in\F_q^{i-1}$, $1\le i\le\ell$; it has $\sum_i q^{i-1}\le q^\ell$ entries, each of $O(d\log q)$ bits.
+The \emph{honest} table is $g_{a_1..a_{i-1}}=B_{a_1..a_{i-1}}$.
+
+\begin{definition}[Sum-check test]\label{def:sumcheck}
+Input: $B$ (available through oracle access), $H$, a claimed value $c\in\F_q$ and a table $g$.
+Choose $a_1,\dots,a_\ell\in\F_q$ independently and uniformly; then accept iff
+\begin{align*}
+  &\sum_{x\in H}g_\varnothing(x)=c,\\
+  &\sum_{x\in H}g_{a_1,\dots,a_{i-1}}(x)=g_{a_1,\dots,a_{i-2}}(a_{i-1})\quad(2\le i\le\ell),\\
+  &g_{a_1,\dots,a_{\ell-1}}(a_\ell)=B(a_1,\dots,a_\ell).
+\end{align*}
+\end{definition}
+
+\noindent
+The test reads $\ell$ table entries and one value of $B$ at the uniform point $a=(a_1,\dots,a_\ell)$.  The entries to be read depend only on $a$, not on
+earlier answers: the test is non-adaptive.  It uses $\ell\log q=\log|\F_q^\ell|$ random bits.
+
+\begin{lemma}[Sum-check]\label{lem:sumcheck}
+Let $B\in\mathcal P^\ell_d$, $c\in\F_q$.
+\begin{enumerate}[label=(\alph*)]
+  \item If $\sum_{x\in H^\ell}B(x)=c$, the honest table is accepted with probability~$1$.
+  \item If $\sum_{x\in H^\ell}B(x)\ne c$, then \emph{every} table is accepted with probability at most $d\ell/q$.
+\end{enumerate}
+\end{lemma}
+\begin{proof}
+(a) Each check is an identity between partial sums.
+
+(b) Induction on $\ell$.  For $\ell=1$ the test accepts iff $\sum_Hg_\varnothing=c$ and $g_\varnothing(a_1)=B(a_1)$.  Since $\sum_HB\ne c$ we have $g_\varnothing\ne B$, and two distinct polynomials of
+degree $\le d$ agree in at most $d$ points, so the acceptance probability is at most $d/q$.
+
+For $\ell>1$ let $B_\varnothing(x_1)=\sum_{x_2..x_\ell\in H}B(x_1,x_2,\dots,x_\ell)$.  Then $\sum_{x\in H}B_\varnothing(x)=\sum_{H^\ell}B\ne c$.
+\emph{Case 1:} $g_\varnothing=B_\varnothing$.  Then $\sum_Hg_\varnothing\ne c$ and the first check fails with probability~$1$.
+\emph{Case 2:} $g_\varnothing\ne B_\varnothing$.  They agree in at most $d$ points $a_1$.  For every other $a_1$, the claim ``$\sum_{x_2..x_\ell\in H}B(a_1,x_2,\dots,x_\ell)=g_\varnothing(a_1)$'' is
+false.  Fixing $a_1$, the remaining checks form exactly the sum-check test for the polynomial $B(a_1,\cdot)\in\mathcal P^{\ell-1}_d$, the claim $c'=g_\varnothing(a_1)$ and the sub-table $g_{a_1,\ast}$;
+by induction it accepts with probability $\le d(\ell-1)/q$.  Hence the overall acceptance probability is at most
+\[
+  \frac dq\cdot1+\Bigl(1-\frac dq\Bigr)\frac{d(\ell-1)}q\ \le\ \frac{d\ell}q.\qedhere
+\]
+\end{proof}
+
+\noindent
+(The recursion $p_\ell\le d/q+(1-d/q)p_{\ell-1}$, $p_1\le d/q$, solves to the slightly sharper $p_\ell\le1-(1-d/q)^\ell\le d\ell/q$.)
+
+\begin{example}[A cheating table, exactly]\label{ex:sc}
+Let $q=7$, $d=2$, $\ell=2$, $H=\{0,1\}$ and $B(x_1,x_2)=x_1x_2+x_2^2+1$.  Then
+$B_\varnothing(x_1)=B(x_1,0)+B(x_1,1)=1+(x_1+2)=x_1+3$, and the true sum is $B_\varnothing(0)+B_\varnothing(1)=3+4=7\equiv0$.
+Suppose the prover wants to convince us of the false claim $c=1$.  An exhaustive computation over all tables (every polynomial of degree $\le2$ at every node of the tree) gives
+\[
+  \max_g\Pr[\text{accept}]\;=\;\frac{24}{49}\;=\;1-\Bigl(\frac57\Bigr)^2\;\approx\;0.490\ \ <\ \frac{d\ell}q=\frac47\approx0.571 .
+\]
+The maximum is the same for every false claim $c\ne0$, and equals exactly the sharper bound $1-(1-d/q)^\ell$ of the remark after the proof: at the first level the cheating polynomial can have
+$d=2$ points $a_1$ at which it agrees with $B_\varnothing$, and at each of the other points the second level leaves a further $d/q$.  The bound $d\ell/q$ of the lemma is its linearization.
+\end{example}
+
+\begin{pitfall}{a table of partial sums is a prover strategy written out}
+In the interactive sum-check of \citet{LFKN92} the prover answers round by round, and its $i$th message may depend on the challenges $a_1,\dots,a_{i-1}$.  A deterministic strategy of such a prover is
+\emph{exactly} a table of partial sums: the entry $g_{a_1,\dots,a_{i-1}}$ is its $i$th message.  So the lemma says the same thing in both models.  What the table form adds is that the verifier
+may choose all of $a$ first and then read the $\ell$ entries on the path to $a$ in one batch: the test is non-adaptive.  This is needed for the composition lemma (Section~\ref{sec:compose}).
+\end{pitfall}
+
+\subsection{Putting arithmetization and sum-check together}
+
+Combine Corollary~\ref{cor:P} and Lemma~\ref{lem:sumcheck} with $B=P^A_t$, $d=7h$, $\ell=4m$, $H=\{0..h\}$, $c=0$.  A verifier that holds $f\colon\F_q^m\to\F_q$ (in the role of $A$)
+and a collection of sum-check tables $\{g^{(t)}\}_{t\in\F_q^{4m}}$ does the following:
+\begin{enumerate}
+  \item pick $t\in\F_q^{4m}$ uniformly ($4m\log q$ random bits) and compute from $\varphi$ and $t$ everything about $P^f_t$ except the values of $f$;
+  \item run the sum-check on $P^f_t$ with claim $c=0$ and table $g^{(t)}$.
+\end{enumerate}
+If $f$ extends a satisfying assignment, there are tables making this accept with probability~$1$.  If $\varphi$ is unsatisfiable and $f$ is \emph{any} polynomial in $\mathcal P^m_h$, then by
+Corollary~\ref{cor:P} and Lemma~\ref{lem:sumcheck} the test accepts with probability at most $\tfrac18+28hm/q$ (here $d\ell/q=7h\cdot4m/q$).  In the next section we remove the assumption that $f$ is a polynomial.
+
+
+%% ===========================================================================
+\section{The low-degree test}
+\label{sec:ldt}
+%% ===========================================================================
+
+The sum-check of the previous section was proved for polynomials.  The verifier holds a table $f$.  We need a \emph{local} test that accepts every
+$f\in\mathcal P^m_h$ and rejects every $f$ far from $\mathcal P^m_h$.
+
+\subsection{The exact statement, and why it is not enough}
+
+An \defn{axis-parallel line} of direction $i$ in $\F_q^m$ is $\ell=\{(a_1,\dots,a_{i-1},x,a_{i+1},\dots,a_m):x\in\F_q\}$.  There are $m\,q^{m-1}$ of them.
+If $p\in\mathcal P^m_h$ then its restriction to every axis-parallel line is a univariate polynomial of degree $\le h$.  The converse is true, and its proof is a good warm-up.
+
+\begin{lemma}[Axis-parallel lines suffice, exact version]\label{lem:axis}
+Let $f\colon\F_q^m\to\F_q$ be such that the restriction of $f$ to every axis-parallel line is a polynomial of degree $\le h$ (with $h<q$).  Then $f\in\mathcal P^m_h$.
+\end{lemma}
+\begin{proof}
+Induction on $m$; $m=1$ is the hypothesis.  Fix distinct $c_0,\dots,c_h\in\F_q$.  For each $j$ the function $f(\cdot,c_j)$ on $\F_q^{m-1}$ satisfies the hypothesis in $m-1$ variables, so it is a polynomial
+$p_j\in\mathcal P^{m-1}_h$.  Let $\lambda_j$ be the univariate Lagrange polynomials of degree $h$ for the nodes $c_0,\dots,c_h$ and define
+$G(x',x_m)=\sum_{j=0}^h\lambda_j(x_m)\,p_j(x')\in\mathcal P^m_h$.  For each fixed $x'$, the functions $f(x',\cdot)$ and $G(x',\cdot)$ are both univariate polynomials of degree $\le h$ and they agree at the
+$h+1$ points $c_0,\dots,c_h$; hence they are equal.  So $f=G$ everywhere.
+\end{proof}
+
+\noindent
+As a sanity check, take $q=5$, $h=1$, $m=2$.  A pruned exhaustive search through the $5^{25}$ functions $\F_5^2\to\F_5$ finds exactly $625=5^{(h+1)^2}$ with all rows and all columns of degree $\le1$:
+precisely the $5^4$ polynomials of $\mathcal P^2_1$, as the lemma predicts.
+
+\begin{bigpicture}{Exact versus robust}
+Lemma~\ref{lem:axis} is a statement about \emph{perfect} functions.  A verifier can only look at a few lines, and can at best find that \emph{most} of the lines it looked at are low-degree and \emph{mostly} agree where they meet.
+The theorem the test needs is the \emph{robust} form: if the restrictions to most axis-parallel lines are consistent with each other and with~$f$, then $f$ is \emph{close} to a polynomial.
+All the difficulty of the Arora--Safra analysis sits here, and it is the reason the field size is cubic in the degree.
+\end{bigpicture}
+
+\subsection{The test of Arora and Safra}
+
+A \defn{decomposition} is a table $g$ that assigns to every axis-parallel line $\ell$ a univariate polynomial $g[\ell]$ of degree $\le h$ (an entry of $O(h\log q)$ bits).  For $1\le i\le m$ and
+$a\in\F_q^m$ let $g_i(a)=g[\ell_i(a)](a_i)$, where $\ell_i(a)$ is the line of direction $i$ through $a$.  A \defn{checkpoint} is a pair $(i,a)$ with $1\le i<m$; the decomposition is \defn{consistent} at it if
+$g_i(a)=g_{i+1}(a)$.  Note that a genuine decomposition of a polynomial $p$ ($g[\ell]=p|_\ell$) is consistent everywhere and $g_i=p$ for all $i$.
+
+\begin{definition}[Low-degree test]\label{def:ldt}
+Given $f\colon\F_q^m\to\F_q$, the closeness parameter $\delta<0.1$ and a decomposition $g$:
+\begin{enumerate}[label=(\roman*)]
+  \item choose $\lceil4/\delta\rceil$ points $a\in\F_q^m$ uniformly and independently, and check $f(a)=g_1(a)$ at each;
+  \item choose $\lceil8m/\delta\rceil$ checkpoints $(i,a)$ uniformly and independently, and check $g_i(a)=g_{i+1}(a)$ at each.
+\end{enumerate}
+Accept iff all checks pass.
+\end{definition}
+
+\noindent
+The test reads $O(1/\delta)$ values of $f$ and $O(m/\delta)$ entries of $g$: $O(m)$ queries for constant $\delta$, non-adaptively.  (The randomness is $O(m\log q)$ bits per sample, which is reduced to $O(\log q^m)$ in total
+by pairwise-independent sampling; we omit it.)  It accepts every $f\in\mathcal P^m_h$ together with its true decomposition.
+
+\begin{lemma}[Robust consistency; Arora--Safra, Lemma~4.6.4]\label{lem:robust}
+Let $m\ge2$ and $q\ge100\,h^3m^2$.  If $g_1$ is not $\eps$-close to $\mathcal P^m_h$, then the fraction of checkpoints at which $g$ is inconsistent is at least
+$\gamma^{2(m-1)}\min\{0.1,\eps\}/(m-1)$, where $\gamma=1-\sqrt{h/q}$.  Since $\sqrt{h/q}\le1/(10m)$ we have $\gamma^{2(m-1)}\ge1-2(m-1)/(10m)\ge0.8$, so this fraction is at least $\min\{0.1,\eps\}/(2m)$.
+\end{lemma}
+
+\noindent
+We do not prove Lemma~\ref{lem:robust}.  The proof is an induction on $m$.  Its base case $m=2$ is the \emph{bivariate} lemma that \citet{ALMSS98} quote as Theorem~69 (due to Arora--Safra): if the row polynomial and the column polynomial of a
+function $F\colon\F_q^2\to\F_q$ each agree with $F$ on all but an $\eta$ fraction of points ($\eta\le\eta_0$) and $q\ge c\,h^3$, then $F$ is $4\eta$-close to a polynomial of degree $\le h$ in each variable.  This is the robust analogue
+of the exact Lemma~\ref{lem:axis} with $m=2$, and it is where the \emph{cubic} dependence on~$h$ comes from.  \citet{PolishchukSpielman94} later gave a proof that needs only $q=\Omega(h)$.
+
+\begin{corollary}[Soundness of the test]\label{cor:ldt}
+Let $q\ge100\,h^3m^2$ and $m\ge2$.  If $f$ is not $\delta$-close to $\mathcal P^m_h$ ($\delta<0.1$), then for \emph{every} decomposition $g$ the test of Definition~\ref{def:ldt} rejects with probability at least $3/4$.
+\end{corollary}
+\begin{proof}
+If $\Delta(f,g_1)\ge\delta/2$, part~(i) fails to reject with probability at most $(1-\delta/2)^{4/\delta}\le e^{-2}\approx0.135<\tfrac14$.
+Otherwise $\Delta(f,g_1)<\delta/2$, so $g_1$ is not $\delta/2$-close to $\mathcal P^m_h$ (else $f$ would be $\delta$-close by the triangle inequality).  By Lemma~\ref{lem:robust} with $\eps=\delta/2\le0.05$ a fraction at least $\delta/(4m)$ of the
+checkpoints is inconsistent, and part~(ii) misses all of them with probability at most $(1-\delta/4m)^{8m/\delta}\le e^{-2}<\tfrac14$.
+\end{proof}
+
+\begin{remark}
+With $\delta=0.01$ the two failure probabilities are $\le0.1347$ and $\le0.1353$ respectively (computed from the formulas above).  The older analysis of this test (for $h=1$ in \citealp{FGLSS96}) required $O(mh)$ queries; Arora and Safra's algebraic argument gets $O(m)$, at the price of $q=\Omega(h^3m^2)$.  The number of queries to the low-degree table is exactly what is later
+reduced to a constant by \citet{ALMSS98}; see Section~\ref{sec:as-limits}.
+\end{remark}
+
+
+%% ===========================================================================
+\section{The basic verifier}
+\label{sec:vpoly}
+%% ===========================================================================
+
+We now assemble the three modules.  Let $n=(h+1)^m$ with $h\ge\log n$ and $q=\Theta(h^3m^2)$ a prime power (note that $m<h$ forces $q=O(h^5)$).  The verifier $V_{\rm poly}$ for a $3$-CNF $\varphi$ with $n$ variables expects the proof to consist of
+
+\begin{center}\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.6cm}
+                   >{\raggedright\arraybackslash}p{6.0cm}
+                   >{\raggedright\arraybackslash}p{4.0cm}@{}}
+\toprule
+component & content & size\\
+\midrule
+$f$ & a function $\F_q^m\to\F_q$ (the claimed extension of a satisfying assignment) & $q^m=n^{O(1)}$ field elements\\
+$g$ & a decomposition for the low-degree test of $f$ & $mq^{m-1}$ polynomials of degree $h$\\
+$\{\tau^{(t)}\}_{t\in\F_q^{4m}}$ & a table of partial sums for the sum-check of $P_t^{f}$, one per $t$ & $\le2q^{8m}=n^{O(1)}$ polynomials of degree $7h$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+and works as follows.
+
+\begin{definition}[The verifier $V_{\rm poly}$]
+Given the proof components above, $V_{\rm poly}$ does the following.
+\begin{enumerate}
+  \item Run the low-degree test (Definition~\ref{def:ldt}) on $f$ and $g$ with $\delta=0.01$; reject if it rejects.
+  \item Choose $t\in\F_q^{4m}$ uniformly and run the sum-check (Definition~\ref{def:sumcheck}) for $B=P^{f}_t$ (that is, with the values of $f$ in place of $A$), $H=\{0..h\}$, $\ell=4m$, $d=7h$, $c=0$, and table $\tau^{(t)}$;
+        reject if it rejects.  Whenever the sum-check needs $f$ at a point $w$, it reads $f(w)$.
+  \item Otherwise accept.
+\end{enumerate}
+\end{definition}
+
+\begin{theorem}[The basic verifier; Arora--Safra, Theorem~3.5(a)]\label{thm:vpoly}
+$V_{\rm poly}$ is a non-adaptive verifier for $\sat{3SAT}$ with perfect completeness, soundness $<\tfrac14$, using $O(\log n)$ random bits and $O(m)$ queries,
+each to an entry of $O(h\log h)$ bits, and with decision time $\poly(h)$.
+\end{theorem}
+\begin{proof}
+\emph{Completeness.}  If $\varphi$ is satisfiable, let $f$ be the extension of a satisfying assignment, $g$ its true decomposition, and $\tau^{(t)}$ the honest table for $P_t^f$.  The low-degree test accepts by completeness, and
+the sum-check accepts by Lemma~\ref{lem:sumcheck}(a), because $\sum_{y\in\mathbb K^{4m}}P^f_t(y)=0$ by Corollary~\ref{cor:P}.
+
+\emph{Soundness.}  Let $\varphi$ be unsatisfiable and fix any proof.  If $f$ is not $0.01$-close to $\mathcal P^m_h$, step~1 rejects with probability $\ge3/4$ (Corollary~\ref{cor:ldt}).
+So assume $f$ is $0.01$-close, and let $\tilde f\in\mathcal P^m_h$ be its unique nearest polynomial (Corollary~\ref{cor:dist}).  Step~2 accepts only if one of three events happens:
+\begin{enumerate}[label=(\roman*)]
+  \item $\sum_{\mathbb K^{4m}}P^{\tilde f}_t=0$: by Corollary~\ref{cor:P} this has probability $\le\tfrac18$ over $t$ (this is where unsatisfiability is used, for the arbitrary polynomial $\tilde f$);
+  \item the sum is nonzero but the sum-check does not detect it: probability $\le d\ell/q=28hm/q$ by Lemma~\ref{lem:sumcheck}(b), which is applied to the genuine polynomial $B=P_t^{\tilde f}$;
+  \item the sum-check reads $f(w_j)$ at one of three points $w_1,w_2,w_3$ with $f(w_j)\ne\tilde f(w_j)$: each $w_j$ is uniform (Lemma~\ref{lem:arith}(c)), so by the union bound this has probability $\le3\cdot0.01$.
+\end{enumerate}
+Altogether the acceptance probability is at most $\tfrac18+0.03+28hm/q<\tfrac14$ (for $q\ge h^3m^2$ and $h\ge\log n$ the last term is $o(1)$).
+
+\emph{Parameters.}  The random bits are those of $t$, the point $a\in\F_q^{4m}$ of the sum-check, and the samples of the low-degree test: $O(m\log q)=O(m\log h)=O(\log n)$ in total, since $(h+1)^{m}=n$.
+The low-degree test reads $O(m)$ entries and the sum-check $4m$ entries of $\tau^{(t)}$, plus three values of $f$.  Entries have $O(h\log q)=O(h\log h)$ bits.  Before reading the proof, the verifier computes from $\varphi$ and $(t,a)$ everything about
+$P^f_t(a)$ that does not involve $f$: $\hat\chi_j,\hat\varsigma_j,R_t$ at the relevant points, which takes $\poly(n)$ time; after reading, it does $\poly(m,h,\log q)=\poly(h)$ field operations.  All positions queried are determined by the random string alone: the verifier draws all its randomness first, so it can read the entries of the
+low-degree test and of the sum-check in one batch.  This is the point of using sum-check \emph{tables} rather than the interactive protocol.
+\end{proof}
+
+\begin{remark}
+Note how the verifier avoids a circularity.  The sum-check needs $\tilde f$ at three points, but only $f$ is available.  The three points are \emph{uniform}, hence outside the $1\%$ of disagreement with probability $\ge0.97$.
+This is the ``never evaluate at a predictable point'' principle of Section~\ref{sec:poly}, and it is the reason the arithmetization of Lemma~\ref{lem:arith}(c) was designed so that each $w_j$ is uniform.
+\end{remark}
+
+Theorem~\ref{thm:vpoly} is already a PCP: choosing $h+1=n^{1/m}$ for a constant $m$ it has $O(1)$ queries.  The catch is the \emph{size} of the queried symbols: $O(h\log h)=n^{\Omega(1/m)}$ bits each.
+To get a verifier that reads \emph{bits} one must re-encode every queried symbol and check it without reading it.  That is the job of composition.
+
+
+%% ===========================================================================
+\section{Normal form verifiers and split-encoded assignments}
+\label{sec:normal}
+%% ===========================================================================
+
+Suppose an \emph{outer} verifier $V_1$ has a decision circuit $C_w$ (on the symbols it queried under random string $w$), of size $T$ much smaller than the proof.
+Instead of reading the queried symbols $P[i_1(w)],\dots,P[i_Q(w)]$ in full, we would like to check ``$C_w$ accepts them'' by running a second, \emph{inner} verifier $V_2$ on the formula of $C_w$.
+Two requirements:
+\begin{itemize}
+  \item the inner verifier must work when the \emph{input assignment is spread over several separate pieces}, each of which is held in some encoded form in the proof (the $Q$ queried symbols and a scratch string);
+  \item the inner verifier must read only a few \emph{bits} of each piece, since reading the pieces in full is what we want to avoid.
+\end{itemize}
+This is formalized in the following definition (a simplified form of Definition~3.2 of \citet{AroraSafra98}).
+
+\begin{definition}[Normal form verifier]\label{def:normal}
+An \defn{$(r,s,q,t)$-constrained normal form verifier} $V_2$ has an associated encoding scheme $\sigma$ (bit strings to codewords of minimum distance $\delta_{\min}$ over an alphabet of $2^{O(s)}$ symbols).
+Given a $3$-CNF $\psi$ with $N$ variables and an integer $p$ dividing $N$, it is given access to a proof $z_1\sharp\cdots\sharp z_p\sharp\pi$, where each $z_i$ is a word over the alphabet and $\pi$ is auxiliary, and must satisfy:
+\begin{itemize}
+  \item \emph{(completeness)} if each $z_i=\sigma(a_i)$ for $a_i\in\{0,1\}^{N/p}$ and $a_1\circ\dots\circ a_p$ satisfies $\psi$, there is a $\pi$ with acceptance probability~$1$;
+  \item \emph{(soundness)} if some $z_i$ is not $\delta_{\min}/3$-close to a codeword, or if each $z_i$ is close to a codeword $\sigma(a_i)$ but $a_1\circ\dots\circ a_p$ does not satisfy $\psi$, then every $\pi$ is accepted with probability $<\tfrac12$;
+  \item \emph{(resources)} it uses $O(r(N))$ random bits and alphabet symbols of $O(s(N))$ bits, makes $O(p+q(N))$ non-adaptive queries, and has decision time $O(p\,t(N))$.
+\end{itemize}
+\end{definition}
+
+\noindent
+The unusual feature is the query count $O(p+q(N))$ rather than $O(p\cdot q(N))$: the inner verifier reads $O(1)$ symbols of each piece plus $q(N)$ symbols of the \emph{shared} auxiliary table.
+Proposition~3.3 of \citet{AroraSafra98} records the trivial case $p=1$: a normal form verifier gives a verifier for $\sat{3SAT}$ with the same resources.
+
+This notion is the ancestor of the \emph{PCP of proximity} \citep{BGHSV06} and of the \emph{assignment tester} \citep{DR04}, which isolate exactly the property used here---``a tester that looks at a few places of an encoded input
+and a proof''---and which are what \citet{Dinur07} composes with in Lecture~6.
+
+\subsection{How $V_{\rm poly}$ becomes a normal form verifier}
+
+By Theorem~\ref{thm:vpoly}, $V_{\rm poly}$ is a verifier with parameters $(\log n,\ h\log h,\ m,\ \poly(h))$ for $r,s,q,t$.  Two additions turn it into a normal form verifier, and
+both are instances of the exact-versus-robust pattern.
+
+\paragraph{The encoding.}  Take $\sigma$ to be the polynomial extension: $\sigma\colon\{0,1\}^N\to\mathcal P^{m}_h$ with $N=(h+1)^m$, a code of minimum distance $\ge1-hm/q>\tfrac12$.
+
+\paragraph{Split encodings.}  Suppose $N=(h+1)^m$ and $p=(h+1)^{m-\ell}$, so that each of the $p$ pieces has $N/p=(h+1)^\ell$ bits.  The proof contains $f\colon\F_q^m\to\F_q$ (the encoding of the whole assignment, for the sum-check as before)
+and $f_1,\dots,f_p\colon\F_q^\ell\to\F_q$ (the encodings of the pieces), and must check the \defn{concatenation property}: for $i\in\mathbb K^{m-\ell}$ and $u\in\mathbb K^\ell$,
+\begin{equation}\label{eq:concat}
+  f(i,u)=f_i(u).
+\end{equation}
+
+\begin{lemma}[Concatenation]\label{lem:concat}
+Let $f\in\mathcal P^m_h$ and $f_1,\dots,f_p\in\mathcal P^\ell_h$ (indexed by $i\in\mathbb K^{m-\ell}$).  Then~\eqref{eq:concat} holds if and only if, as polynomials,
+\[
+  f(x_1,\dots,x_m)\;=\;\sum_{i\in\mathbb K^{m-\ell}}\Lambda_i(x_1,\dots,x_{m-\ell})\,f_i(x_{m-\ell+1},\dots,x_m),
+\]
+where $\Lambda_i$ is the Lagrange basis polynomial of Lemma~\ref{lem:ext} for the cube $\mathbb K^{m-\ell}$.
+\end{lemma}
+\begin{proof}
+Let $G$ denote the right-hand side; $G\in\mathcal P^m_h$.  On a cube point $(i',u)$ we have $\Lambda_i(i')=\mathbf 1[i=i']$, so $G(i',u)=f_{i'}(u)$.  If~\eqref{eq:concat} holds, $f$ and $G$ agree on $\mathbb K^m$ and are equal by the
+uniqueness in Lemma~\ref{lem:ext}.  Conversely, if $f=G$ then $f(i',u)=G(i',u)=f_{i'}(u)$.
+\end{proof}
+
+\noindent
+So the verifier tests the identity $f(x)=\sum_i\Lambda_i(x')f_i(x'')$ at $O(1)$ random points $x=(x',x'')\in\F_q^m$.  Each test reads $f(x)$ and one value $f_i(x'')$ for each of the $p$ pieces: $O(1)$ values per piece, $O(p)$ in all,
+which is the source of the $O(p+q)$ in Definition~\ref{def:normal}.  If the functions are polynomials but the identity fails, then $f-G$ is a nonzero polynomial and the test catches it with probability $\ge1-hm/q$ per sample (Lemma~\ref{lem:sz}).
+Arora and Safra prove the \emph{robust} version (their Theorem~4.4.2): if $f$ is $0.01$-close and the test accepts with probability $>\tfrac14$, then each $f_i$ is $0.03$-close and the concatenation property holds for the nearest polynomials.
+The proof rests on a second robust lemma (their Lemma~5.1.1, proved with the same field-size hypothesis as Lemma~\ref{lem:robust}): a function $G$ that is $0.02$-close to a polynomial and all of whose
+restrictions $x'\mapsto G(x',x'')$, for fixed $x''$, are polynomials of degree $\le h$, has the property that every restriction $x''\mapsto G(x',x'')$ is $0.03$-close to a polynomial---namely to the corresponding
+restriction of the nearest polynomial $\tilde G$.  Applied to $G=\sum_i\Lambda_if_i$ it yields that each $f_i$ is $0.03$-close, with $\tilde f_i=\tilde f(i,\cdot)$.
+
+\begin{pitfall}{decoding must produce bits}
+In the definition of a normal form verifier the decoded pieces $a_i=\sigma^{-1}(\text{nearest codeword to }z_i)$ must be \emph{bit strings}, and $\psi$ is evaluated on their concatenation.
+By the pitfall after Lemma~\ref{lem:arith}, the arithmetization alone only certifies satisfiability of the rounded assignment; to meet the definition the verifier adds a Booleanity check
+($A(A-1)$ vanishing on the cube) to the sum-check, which changes only the constants.
+\end{pitfall}
+
+
+%% ===========================================================================
+\section{The composition lemma}
+\label{sec:compose}
+%% ===========================================================================
+
+Let $V_1$ be a verifier with random bits $R$, alphabet of $2^{S}$ symbols, $Q$ queries, decision time $T$, perfect completeness and soundness $\tfrac14$.  For a random string $w\in\{0,1\}^R$ it queries positions
+$i_1(w),\dots,i_Q(w)$ of its proof $P$, and accepts iff a circuit $C_w$ of size $O(T^2)$ accepts $P[i_1(w)]\circ\dots\circ P[i_Q(w)]$.  By the Cook--Levin theorem for circuits this is equivalent to the satisfiability of a $3$-CNF
+$c_w$ of size $\tau=O(T^2)$ over the bits of the $Q$ symbols and of a witness string $y_w$.  We append the strings $y_w$ ($w\in\{0,1\}^R$) to $P$ as extra symbols and let $V_1$ read $y_w$ as a $(Q{+}1)$st query.
+After this harmless change, writing $i_{Q+1}(w)$ for the position of $y_w$,
+\begin{equation}\label{eq:decide}
+  V_1\text{ accepts }P\text{ on }w\iff P[i_1(w)]\circ\dots\circ P[i_{Q+1}(w)]\text{ satisfies }c_w .
+\end{equation}
+
+\begin{lemma}[Composition; Arora--Safra, Lemma~3.4]\label{lem:compose}
+Let $V_1$ be as above, with parameters $(R,S,Q,T)$, and let $V_2$ be an $(r,s,q,t)$-constrained normal form verifier (Definition~\ref{def:normal}).
+Then the same language has a verifier $V_{\rm new}$ with perfect completeness and soundness $<\tfrac12$, and with
+\[
+  \begin{aligned}
+  \text{random bits } &R+O(r(\tau)),\qquad &\text{alphabet bits } &O(s(\tau)),\\
+  \text{queries } &O\bigl(Q+q(\tau)\bigr),\qquad &\text{decision time } &O\bigl(Q\,t(\tau)\bigr),
+  \end{aligned}\qquad\tau=O(T^2).
+\]
+\end{lemma}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,every node/.style={font=\small},
+   wd/.style={draw,minimum width=0.62cm,minimum height=0.62cm,inner sep=0pt,fill=white},
+   hl/.style={wd,fill=accent!30},
+   hy/.style={wd,fill=warn!35},
+   hp/.style={wd,fill=claim!22}]
+  \foreach \i in {0,...,13} \node[wd] at (\i*0.66,0) {};
+  \node[hl] at (1*0.66,0) {};  \node[hl] at (5*0.66,0) {};  \node[hl] at (9*0.66,0) {};
+  \node[hy] at (12*0.66,0) {};
+  \foreach \i in {15,...,19} \node[wd] at (\i*0.66,0) {};
+  \node[hp] at (17*0.66,0) {};
+  \node[anchor=east] at (-0.5,0) {$P_{\rm new}$};
+  \draw[decorate,decoration={brace,amplitude=3pt,mirror}] (-0.28,-0.5) -- (13*0.66+0.28,-0.5)
+        node[midway,below=4pt,font=\footnotesize] {$Y$ words: $\sigma(P[j])$ and $\sigma(y_w)$};
+  \draw[decorate,decoration={brace,amplitude=3pt,mirror}] (15*0.66-0.28,-0.5) -- (19*0.66+0.28,-0.5)
+        node[midway,below=4pt,font=\footnotesize] {$2^R$ words $\pi_w$};
+  % verifiers
+  \node[draw,rounded corners=3pt,fill=black!5,minimum width=3.2cm,minimum height=0.8cm] (V1) at (3.0,2.4) {$V_1$: picks $w$, forms $c_w$};
+  \node[draw,rounded corners=3pt,fill=black!5,minimum width=4.2cm,minimum height=0.8cm] (V2) at (9.6,2.4) {$V_2$ on $c_w$ (normal form)};
+  \draw[-{Stealth[length=2mm]}] (V1)--(V2) node[midway,above,font=\footnotesize] {$c_w$};
+  \foreach \x in {1,5,9,12} \draw[accent,-{Stealth[length=1.6mm]}] (V2.south) to[out=-110,in=90] (\x*0.66,0.35);
+  \draw[claim,-{Stealth[length=1.6mm]}] (V2.south) to[out=-70,in=90] (17*0.66,0.35);
+\end{tikzpicture}
+\caption{The composed verifier $V_{\rm new}$ (Lemma~\ref{lem:compose}).  The proof consists of encodings $\sigma(P[j])$ of the symbols of $V_1$'s proof (including the witness strings $y_w$) and one auxiliary word
+$\pi_w$ per random string $w$ of $V_1$.  On random string $w$ the verifier $V_1$ would read the $Q$ blue words and the orange word in full; $V_{\rm new}$ instead hands them to $V_2$ as a split-encoded assignment to $c_w$
+and reads only a few symbols of each.}
+\label{fig:compose}
+\end{figure}
+
+\begin{proof}
+Replacing $V_1$ and $V_2$ by two independent repetitions of themselves we may assume that both have soundness $\tfrac14$ (this affects only constants).
+Let $\sigma$ be the encoding of $V_2$ and write $Y$ for the number of symbols of $V_1$'s (extended) proof.
+
+\emph{The verifier.}  $V_{\rm new}$ expects a proof $P_{\rm new}$ of $Y+2^R$ words; the word $P_{\rm new}[j]$ for $j\le Y$ is supposed to be $\sigma(P[j])$, and $P_{\rm new}[Y+w]$ is an auxiliary proof $\pi_w$.
+On input $x$ it (1)~chooses $w\in\{0,1\}^R$ and computes $c_w$ and $i_1(w),\dots,i_{Q+1}(w)$ without reading the proof; (2)~chooses a random string $w'$ for $V_2$ and runs $V_2$ on $c_w$ with the
+$(Q{+}1)$-part split-encoded assignment $z_j=P_{\rm new}[i_j(w)]$ ($1\le j\le Q+1$) and auxiliary proof $\pi_w=P_{\rm new}[Y+w]$.  It reads only those symbols of the $z_j$ and of $\pi_w$ that $V_2$ queries under $w'$, and accepts iff $V_2$ does.
+
+\emph{Resources.}  The random bits are those of $w$ and $w'$.  Everything else is that of $V_2$ run with $p=Q+1$ parts on a formula of size~$\tau$: alphabet $O(s(\tau))$, queries $O(p+q(\tau))$, decision time $O(p\,t(\tau))$.
+The queries depend only on $(w,w')$, so $V_{\rm new}$ is non-adaptive; this is why non-adaptivity was built into every definition.
+
+\emph{Completeness.}  If $x\in L$ take a proof $P$ with $V_1$ accepting on every $w$, and put $P_{\rm new}[j]=\sigma(P[j])$.  By~\eqref{eq:decide} the concatenation of the $P[i_j(w)]$ satisfies $c_w$, so by completeness of $V_2$ there is $\pi_w$ accepted with
+probability~$1$; place it at $Y+w$.
+
+\emph{Soundness.}  Let $x\notin L$ and suppose $P_{\rm new}$ is accepted with probability $\ge\tfrac12$.  Define $P[j]=\sigma^{-1}(N(P_{\rm new}[j]))$, where $N$ is the nearest codeword (an arbitrary string if it is undefined).
+Let $p_1=\Pr_w[V_1\text{ accepts }P\text{ on }w]<\tfrac14$.  If $V_1$ rejects $P$ on $w$ then by~\eqref{eq:decide} the decoded concatenation $P[i_1(w)]\circ\dots\circ P[i_{Q+1}(w)]$ does not satisfy $c_w$, so
+either some $z_j$ is not close to a codeword or the decoded assignment is unsatisfying.  By the soundness of $V_2$, $V_{\rm new}$ accepts on such $w$ with probability $<\tfrac14$, \emph{whatever $\pi_w$ is}.  Hence
+\[
+  \Pr[V_{\rm new}\text{ accepts}]\ <\ p_1+(1-p_1)\cdot\tfrac14\ <\ \tfrac14+\tfrac34\cdot\tfrac14\ =\ \tfrac7{16}\ <\ \tfrac12,
+\]
+a contradiction.
+\end{proof}
+
+\begin{pitfall}{what composition does \emph{not} do}
+Composition does not make a \emph{hard} instance easier; it makes the \emph{queries} cheaper by moving the cost into the proof length and the verifier's computation.
+Also, the lemma needs $V_2$ to \emph{check an encoded input}.  A verifier with the same parameters that must read its input in the clear would give nothing: the whole point is that $V_{\rm new}$ never reads a $z_j$ in full.
+This is the reason normal form (Section~\ref{sec:normal}), and not just a verifier with small parameters, is the right interface.
+\end{pitfall}
+
+
+%% ===========================================================================
+\section{The parameter chase}
+\label{sec:chase}
+%% ===========================================================================
+
+We now put the pieces together.  Throughout, $n$ is the formula size, $L=\log n$, and all logarithms are base~$2$.
+
+\begin{enumerate}[label=\textbf{Step \arabic*.},leftmargin=*]
+  \item \emph{Outer verifier.}  Apply Theorem~\ref{thm:vpoly} with $h+1=2^{\sqrt L}$ and $m=\sqrt L$ ($h\ge\log n$ holds for large $n$).  Call it $V^{(0)}$:
+        \[
+          (R,S,Q,T)\ =\ \bigl(O(L),\ 2^{O(\sqrt L)},\ \sqrt L,\ 2^{O(\sqrt L)}\bigr).
+        \]
+  \item \emph{Inner verifier.}  By Section~\ref{sec:normal} (the concatenation test and the Booleanity check added), the same verifier with the same parameter choice is, at input size $N$, an
+        $(r,s,q,t)$-constrained normal form verifier with $(r,s,q,t)(N)=(\log N,\ 2^{O(\sqrt{\log N})},\ \sqrt{\log N},\ 2^{O(\sqrt{\log N})})$.
+  \item \emph{Compose with $V^{(0)}$ as inner verifier.}  Apply Lemma~\ref{lem:compose}.  Since $T=2^{O(\sqrt L)}$, $\tau=O(T^2)$ has $\log\tau=O(\sqrt L)$, and
+        \[
+          \begin{aligned}
+          \text{random bits}&\;:\; L+O(\log\tau)=O(L),\\
+          \text{alphabet bits}&\;:\; 2^{O(\sqrt{\log\tau})}=2^{O(L^{1/4})},\\
+          \text{queries}&\;:\; O\bigl(\sqrt L+\sqrt{\log\tau}\bigr)=O(\sqrt L),\\
+          \text{decision time}&\;:\; \sqrt L\cdot2^{O(\sqrt{\log\tau})}=2^{O(L^{1/4})}.
+          \end{aligned}
+        \]
+  \item \emph{Iterate.}  Each further composition with $V^{(0)}$ replaces the exponent $e$ in $2^{O(L^{e})}$ by $e/2$ and leaves queries and randomness unchanged up to constant factors.  After $k$ compositions the verifier has
+        alphabet bits and decision time $2^{O(L^{2^{-(k+1)}})}$, $O(\sqrt L)$ queries, $O(L)$ random bits.
+  \item \emph{Final composition with $V_{\rm savior}$.}  Apply Theorem~\ref{thm:vpoly} with $h=\Theta(\log N)$ and $m=\log N/\log\log N$ at input size $N$: it is a normal form verifier with
+        $(r,s,q,t)(N)=(\log N,\ \log N\log\log N,\ \log N/\log\log N,\ \poly\log N)$.  Composing with it, where $\log\tau=O(L^{2^{-(k+1)}})$, gives
+        \begin{align*}
+          \text{alphabet bits}&=\log\tau\log\log\tau=L^{2^{-(k+1)}+o(1)},\\
+          \text{queries}&=O(\sqrt L),\\
+          \text{decision time}&=\sqrt L\cdot\poly(\log\tau)=\poly(L).
+        \end{align*}
+\end{enumerate}
+
+\begin{table}[t]
+\centering\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}lllll@{}}
+\toprule
+verifier & random bits & queries (symbols) & bits per symbol & decision time\\
+\midrule
+$V^{(0)}$ (Step 1) & $O(L)$ & $\sqrt L$ & $2^{O(L^{1/2})}$ & $2^{O(L^{1/2})}$\\
+$V^{(1)}=V^{(0)}\circ V^{(0)}$ & $O(L)$ & $O(\sqrt L)$ & $2^{O(L^{1/4})}$ & $2^{O(L^{1/4})}$\\
+$V^{(2)}=V^{(1)}\circ V^{(0)}$ & $O(L)$ & $O(\sqrt L)$ & $2^{O(L^{1/8})}$ & $2^{O(L^{1/8})}$\\
+$V^{(k)}$ & $O(L)$ & $O(\sqrt L)$ & $2^{O(L^{2^{-(k+1)}})}$ & $2^{O(L^{2^{-(k+1)}})}$\\
+$V^{(k)}\circ V_{\rm savior}$ & $O(L)$ & $O(\sqrt L)$ & $L^{2^{-(k+1)}+o(1)}$ & $\poly(L)$\\
+\bottomrule
+\end{tabular}
+\caption{The parameter chase of Section~\ref{sec:chase} ($L=\log n$).  Each composition square-roots the exponent of the alphabet size; the number of queries is stuck at $\sqrt L$ because it is inherited from
+the outer verifier.}
+\label{tab:chase}
+\end{table}
+
+\begin{proof}[Proof of Theorem~\ref{thm:as}]
+Given $\eps>0$ choose $k$ with $2^{-(k+1)}\le\eps/2$, a constant.  The verifier of Table~\ref{tab:chase} after $k$ compositions and the final one with $V_{\rm savior}$ uses $O(L)$ random bits,
+makes $O(\sqrt L)$ queries to symbols of $L^{\eps/2+o(1)}$ bits each, so reads $L^{1/2+\eps/2+o(1)}\le L^{1/2+\eps}$ bits of the proof, has perfect completeness and soundness $\tfrac12$.
+Hence $\sat{3SAT}\in\PCP[\log n,\log^{1/2+\eps}n]$ and so $\NP\subseteq\PCP[\log n,\log^{1/2+\eps}n]$.  The reverse inclusion was noted at the beginning of the lecture.
+\end{proof}
+
+\noindent
+Each step of the chase hides a constant in $\tau=O(T^2)$ and in $O(Q+q(\tau))$; the next section is about why that matters.
+
+\begin{bigpicture}{What is proved here and what is quoted}
+\textbf{Proved in this lecture, from scratch:} Schwartz--Zippel, polynomial extension, the arithmetization (Lemma~\ref{lem:arith}) and zero-testers (Lemma~\ref{lem:zt}), the sum-check (Lemma~\ref{lem:sumcheck}), the exact low-degree
+statement (Lemma~\ref{lem:axis}), the concatenation identity (Lemma~\ref{lem:concat}), the composition lemma (Lemma~\ref{lem:compose}), and the whole parameter chase.
+\textbf{Quoted:} the two \emph{robust} algebraic lemmas, Lemma~\ref{lem:robust} (consistency of a decomposition) and the robust concatenation theorem (Theorem~4.4.2 of \citealp{AroraSafra98}), both of which rely on
+the bivariate lemma of Arora and Safra and on the cubic field size.  Everything else in the text is bookkeeping around them.
+\end{bigpicture}
+
+
+%% ===========================================================================
+\section{\texorpdfstring{Consequence: Clique within $2^{\log^{1/2-\eps}N}$ is $\NP$-hard}{Consequence: hardness of approximating Clique}}
+\label{sec:clique}
+%% ===========================================================================
+
+\begin{proof}[Proof of Corollary~\ref{cor:as-clique}]
+Let $0<\eps_1<\eps$.  By Theorem~\ref{thm:as} there is a verifier $V$ for $\sat{3SAT}$ with $O(\log n)$ random bits and $q=\log^{1/2+\eps_1}n$ queries, perfect completeness and soundness $\tfrac12$.  Amplify it by
+the random walk on an explicit constant-degree expander on the set of random strings (Exercise~\ref{ex:expander}; \citealp{AKS87}): $k=\lceil\log n/q\rceil$ steps use $O(\log n)+O(k)=O(\log n)$ random bits, make $kq=O(\log n)$ queries, and
+give soundness $2^{-\Omega(k)}=2^{-\Omega(\log^{1/2-\eps_1}n)}$.  The FGLSS graph $H_x$ of the amplified verifier (Definition~\ref{def:fglss}) has at most $2^{O(\log n)}=n^{O(1)}=:N$ vertices, and by Theorem~\ref{thm:fglss}
+\[
+  x\in\sat{3SAT}\Rightarrow\omega(H_x)=2^{r},\qquad x\notin\sat{3SAT}\Rightarrow\omega(H_x)\le2^{r}\cdot2^{-\Omega(\log^{1/2-\eps_1}n)} .
+\]
+The gap is $2^{\Omega(\log^{1/2-\eps_1}N)}$, which exceeds $2^{c\log^{1/2-\eps}N}$ for every constant $c$ and large $N$ because $\eps_1<\eps$.  An approximation algorithm within $2^{c\log^{1/2-\eps}N}$ would therefore
+decide $\sat{3SAT}$ in polynomial time.
+\end{proof}
+
+\noindent
+Compare with Corollary~\ref{cor:clique-quasi}, which reached $2^{\Omega((\log N)^{1/(1+\eps)})}$ from a constant-query PCP and quasi-polynomial time.  Here the PCP has $\log^{1/2+\eps_1}n$ queries, but the amplification is
+randomness-efficient, so the reduction takes \emph{polynomial} time: \emph{this} is the improvement that earned the paper its title.
+
+
+%% ===========================================================================
+\section{\texorpdfstring{Why it stops at $\log^{1/2+\eps}n$, and how to reach $O(1)$}{Why it stops at sublogarithmic query bits, and how to reach O(1)}}
+\label{sec:as-limits}
+%% ===========================================================================
+
+The chase of Table~\ref{tab:chase} has two bottlenecks.
+
+\paragraph{Queries are inherited, never reduced.}  By Lemma~\ref{lem:compose} the new number of queries is $O(Q+q(\tau))\ge Q$.  Composition shrinks the \emph{symbols} but never the number of symbols queried,
+and $V_{\rm poly}$ has $Q=m=\log n/\log(h+1)$.  To have few queries one needs $h$ large, hence symbols of $\Omega(h)$ bits, hence \emph{many} compositions to make them short.
+
+\paragraph{Constants compound.}  With $h+1=n^{1/m}$ and $m$ constant, the alphabet has $n^{\Omega(1/m)}$ bits and shrinking it to $\polylog n$ takes $\Theta(\log\log n)$ compositions, each
+multiplying the hidden constants in $O(Q+q(\tau))$ by a factor $c>1$.  After $\Theta(\log\log n)$ rounds the product is $c^{\Theta(\log\log n)}=\polylog n$ queries.  This is exactly the caution in
+the paper: ``We do not wish to invoke the Composition Lemma more than $O(1)$ times because it hid constant factors in its $O(\cdot)$ notation and those constant factors could grow very fast.''  The $\log^{1/2+\eps}n$ of Theorem~\ref{thm:as}
+is what survives when one limits oneself to $O(1)$ compositions.
+
+\paragraph{The remedy of ALMSS.}  According to Section~6 of \citet{AroraSafra98}, \citet{ALMSS98} proceed in three steps.
+\begin{enumerate}
+  \item They construct a new outer verifier that reads only $O(1)$ entries of the polynomial tables (not $O(m)$) and has polylogarithmic decision time.  The two ingredients are a more efficient low-degree test, based on the
+        main lemma of Arora--Safra (the bivariate Lemma~\ref{lem:robust}'s base case) and on the work of \citet{RubinfeldSudan92}, and a \emph{parallelization} step in the spirit of \citet{LapidotShamir91} and \citet{FeigeLovasz92}
+        (a close relative of the constraint--variable game of Lecture~\ref{lec:games}, in which the answers to all queries of a random string are bundled into one symbol), which collapses several queries into one.
+  \item They compose this verifier with itself.  The result reads $O(1)$ symbols of size $O(\log\log n)$.
+  \item They compose that with a verifier, built from ideas of \citet{BLR90}, which is \emph{wasteful in randomness} (polynomial in the proof size) but makes only $O(1)$ \emph{bit} queries.  Since by now the input
+        to the last verifier has size $\polylog n$, its wastefulness is harmless.  The result is a $(\log n,1)$-restricted verifier.
+\end{enumerate}
+This is Lecture~4.  The last of the three verifiers is based on the \emph{Hadamard code} and linearity testing \citep{BLR90}; the \emph{long code} of \citet{BGS98}, the workhorse of Lecture~7, is a more redundant relative of the Hadamard code.
+
+\begin{bigpicture}{The shape of the argument, in one paragraph}
+A satisfying assignment is encoded by a low-degree polynomial, a code in which a $1\%$-corrupted word still determines the codeword.  Satisfiability becomes one vanishing sum, which the sum-check verifies at a single random
+point of a polynomial that is itself computed from three random points of the table.  A low-degree test certifies that the table is close to a polynomial.  Because the verifier only ever asks for \emph{uniformly distributed}
+points, corruption of a small fraction of the table is invisible to it.  This yields a verifier with $O(\log n)$ random bits and few, but long, queries.  Composition then re-checks each long symbol \emph{in encoded form} with a second such verifier, trading
+symbol length for proof length.  Iterating, one reaches sublogarithmic query bits; getting to $O(1)$ needs a better outer verifier and a Hadamard-code inner verifier (Lecture~4), or Dinur's entirely different amplification (Lecture~6).
+\end{bigpicture}
+
+
+%% ===========================================================================
+\section*{Exercises}
+\addcontentsline{toc}{section}{Exercises}
+%% ===========================================================================
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:sz-tight}
+Show that Lemma~\ref{lem:sz} is nearly tight: for $d<q$ and every $m$ there is a nonzero $p\in\mathcal P^m_d$ vanishing on exactly a $1-(1-d/q)^m$ fraction of $\F_q^m$.  Compare $1-(1-d/q)^m$ with $dm/q$.
+\end{exercise}
+
+\begin{exercise}[\stars{$\star$}]\label{ex:maj}
+Compute the multilinear extension $\hat s$ of the majority function $s\colon\{0,1\}^3\to\{0,1\}$ and evaluate it at $(2,2,2)$ over $\F_7$.  Verify that $\hat s$ has degree $1$ in each variable but total degree $3$.
+\end{exercise}
+
+\begin{exercise}[\stars{$\star$}]\label{ex:arith2}
+In Example~\ref{ex:arith} take instead $a=(1,1,1,1)$.  Which clause is violated?  Find all nonzero points of $g_{\hat a}$ on $\mathbb K^{8}$ and their values, and compute $\Pr_t[F(t)=0]$ exactly as in Example~\ref{ex:zt}.
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:sc-tight}
+Let $B\equiv0$ be the zero polynomial in $\ell$ variables, $H\subseteq\F_q$, $c\ne0$.  Show that the best table convinces the sum-check with probability \emph{exactly} $1-(1-d/q)^\ell$ provided that there is a polynomial
+of degree $\le d$ with $d$ distinct roots in $\F_q$ whose sum over $H$ is $c$.  Exhibit one for $q=7$, $d=2$, $H=\{0,1\}$, $c=1$.  (\emph{Hint: scaling a polynomial by a nonzero constant keeps its roots and scales its sum over $H$.})
+\end{exercise}
+
+\begin{exercise}[\stars{$\star$}]\label{ex:onedir}
+Show that Lemma~\ref{lem:axis} fails if lines of one direction are omitted: for $m=2$ let $f(x_1,x_2)=\varphi(x_1)$ where $\varphi\colon\F_q\to\F_q$ is a function of degree greater than $h$.  Every row $f(x_1,\cdot)$ is constant,
+but $f\notin\mathcal P^2_h$.  Prove that $\Delta(f,\mathcal P^2_h)=\Delta(\varphi,\mathcal P^1_h)$, so $f$ can be as far from $\mathcal P^2_h$ as a univariate function can be from $\mathcal P^1_h$.
+\emph{Hint: for a fixed polynomial $p$ average over $x_2$.}
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:chase}
+Suppose an inner verifier has $s(N)=t(N)=N^{1/3}$, $q(N)=O(1)$, $r(N)=\log N$ and the outer verifier has $(R,S,Q,T)=(O(\log n),n^{1/3},c_0,n^{1/3})$.  Compute the parameters after $k$ compositions
+and find the least $k$ for which the alphabet is $\polylog n$.  If each composition multiplies the number of queries by a constant $c>1$, what is the final number of queries?  Compare with Step~4 of Section~\ref{sec:chase}.
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:bool}
+Design the Booleanity check mentioned in the pitfalls of Sections~\ref{sec:arith} and~\ref{sec:normal}: give a polynomial in $\mathcal P^{m}_{2h}$ that vanishes on $\mathbb K^m$ iff $A$ is $\{0,1\}$-valued
+there, and show how a second sum-check (with its own zero-tester, $k=m$ variables) detects a violation with probability at least $1-3hm/q$.  How many extra queries does the verifier make?
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star\star$}]\label{ex:reading3}
+\emph{Reading.}  Compare the low-degree test of Section~4.6 of \citet{AroraSafra98} with the one analyzed in Section~7 of \citet{ALMSS98}: what is tested (axis-parallel lines or random lines), how many queries
+are made, how large the field must be, and which of the two lemmas is the bivariate base case.  Which of these differences is responsible for the drop from $O(m)$ to $O(1)$ queries?
+\end{exercise}
+
+
+%% ===========================================================================
+\section*{Notes and further reading}
+\addcontentsline{toc}{section}{Notes and further reading}
+%% ===========================================================================
+
+\paragraph{Where this lecture comes from.}
+Everything is from \citet{AroraSafra98}: Sections~3 and~4 give the verifier and the composition lemma, Section~5 the algebraic lemmas that we quoted, and Section~6 the account of what followed.  The algebraic characterization of satisfying polynomials (Lemma~\ref{lem:arith}) is credited there to \citet{BFLS91}, in a form similar in spirit to \citet{BFL91}, and the zero-testers (Lemma~\ref{lem:zt}) to
+\citet{BFLS91} and \citet{FGLSS96}; the sum-check is due to \citet{LFKN92}.  The names ``zero-tester'' and ``table of partial sums'', the form of the composition lemma
+and our parameter table follow \citet{AroraSafra98}; the numerical examples (Examples~\ref{ex:arith}, \ref{ex:zt}, \ref{ex:sc}) were computed for these notes.
+
+\paragraph{On attributions.}
+We distinguish three statements that are often confused: Arora--Safra proved sub-logarithmic queries, Arora--Lund--Motwani--Sudan--Szegedy constant queries.  Section~6 of \citet{AroraSafra98} is generous in crediting the second
+paper and the earlier observation of Szegedy and Sudan that a verifier with small decision time yields a gap for \sat{Max-3SAT}.  The modular formulation of composition (PCPs of proximity, assignment testers) is
+due to \citet{BGHSV06} and \citet{DR04}; Arora and Safra's normal form verifier is the special case used here.  The analysis of the low-degree test was subsequently improved by \citet{RubinfeldSudan92},
+\citet{PolishchukSpielman94} and \citet{AroraSudan97}; none of these is needed for what we do.
+
+\paragraph{A caveat on the text.}
+Two small points in the presentation of \citet{AroraSafra98} that we were careful with: the arithmetization certifies rounded satisfiability, so Booleanity must be checked separately when decoding
+(pitfall after Lemma~\ref{lem:arith}); and in the remark after Lemma~4.6.4 the paper writes $\gamma^{2(l-1)}\ge\tfrac15$, which is true but too weak for the conclusion drawn from it for $l>5$; the correct bound is $\ge\tfrac45$ (Bernoulli's inequality), and
+it is this that makes the choice of $8m/\delta$ checkpoints in the test sufficient.
+
+\paragraph{What is not covered.}
+We have not proved the robust lemmas, nor the analysis of $V_{\rm savior}$ at small input size, and we have not treated the $\PCP[\log n,(\log\log n)^2]$ refinement mentioned in the paper.
+The proof of the constant-query theorem is Lecture~4, and the combinatorial alternative is Lecture~6.

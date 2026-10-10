@@ -364,7 +364,7 @@ useless, and we get randomized polynomial time.  The question is how much \emph{
 (which buys coverage of the proof) and how many \emph{queries} are needed.  Note that
 $\PCP[O(\log n),O(1)]\subseteq\NP$ trivially: there are only $2^{O(\log n)}=\poly(n)$ random
 strings, and together they query only polynomially many positions of $\pi$, so a nondeterministic
-machine can guess these bits and check all random strings.  The surprise is the other direction.
+machine can guess these bits and check all random strings.  The surprise is the other direction.  (Requiring the queries to be non-adaptive costs nothing when $q$ is constant, since a verifier that makes $q$ adaptive queries can be replaced by one that reads all $2^q-1$ positions of its decision tree: Exercise~\ref{ex:adaptive}.)
 
 \begin{figure}[t]
 \centering
@@ -479,7 +479,7 @@ Theorem~\ref{thm:pcp2} reads as a statement about \emph{approximation}, yet the 
 paved by results about \emph{interactive proofs}: multi-prover interactive proofs
 \citep{BGKW88}, $\mathsf{NEXP}=\mathsf{MIP}$ \citep{BFL91}, and the discovery by
 \citet{FGLSS96} that a PCP verifier can be turned into a graph whose largest clique encodes the
-maximum acceptance probability (Exercise~\ref{ex:fglss}), and hence that PCPs imply
+maximum acceptance probability (Section~\ref{sec:fglss}), and hence that PCPs imply
 hardness of approximating \sat{Max-Clique}.  Section~\ref{sec:games} follows the thread through
 the multi-prover systems.
 \end{remark}
@@ -977,13 +977,10 @@ Show that $\Gap{1}{s}{Max-E3-Lin}$ is in $\Ptime$ for every $s<1$.  (Hence H\aa 
 cannot have perfect completeness.)  Why does the same argument not apply to $\Gap{1}{\tfrac78+\eps}{Max-E3-SAT}$?
 \end{exercise}
 
-\begin{exercise}[\stars{$\star\star$}]\label{ex:fglss}
-Let $V$ be a PCP verifier with $r$ random bits and $q$ queries, and input $x$.  Build a graph $H_x$ whose vertices are
-the pairs $(\rho,a)$ with $\rho\in\{0,1\}^r$ and $a\in\{0,1\}^q$ satisfying $P_\rho(a)=1$, and in which
-$(\rho,a)$ and $(\rho',a')$ are adjacent if $\rho\ne\rho'$ and the two answer vectors do not contradict each other on
-positions queried by both.  Prove that the largest clique of $H_x$ has size $2^r\cdot\max_\pi\Pr_\rho[V^\pi(x)\text{ accepts}]$.
-Conclude, using the PCP theorem, that it is $\NP$-hard to approximate \sat{Max-Clique} within some constant factor.
-(Amplifying this to a polynomial factor needs randomness-efficient repetition; \citealp{FGLSS96}.)
+\begin{exercise}[\stars{$\star\star$}]\label{ex:adaptive}
+In Definition~\ref{def:pcp} we required the queries to be non-adaptive.  Show that adaptivity buys nothing in the constant-query regime: a verifier that makes $q$ \emph{adaptive}
+queries (each position may depend on the previous answers) can be simulated by a non-adaptive verifier that makes $2^q-1$ queries, with the same randomness, completeness and soundness.
+Conclude that $\NP=\PCP[O(\log n),O(1)]$ holds with or without adaptivity.
 \end{exercise}
 
 \begin{exercise}[\stars{$\star$}]\label{ex:repeat}
