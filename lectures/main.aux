@@ -1,0 +1,646 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\@writefile{toc}{\contentsline {chapter}{About these notes}{i}{chapter*.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Prerequisites.}{i}{paragraph*.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{How to read the boxes.}{i}{paragraph*.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{How results are labelled.}{i}{paragraph*.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Exercises.}{i}{paragraph*.5}\protected@file@percent }
+\citation{GW95}
+\citation{KKMO07,MOO10}
+\citation{Khot02}
+\citation{Hastad01}
+\citation{Hastad01}
+\citation{GW95}
+\citation{Hastad01,TSSW00}
+\citation{KKMO07,MOO10}
+\citation{DKKMS18,KMS18}
+\citation{KhotRegev08}
+\@writefile{toc}{\contentsline {chapter}{\numberline {1}Why PCP and Unique Games Matter}{1}{chapter.1}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{lec:why}{{1}{1}{Why PCP and Unique Games Matter}{chapter.1}{}}
+\citation{Raghavendra08}
+\@writefile{lot}{\contentsline {table}{\numberline {1.1}{\ignorespaces Approximability thresholds for four basic problems. Ratios are $\le 1$ for maximization and $\ge 1$ for minimization problems (Definition~\ref {def:approx}). ``$\mathsf  {NP}$-hard beyond $\alpha $'' means that no polynomial-time algorithm achieves ratio better than $\alpha $ unless $\mathsf  {P}=\mathsf  {NP}$. The first two rows are unconditionally tight; for the last two, the UGC would close the gap between algorithm and hardness.}}{2}{table.1.1}\protected@file@percent }
+\newlabel{tab:scoreboard}{{1.1}{2}{Approximability thresholds for four basic problems. Ratios are $\le 1$ for maximization and $\ge 1$ for minimization problems (Definition~\ref {def:approx}). ``$\NP $-hard beyond $\alpha $'' means that no polynomial-time algorithm achieves ratio better than $\alpha $ unless $\Ptime =\NP $. The first two rows are unconditionally tight; for the last two, the UGC would close the gap between algorithm and hardness}{table.1.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {1.1}A scoreboard of approximability}{2}{section.1.1}\protected@file@percent }
+\newlabel{sec:scoreboard}{{1.1}{2}{A scoreboard of approximability}{section.1.1}{}}
+\newlabel{eq:alphaGW}{{1.1}{2}{A scoreboard of approximability}{equation.1.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {1.2}Approximation algorithms in one page}{3}{section.1.2}\protected@file@percent }
+\newlabel{sec:approx}{{1.2}{3}{Approximation algorithms in one page}{section.1.2}{}}
+\newlabel{def:approx}{{1.1}{3}{Approximation ratio}{theorem.1.1}{}}
+\newlabel{ex:random}{{1.2}{3}{Four one-paragraph algorithms}{theorem.1.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {1.3}Gap problems: the language of hardness}{3}{section.1.3}\protected@file@percent }
+\newlabel{sec:gap}{{1.3}{3}{Gap problems: the language of hardness}{section.1.3}{}}
+\citation{Cook71,Levin73,Karp72}
+\newlabel{def:gap}{{1.3}{4}{Gap problem}{theorem.1.3}{}}
+\newlabel{lem:gap-approx}{{1.4}{4}{Gap hardness implies inapproximability}{theorem.1.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {1.4}Why ordinary reductions cannot create a gap}{4}{section.1.4}\protected@file@percent }
+\newlabel{sec:nogap}{{1.4}{4}{Why ordinary reductions cannot create a gap}{section.1.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.4.1}Cook--Levin yields a gap of one clause}{4}{subsection.1.4.1}\protected@file@percent }
+\newlabel{obs:cl}{{1.4.1}{5}{}{subsection.1.4.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.4.2}Karp reductions transport gaps, they do not create them}{5}{subsection.1.4.2}\protected@file@percent }
+\newlabel{prop:triangle}{{1.5}{5}{The triangle reduction}{theorem.1.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1.1}{\ignorespaces Where the optimum $\OPT  (\varphi )$ lives for YES and NO instances of a reduction to \textsc  {Max-3SAT} (schematic, not to scale). The classical reductions leave a single clause between the two cases; the PCP theorem moves the NO instances away by a constant fraction.}}{6}{figure.1.1}\protected@file@percent }
+\newlabel{fig:gap}{{1.1}{6}{Where the optimum $\OPT (\varphi )$ lives for YES and NO instances of a reduction to \sat {Max-3SAT} (schematic, not to scale). The classical reductions leave a single clause between the two cases; the PCP theorem moves the NO instances away by a constant fraction}{figure.1.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {1.5}The PCP theorem: two faces}{6}{section.1.5}\protected@file@percent }
+\newlabel{sec:pcp}{{1.5}{6}{The PCP theorem: two faces}{section.1.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.5.1}Proofs that can be spot-checked}{6}{subsection.1.5.1}\protected@file@percent }
+\newlabel{def:pcp}{{1.6}{6}{Probabilistically checkable proofs}{theorem.1.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1.2}{\ignorespaces A PCP verifier. For each of polynomially many random strings $\rho $ it inspects a constant number of proof bits and applies a local test. A correct proof passes every test; every proof of a false statement fails at least half of them.}}{7}{figure.1.2}\protected@file@percent }
+\newlabel{fig:pcp}{{1.2}{7}{A PCP verifier. For each of polynomially many random strings $\rho $ it inspects a constant number of proof bits and applies a local test. A correct proof passes every test; every proof of a false statement fails at least half of them}{figure.1.2}{}}
+\newlabel{thm:pcp1}{{1.7}{7}{PCP theorem, proof-checking form; Arora--Safra, Arora--Lund--Motwani--Sudan--Szegedy}{theorem.1.7}{}}
+\newlabel{thm:pcp2}{{1.8}{7}{PCP theorem, hardness form}{theorem.1.8}{}}
+\newlabel{prop:pcp-equiv}{{1.9}{7}{Equivalence of the two forms}{theorem.1.9}{}}
+\citation{AroraSafra98}
+\citation{ALMSS98}
+\citation{Dinur07}
+\citation{BGKW88}
+\citation{BFL91}
+\citation{FGLSS96}
+\@writefile{toc}{\contentsline {section}{\numberline {1.6}Two provers, Label Cover, and parallel repetition}{8}{section.1.6}\protected@file@percent }
+\newlabel{sec:games}{{1.6}{8}{Two provers, Label Cover, and parallel repetition}{section.1.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.6.1}Games, labelings, projections}{9}{subsection.1.6.1}\protected@file@percent }
+\newlabel{def:game}{{1.10}{9}{Two-prover one-round game / Label Cover}{theorem.1.10}{}}
+\newlabel{lem:determ}{{1.11}{9}{Determinism suffices}{theorem.1.11}{}}
+\newlabel{lem:random-label}{{1.12}{9}{Random labeling}{theorem.1.12}{}}
+\newlabel{ex:cv}{{1.13}{9}{The clause--variable game}{theorem.1.13}{}}
+\newlabel{prop:cv}{{1.14}{9}{Soundness of the clause--variable game}{theorem.1.14}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1.3}{\ignorespaces The clause--variable game of a $3$-CNF. An edge is a pair (clause, variable occurring in it). The highlighted edge $(C_2,x_3)$ is accepted iff Alice's assignment to $C_2$ and Bob's bit agree on~$x_3$, i.e.\ iff the projection $\pi _{(C_2,x_3)}$ of Alice's label to the coordinate $x_3$ equals Bob's label.}}{10}{figure.1.3}\protected@file@percent }
+\newlabel{fig:cv}{{1.3}{10}{The clause--variable game of a $3$-CNF. An edge is a pair (clause, variable occurring in it). The highlighted edge $(C_2,x_3)$ is accepted iff Alice's assignment to $C_2$ and Bob's bit agree on~$x_3$, \ie iff the projection $\pi _{(C_2,x_3)}$ of Alice's label to the coordinate $x_3$ equals Bob's label}{figure.1.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {1.2}{\ignorespaces The dictionary. The same object is a verifier, a constraint satisfaction problem, a game, and a Label Cover instance.}}{10}{table.1.2}\protected@file@percent }
+\newlabel{tab:dict}{{1.2}{10}{The dictionary. The same object is a verifier, a constraint satisfaction problem, a game, and a Label Cover instance}{table.1.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.6.2}Parallel repetition}{10}{subsection.1.6.2}\protected@file@percent }
+\citation{Raz11}
+\citation{FKO07}
+\citation{Raz98}
+\citation{Holenstein09}
+\newlabel{thm:raz}{{1.16}{11}{Parallel repetition; Raz 1998, Holenstein 2009, Rao 2011}{theorem.1.16}{}}
+\newlabel{thm:lc}{{1.17}{11}{Label Cover theorem}{theorem.1.17}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {1.7}Unique Games and the Unique Games Conjecture}{12}{section.1.7}\protected@file@percent }
+\newlabel{sec:ug}{{1.7}{12}{Unique Games and the Unique Games Conjecture}{section.1.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.7.1}Definition and a first observation}{12}{subsection.1.7.1}\protected@file@percent }
+\newlabel{def:ug}{{1.18}{12}{Unique Games}{theorem.1.18}{}}
+\newlabel{ex:ug-examples}{{1.19}{12}{}{theorem.1.19}{}}
+\newlabel{prop:ug-easy}{{1.20}{12}{Unique Games with perfect completeness are easy}{theorem.1.20}{}}
+\citation{Khot10}
+\citation{Trevisan12}
+\citation{Khot02}
+\@writefile{lof}{\contentsline {figure}{\numberline {1.4}{\ignorespaces A constraint $\pi _e$ between the label sets of two vertices. In a projection game (left) a label of $w$ has several preimages; in a Unique Game (right) the constraint is a perfect matching.}}{13}{figure.1.4}\protected@file@percent }
+\newlabel{fig:uniq}{{1.4}{13}{A constraint $\pi _e$ between the label sets of two vertices. In a projection game (left) a label of $w$ has several preimages; in a Unique Game (right) the constraint is a perfect matching}{figure.1.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.7.2}The conjecture}{13}{subsection.1.7.2}\protected@file@percent }
+\newlabel{conj:ugc}{{1.21}{13}{Unique Games Conjecture; Khot 2002}{theorem.1.21}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.7.3}Why Unique Games?}{13}{subsection.1.7.3}\protected@file@percent }
+\citation{CMM06}
+\citation{ABS15}
+\citation{KhotVishnoi15}
+\citation{KMS17,DKKMS18,KMS18}
+\citation{Khot19}
+\citation{OpenAI26}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.7.4}Evidence for and against}{14}{subsection.1.7.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {1.8}The map of the territory}{14}{section.1.8}\protected@file@percent }
+\newlabel{sec:map}{{1.8}{14}{The map of the territory}{section.1.8}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1.5}{\ignorespaces The route from $\mathsf  {NP}$-completeness to Unique Games. Solid blue arrows are established implications. The orange double arrow records a \emph  {tension}: a subexponential algorithm for Unique Games sits uneasily next to a conjecture asserting $\mathsf  {NP}$-hardness. The dashed wine-red arrow marks a claim whose status is explained in the box below. \emph  {L$n$} abbreviates ``Lecture~$n$''.}}{15}{figure.1.5}\protected@file@percent }
+\newlabel{fig:map}{{1.5}{15}{The route from $\NP $-completeness to Unique Games. Solid blue arrows are established implications. The orange double arrow records a \emph {tension}: a subexponential algorithm for Unique Games sits uneasily next to a conjecture asserting $\NP $-hardness. The dashed wine-red arrow marks a claim whose status is explained in the box below. \emph {L$n$} abbreviates ``Lecture~$n$''}{figure.1.5}{}}
+\citation{Cook71,Levin73,Karp72}
+\citation{Johnson74}
+\citation{BGKW88}
+\citation{BFL91}
+\citation{FGLSS96}
+\citation{AroraSafra98,ALMSS98}
+\citation{FeigeLovasz92}
+\citation{GW95}
+\citation{Raz98}
+\citation{BGS98}
+\citation{Hastad99}
+\citation{Hastad01}
+\citation{Khot02}
+\citation{KhotRegev08}
+\citation{KKMO07}
+\citation{KhotVishnoi15}
+\citation{Dinur07}
+\citation{Raghavendra08}
+\citation{ABS15}
+\citation{KMS17,DKKMS18,KMS18}
+\citation{OpenAI26}
+\@writefile{lot}{\contentsline {table}{\numberline {1.3}{\ignorespaces A timeline of the main results (conference years; journal versions are later). Many important contributions are missing.}}{16}{table.1.3}\protected@file@percent }
+\newlabel{tab:timeline}{{1.3}{16}{A timeline of the main results (conference years; journal versions are later). Many important contributions are missing}{table.1.3}{}}
+\@writefile{toc}{\contentsline {section}{Exercises}{16}{table.1.3}\protected@file@percent }
+\newlabel{ex:derand}{{1.1}{16}{\stars {$\star $}}{exercise.1.1}{}}
+\citation{Khot10}
+\citation{OpenAI26}
+\newlabel{ex:minimization}{{1.2}{17}{\stars {$\star $}}{exercise.1.2}{}}
+\newlabel{ex:gauss}{{1.3}{17}{\stars {$\star $}}{exercise.1.3}{}}
+\newlabel{ex:adaptive}{{1.4}{17}{\stars {$\star \star $}}{exercise.1.4}{}}
+\newlabel{ex:repeat}{{1.5}{17}{\stars {$\star $}}{exercise.1.5}{}}
+\newlabel{ex:oddcycle}{{1.6}{17}{\stars {$\star \star $}}{exercise.1.6}{}}
+\newlabel{ex:fortnow}{{1.7}{17}{\stars {$\star \star $}}{exercise.1.7}{}}
+\newlabel{ex:not-ug}{{1.8}{17}{\stars {$\star $}}{exercise.1.8}{}}
+\newlabel{ex:quant}{{1.9}{17}{\stars {$\star \star $}}{exercise.1.9}{}}
+\citation{Harsha07}
+\citation{Trevisan06}
+\citation{AroraBarak09}
+\citation{Trevisan06}
+\citation{Harsha07}
+\citation{DIMACS10}
+\citation{Khot10}
+\citation{Trevisan12}
+\citation{Hastad99}
+\citation{Zuckerman07}
+\citation{Hastad01}
+\citation{FKO07}
+\citation{Raz11}
+\newlabel{ex:reading}{{1.10}{18}{\stars {$\star \star $}}{exercise.1.10}{}}
+\@writefile{toc}{\contentsline {section}{Notes and further reading}{18}{exercise.1.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Where this lecture comes from.}{18}{paragraph*.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{On attributions.}{18}{paragraph*.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{What is not covered.}{18}{paragraph*.9}\protected@file@percent }
+\citation{FGLSS96}
+\@writefile{toc}{\contentsline {chapter}{\numberline {2}Games, Label Cover, and the Language of PCPs}{19}{chapter.2}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{lec:games}{{2}{19}{Games, Label Cover, and the Language of PCPs}{chapter.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.1}Constraint graphs: one language for everything}{19}{section.2.1}\protected@file@percent }
+\newlabel{sec:lang}{{2.1}{19}{Constraint graphs: one language for everything}{section.2.1}{}}
+\newlabel{def:csp}{{2.1}{19}{Constraint satisfaction instance}{theorem.2.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2.1}{\ignorespaces A zoo of constraint satisfaction problems. The last column is the fraction of constraints satisfied by a \emph  {uniformly random assignment}; it is the ``trivial'' threshold that approximation algorithms must beat.}}{20}{table.2.1}\protected@file@percent }
+\newlabel{tab:zoo}{{2.1}{20}{A zoo of constraint satisfaction problems. The last column is the fraction of constraints satisfied by a \emph {uniformly random assignment}; it is the ``trivial'' threshold that approximation algorithms must beat}{table.2.1}{}}
+\newlabel{lem:random-asg}{{2.2}{20}{Random assignment}{theorem.2.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.1}Binary constraints: constraint graphs}{20}{subsection.2.1.1}\protected@file@percent }
+\newlabel{def:cg}{{2.3}{20}{Constraint graph}{theorem.2.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2.1}{\ignorespaces The four constraint types of Definition~\ref {def:types} as bipartite graphs between $\Sigma _u$ (left, blue) and $\Sigma _v$ (right, orange). In a unique constraint each label determines its partner \emph  {and} vice versa; in a projection, only one direction is determined; in a $2$-to-$2$ constraint each label leaves two candidates. The $2$-to-$2$ relation of panel~(c) is the union of the solid and the dashed perfect matching (Lemma~\ref {lem:split}).}}{21}{figure.2.1}\protected@file@percent }
+\newlabel{fig:types}{{2.1}{21}{The four constraint types of Definition~\ref {def:types} as bipartite graphs between $\Sigma _u$ (left, blue) and $\Sigma _v$ (right, orange). In a unique constraint each label determines its partner \emph {and} vice versa; in a projection, only one direction is determined; in a $2$-to-$2$ constraint each label leaves two candidates. The $2$-to-$2$ relation of panel~(c) is the union of the solid and the dashed perfect matching (Lemma~\ref {lem:split})}{figure.2.1}{}}
+\newlabel{def:types}{{2.4}{21}{Types of constraints}{theorem.2.4}{}}
+\newlabel{cor:alph}{{2.5}{21}{Alphabets cannot be small}{theorem.2.5}{}}
+\newlabel{ex:cycle}{{2.6}{21}{Unique Games on a cycle}{theorem.2.6}{}}
+\citation{Khot10}
+\@writefile{toc}{\contentsline {section}{\numberline {2.2}One oracle or two provers?}{22}{section.2.2}\protected@file@percent }
+\newlabel{sec:oracle}{{2.2}{22}{One oracle or two provers?}{section.2.2}{}}
+\newlabel{def:cover}{{2.7}{22}{Double cover}{theorem.2.7}{}}
+\newlabel{prop:cover}{{2.8}{22}{Value of the double cover}{theorem.2.8}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2.2}{\ignorespaces The double cover of a triangle is a hexagon, which is bipartite. Self-consistency of a single labeling is what the triangle tests; the two provers of the hexagon need not be consistent with each other, and they win with probability~$1$.}}{23}{figure.2.2}\protected@file@percent }
+\newlabel{fig:cover}{{2.2}{23}{The double cover of a triangle is a hexagon, which is bipartite. Self-consistency of a single labeling is what the triangle tests; the two provers of the hexagon need not be consistent with each other, and they win with probability~$1$}{figure.2.2}{}}
+\newlabel{lem:tables}{{2.9}{23}{Answer tables}{theorem.2.9}{}}
+\newlabel{prop:2sat}{{2.10}{23}{Two binary queries are not enough}{theorem.2.10}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.3}From verifiers and CSPs to games}{24}{section.2.3}\protected@file@percent }
+\newlabel{sec:cv}{{2.3}{24}{From verifiers and CSPs to games}{section.2.3}{}}
+\newlabel{def:cvgame}{{2.11}{24}{Constraint--variable game}{theorem.2.11}{}}
+\newlabel{thm:cv}{{2.12}{24}{Soundness of the constraint--variable game}{theorem.2.12}{}}
+\newlabel{ex:phi0}{{2.13}{24}{A formula and its game}{theorem.2.13}{}}
+\citation{KMS17,DKKMS18,KMS18}
+\citation{Khot02}
+\citation{OpenAI26}
+\@writefile{lot}{\contentsline {table}{\numberline {2.2}{\ignorespaces The price of every translation in the dictionary of Table~\ref {tab:dict}.}}{25}{table.2.2}\protected@file@percent }
+\newlabel{tab:price}{{2.2}{25}{The price of every translation in the dictionary of Table~\ref {tab:dict}}{table.2.2}{}}
+\newlabel{cor:verifier-game}{{2.14}{25}{Every verifier is a game}{theorem.2.14}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.4}The ladder of constraint types}{25}{section.2.4}\protected@file@percent }
+\newlabel{sec:ladder}{{2.4}{25}{The ladder of constraint types}{section.2.4}{}}
+\citation{Khot19}
+\citation{OpenAI26}
+\@writefile{lot}{\contentsline {table}{\numberline {2.3}{\ignorespaces The ladder of constraint types. Moving down the table the constraints become more rigid and the hardness results become stronger \emph  {per label}, but harder to prove.}}{26}{table.2.3}\protected@file@percent }
+\newlabel{tab:ladder}{{2.3}{26}{The ladder of constraint types. Moving down the table the constraints become more rigid and the hardness results become stronger \emph {per label}, but harder to prove}{table.2.3}{}}
+\newlabel{lem:split}{{2.15}{26}{A $2$-to-$2$ relation is two bijections}{theorem.2.15}{}}
+\newlabel{cor:half}{{2.16}{26}{Splitting a $2$-to-$2$ game}{theorem.2.16}{}}
+\newlabel{cor:halfway}{{2.17}{26}{A half-way Unique Games Conjecture, from Table~\ref {tab:ladder}}{theorem.2.17}{}}
+\citation{FGLSS96}
+\@writefile{toc}{\contentsline {section}{\numberline {2.5}From PCPs to cliques: the FGLSS graph}{27}{section.2.5}\protected@file@percent }
+\newlabel{sec:fglss}{{2.5}{27}{From PCPs to cliques: the FGLSS graph}{section.2.5}{}}
+\newlabel{def:fglss}{{2.18}{27}{FGLSS graph}{theorem.2.18}{}}
+\newlabel{thm:fglss}{{2.19}{27}{FGLSS}{theorem.2.19}{}}
+\newlabel{ex:fglss}{{2.20}{27}{The FGLSS graph of $\varphi _0$}{theorem.2.20}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2.3}{\ignorespaces The FGLSS graph of the verifier for $\varphi _0$ (Example~\ref {ex:phi0}) that picks one of the four clauses and reads its two variables. Each group of three vertices contains the three satisfying answers of its clause; edges join compatible views. The heavy triangle is a maximum clique: it consists of the views of $\rho =1,2,4$ that agree with the assignment $x=(1,1,0)$, which satisfies $C_1,C_2,C_4$ and violates $C_3$. No view of $\rho =3$ is compatible with all three.}}{28}{figure.2.3}\protected@file@percent }
+\newlabel{fig:fglss}{{2.3}{28}{The FGLSS graph of the verifier for $\varphi _0$ (Example~\ref {ex:phi0}) that picks one of the four clauses and reads its two variables. Each group of three vertices contains the three satisfying answers of its clause; edges join compatible views. The heavy triangle is a maximum clique: it consists of the views of $\rho =1,2,4$ that agree with the assignment $x=(1,1,0)$, which satisfies $C_1,C_2,C_4$ and violates $C_3$. No view of $\rho =3$ is compatible with all three}{figure.2.3}{}}
+\newlabel{cor:clique-const}{{2.21}{28}{Constant-factor hardness for Clique}{theorem.2.21}{}}
+\newlabel{prop:product}{{2.22}{28}{Clique number is multiplicative}{theorem.2.22}{}}
+\citation{FGLSS96}
+\citation{ALMSS98}
+\citation{BGS98}
+\citation{Hastad99}
+\newlabel{cor:clique-quasi}{{2.23}{29}{Hardness of Clique at larger factors}{theorem.2.23}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.6}What Label Cover is for}{29}{section.2.6}\protected@file@percent }
+\newlabel{sec:for}{{2.6}{29}{What Label Cover is for}{section.2.6}{}}
+\citation{LundYannakakis94,Feige98,DinurSteurer14}
+\citation{ABSS97}
+\citation{DIMACS10}
+\@writefile{toc}{\contentsline {section}{Exercises}{30}{section.2.6}\protected@file@percent }
+\newlabel{ex:holonomy}{{2.1}{30}{\stars {$\star $}}{exercise.2.1}{}}
+\newlabel{ex:cover-tight}{{2.2}{30}{\stars {$\star \star $}}{exercise.2.2}{}}
+\newlabel{ex:cv-tight}{{2.3}{30}{\stars {$\star \star $}}{exercise.2.3}{}}
+\newlabel{ex:dreg}{{2.4}{30}{\stars {$\star \star $}}{exercise.2.4}{}}
+\newlabel{ex:3cut}{{2.5}{30}{\stars {$\star $}}{exercise.2.5}{}}
+\newlabel{ex:expander}{{2.6}{30}{\stars {$\star \star \star $}}{exercise.2.6}{}}
+\citation{DIMACS10}
+\citation{ABSS97}
+\citation{FeigeLovasz92}
+\citation{Khot02}
+\citation{Khot19}
+\citation{Khot10}
+\citation{FGLSS96}
+\citation{ALMSS98}
+\citation{AroraSafra98}
+\citation{Hastad99}
+\newlabel{ex:reading2}{{2.7}{31}{\stars {$\star \star $}}{exercise.2.7}{}}
+\@writefile{toc}{\contentsline {section}{Notes and further reading}{31}{exercise.2.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Where this lecture comes from.}{31}{paragraph*.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{On attributions.}{31}{paragraph*.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{What is not covered.}{31}{paragraph*.12}\protected@file@percent }
+\citation{AroraSafra98}
+\citation{ALMSS98}
+\citation{ALMSS98}
+\citation{AroraSafra98}
+\@writefile{toc}{\contentsline {chapter}{\numberline {3}The Arora--Safra Route: Polynomials, Sum-Check and Composition}{32}{chapter.3}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{lec:as}{{3}{32}{The Arora--Safra Route: Polynomials, Sum-Check and Composition}{chapter.3}{}}
+\citation{BFLS91}
+\citation{FGLSS96}
+\citation{AroraSafra98}
+\citation{ALMSS98}
+\citation{AroraSafra98}
+\citation{FGLSS96}
+\citation{Dinur07}
+\@writefile{lot}{\contentsline {table}{\numberline {3.1}{\ignorespaces The race for the number of queries (all verifiers non-adaptive; $N$ is the number of vertices of the clique instance). The row of Arora and Safra is the subject of this lecture. Each row implies the ones above it, since $\mathsf  {PCP}[r,q]\subseteq \mathsf  {PCP}[r',q']$ whenever $r\le r'$ and $q\le q'$.}}{33}{table.3.1}\protected@file@percent }
+\newlabel{tab:race}{{3.1}{33}{The race for the number of queries (all verifiers non-adaptive; $N$ is the number of vertices of the clique instance). The row of Arora and Safra is the subject of this lecture. Each row implies the ones above it, since $\PCP [r,q]\subseteq \PCP [r',q']$ whenever $r\le r'$ and $q\le q'$}{table.3.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.1}What was proved, and when}{33}{section.3.1}\protected@file@percent }
+\newlabel{sec:as-land}{{3.1}{33}{What was proved, and when}{section.3.1}{}}
+\newlabel{thm:as}{{3.1}{33}{Arora--Safra}{theorem.3.1}{}}
+\newlabel{cor:as-clique}{{3.2}{33}{Arora--Safra}{theorem.3.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.2}Polynomials as codes}{34}{section.3.2}\protected@file@percent }
+\newlabel{sec:poly}{{3.2}{34}{Polynomials as codes}{section.3.2}{}}
+\newlabel{lem:sz}{{3.3}{34}{Schwartz--Zippel}{theorem.3.3}{}}
+\newlabel{cor:dist}{{3.4}{34}{Codes of large distance}{theorem.3.4}{}}
+\newlabel{lem:ext}{{3.5}{34}{Polynomial extension}{theorem.3.5}{}}
+\newlabel{ex:xor}{{3.6}{35}{The multilinear extension of XOR}{theorem.3.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.3}Arithmetization: satisfiability as a vanishing condition}{35}{section.3.3}\protected@file@percent }
+\newlabel{sec:arith}{{3.3}{35}{Arithmetization: satisfiability as a vanishing condition}{section.3.3}{}}
+\citation{AroraSafra98}
+\newlabel{lem:arith}{{3.7}{36}{Algebraic view of $3$SAT}{theorem.3.7}{}}
+\newlabel{ex:arith}{{3.8}{36}{A formula, an assignment, one nonzero point}{theorem.3.8}{}}
+\citation{LFKN92}
+\citation{AroraSafra98}
+\newlabel{lem:zt}{{3.9}{37}{Zero-testers}{theorem.3.9}{}}
+\newlabel{ex:zt}{{3.10}{37}{Zero-testers on Example~\ref {ex:arith}}{theorem.3.10}{}}
+\newlabel{cor:P}{{3.11}{37}{The summed polynomials $P_t$}{theorem.3.11}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.4}The sum-check protocol, as a table}{37}{section.3.4}\protected@file@percent }
+\newlabel{sec:sumcheck}{{3.4}{37}{The sum-check protocol, as a table}{section.3.4}{}}
+\newlabel{def:sumcheck}{{3.12}{38}{Sum-check test}{theorem.3.12}{}}
+\newlabel{lem:sumcheck}{{3.13}{38}{Sum-check}{theorem.3.13}{}}
+\newlabel{ex:sc}{{3.14}{38}{A cheating table, exactly}{theorem.3.14}{}}
+\citation{LFKN92}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4.1}Putting arithmetization and sum-check together}{39}{subsection.3.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3.5}The low-degree test}{39}{section.3.5}\protected@file@percent }
+\newlabel{sec:ldt}{{3.5}{39}{The low-degree test}{section.3.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5.1}The exact statement, and why it is not enough}{39}{subsection.3.5.1}\protected@file@percent }
+\newlabel{lem:axis}{{3.15}{39}{Axis-parallel lines suffice, exact version}{theorem.3.15}{}}
+\citation{ALMSS98}
+\citation{PolishchukSpielman94}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5.2}The test of Arora and Safra}{40}{subsection.3.5.2}\protected@file@percent }
+\newlabel{def:ldt}{{3.16}{40}{Low-degree test}{theorem.3.16}{}}
+\newlabel{lem:robust}{{3.17}{40}{Robust consistency; Arora--Safra, Lemma~4.6.4}{theorem.3.17}{}}
+\citation{FGLSS96}
+\citation{ALMSS98}
+\newlabel{cor:ldt}{{3.18}{41}{Soundness of the test}{theorem.3.18}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.6}The basic verifier}{41}{section.3.6}\protected@file@percent }
+\newlabel{sec:vpoly}{{3.6}{41}{The basic verifier}{section.3.6}{}}
+\newlabel{thm:vpoly}{{3.20}{42}{The basic verifier; Arora--Safra, Theorem~3.5(a)}{theorem.3.20}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.7}Normal form verifiers and split-encoded assignments}{42}{section.3.7}\protected@file@percent }
+\newlabel{sec:normal}{{3.7}{42}{Normal form verifiers and split-encoded assignments}{section.3.7}{}}
+\citation{AroraSafra98}
+\citation{AroraSafra98}
+\citation{BGHSV06}
+\citation{DR04}
+\citation{Dinur07}
+\newlabel{def:normal}{{3.21}{43}{Normal form verifier}{theorem.3.21}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.7.1}How $V_{\rm  poly}$ becomes a normal form verifier}{43}{subsection.3.7.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{The encoding.}{43}{paragraph*.13}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Split encodings.}{43}{paragraph*.14}\protected@file@percent }
+\newlabel{eq:concat}{{3.1}{43}{Split encodings}{equation.3.1}{}}
+\newlabel{lem:concat}{{3.22}{44}{Concatenation}{theorem.3.22}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.8}The composition lemma}{44}{section.3.8}\protected@file@percent }
+\newlabel{sec:compose}{{3.8}{44}{The composition lemma}{section.3.8}{}}
+\newlabel{eq:decide}{{3.2}{44}{The composition lemma}{equation.3.2}{}}
+\newlabel{lem:compose}{{3.23}{44}{Composition; Arora--Safra, Lemma~3.4}{theorem.3.23}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.1}{\ignorespaces The composed verifier $V_{\rm  new}$ (Lemma~\ref {lem:compose}). The proof consists of encodings $\sigma (P[j])$ of the symbols of $V_1$'s proof (including the witness strings $y_w$) and one auxiliary word $\pi _w$ per random string $w$ of $V_1$. On random string $w$ the verifier $V_1$ would read the $Q$ blue words and the orange word in full; $V_{\rm  new}$ instead hands them to $V_2$ as a split-encoded assignment to $c_w$ and reads only a few symbols of each.}}{45}{figure.3.1}\protected@file@percent }
+\newlabel{fig:compose}{{3.1}{45}{The composed verifier $V_{\rm new}$ (Lemma~\ref {lem:compose}). The proof consists of encodings $\sigma (P[j])$ of the symbols of $V_1$'s proof (including the witness strings $y_w$) and one auxiliary word $\pi _w$ per random string $w$ of $V_1$. On random string $w$ the verifier $V_1$ would read the $Q$ blue words and the orange word in full; $V_{\rm new}$ instead hands them to $V_2$ as a split-encoded assignment to $c_w$ and reads only a few symbols of each}{figure.3.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.9}The parameter chase}{46}{section.3.9}\protected@file@percent }
+\newlabel{sec:chase}{{3.9}{46}{The parameter chase}{section.3.9}{}}
+\citation{AroraSafra98}
+\citation{AKS87}
+\@writefile{lot}{\contentsline {table}{\numberline {3.2}{\ignorespaces The parameter chase of Section~\ref {sec:chase} ($L=\log n$). Each composition square-roots the exponent of the alphabet size; the number of queries is stuck at $\sqrt  L$ because it is inherited from the outer verifier.}}{47}{table.3.2}\protected@file@percent }
+\newlabel{tab:chase}{{3.2}{47}{The parameter chase of Section~\ref {sec:chase} ($L=\log n$). Each composition square-roots the exponent of the alphabet size; the number of queries is stuck at $\sqrt L$ because it is inherited from the outer verifier}{table.3.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.10}Consequence: Clique within $2^{\log ^{1/2-\varepsilon }N}$ is $\mathsf  {NP}$-hard}{47}{section.3.10}\protected@file@percent }
+\newlabel{sec:clique}{{3.10}{47}{\texorpdfstring {Consequence: Clique within $2^{\log ^{1/2-\eps }N}$ is $\NP $-hard}{Consequence: hardness of approximating Clique}}{section.3.10}{}}
+\citation{AroraSafra98}
+\citation{ALMSS98}
+\citation{RubinfeldSudan92}
+\citation{LapidotShamir91}
+\citation{FeigeLovasz92}
+\citation{BLR90}
+\citation{BLR90}
+\citation{BGS98}
+\@writefile{toc}{\contentsline {section}{\numberline {3.11}Why it stops at $\log ^{1/2+\varepsilon }n$, and how to reach $O(1)$}{48}{section.3.11}\protected@file@percent }
+\newlabel{sec:as-limits}{{3.11}{48}{\texorpdfstring {Why it stops at $\log ^{1/2+\eps }n$, and how to reach $O(1)$}{Why it stops at sublogarithmic query bits, and how to reach O(1)}}{section.3.11}{}}
+\@writefile{toc}{\contentsline {paragraph}{Queries are inherited, never reduced.}{48}{paragraph*.15}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Constants compound.}{48}{paragraph*.16}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{The remedy of ALMSS.}{48}{paragraph*.17}\protected@file@percent }
+\citation{AroraSafra98}
+\citation{ALMSS98}
+\citation{AroraSafra98}
+\citation{BFLS91}
+\citation{BFL91}
+\citation{BFLS91}
+\citation{FGLSS96}
+\citation{LFKN92}
+\citation{AroraSafra98}
+\@writefile{toc}{\contentsline {section}{Exercises}{49}{Item.44}\protected@file@percent }
+\newlabel{ex:sz-tight}{{3.1}{49}{\stars {$\star \star $}}{exercise.3.1}{}}
+\newlabel{ex:maj}{{3.2}{49}{\stars {$\star $}}{exercise.3.2}{}}
+\newlabel{ex:arith2}{{3.3}{49}{\stars {$\star $}}{exercise.3.3}{}}
+\newlabel{ex:sc-tight}{{3.4}{49}{\stars {$\star \star $}}{exercise.3.4}{}}
+\newlabel{ex:onedir}{{3.5}{49}{\stars {$\star $}}{exercise.3.5}{}}
+\newlabel{ex:chase}{{3.6}{49}{\stars {$\star \star $}}{exercise.3.6}{}}
+\newlabel{ex:bool}{{3.7}{49}{\stars {$\star \star $}}{exercise.3.7}{}}
+\newlabel{ex:reading3}{{3.8}{49}{\stars {$\star \star \star $}}{exercise.3.8}{}}
+\citation{AroraSafra98}
+\citation{BGHSV06}
+\citation{DR04}
+\citation{RubinfeldSudan92}
+\citation{PolishchukSpielman94}
+\citation{AroraSudan97}
+\citation{AroraSafra98}
+\@writefile{toc}{\contentsline {section}{Notes and further reading}{50}{exercise.3.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Where this lecture comes from.}{50}{paragraph*.18}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{On attributions.}{50}{paragraph*.19}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{A caveat on the text.}{50}{paragraph*.20}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{What is not covered.}{50}{paragraph*.21}\protected@file@percent }
+\citation{ALMSS98}
+\@writefile{toc}{\contentsline {chapter}{\numberline {4}Constant Queries: Hadamard Codes, Parallelization and the ALMSS Proof}{51}{chapter.4}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{lec:alm}{{4}{51}{Constant Queries: Hadamard Codes, Parallelization and the ALMSS Proof}{chapter.4}{}}
+\newlabel{thm:alm}{{4.1}{51}{Arora--Lund--Motwani--Sudan--Szegedy}{theorem.4.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.1}Outer verifiers, inner verifiers, and composition again}{52}{section.4.1}\protected@file@percent }
+\newlabel{sec:outin}{{4.1}{52}{Outer verifiers, inner verifiers, and composition again}{section.4.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.1}The formalism}{52}{subsection.4.1.1}\protected@file@percent }
+\newlabel{def:outer}{{4.2}{52}{Outer verifier}{theorem.4.2}{}}
+\newlabel{def:enc}{{4.3}{52}{Encoding scheme}{theorem.4.3}{}}
+\newlabel{def:inner}{{4.4}{52}{Inner verifier system}{theorem.4.4}{}}
+\newlabel{prop:in-out}{{4.5}{52}{An inner verifier is an outer verifier}{theorem.4.5}{}}
+\newlabel{prop:rep}{{4.6}{53}{Repetition}{theorem.4.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.2}Composition}{53}{subsection.4.1.2}\protected@file@percent }
+\newlabel{thm:compose}{{4.7}{53}{Composition; ALMSS Theorem~13, after Arora--Safra}{theorem.4.7}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.1}{\ignorespaces The architecture of the ALMSS proof. Random bits stay $O(\log n)$ throughout; only the \emph  {answer size} and the \emph  {decision circuit} are shrunk by the compositions, and the number of queries is made constant once and for all in the first arrow.}}{54}{figure.4.1}\protected@file@percent }
+\newlabel{fig:alm-arch}{{4.1}{54}{The architecture of the ALMSS proof. Random bits stay $O(\log n)$ throughout; only the \emph {answer size} and the \emph {decision circuit} are shrunk by the compositions, and the number of queries is made constant once and for all in the first arrow}{figure.4.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.2}The Hadamard code and its local tests}{54}{section.4.2}\protected@file@percent }
+\newlabel{sec:had-code}{{4.2}{54}{The Hadamard code and its local tests}{section.4.2}{}}
+\newlabel{def:hadamard}{{4.8}{54}{Hadamard / parity encoding}{theorem.4.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.1}Fourier analysis over $\mathbb  {F}_2^n$ in one page}{54}{subsection.4.2.1}\protected@file@percent }
+\newlabel{lem:fourier}{{4.9}{54}{Orthonormality and Parseval}{theorem.4.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.2}Linearity testing}{54}{subsection.4.2.2}\protected@file@percent }
+\newlabel{def:blr}{{4.10}{54}{Linearity test; Blum--Luby--Rubinfeld}{theorem.4.10}{}}
+\citation{ALMSS98}
+\citation{BLR90}
+\citation{BCHKS96}
+\newlabel{thm:blr}{{4.11}{55}{Linearity test, sharp form}{theorem.4.11}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.3}Self-correction and concatenation}{55}{subsection.4.2.3}\protected@file@percent }
+\newlabel{prop:selfcorr}{{4.12}{55}{Self-correction; BLR}{theorem.4.12}{}}
+\newlabel{prop:linconcat}{{4.13}{56}{Concatenation test}{theorem.4.13}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.3}Verifying a circuit with Hadamard codes}{56}{section.4.3}\protected@file@percent }
+\newlabel{sec:had-ver}{{4.3}{56}{Verifying a circuit with Hadamard codes}{section.4.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.1}A circuit as a system of quadratic equations}{56}{subsection.4.3.1}\protected@file@percent }
+\newlabel{lem:aug}{{4.14}{56}{}{theorem.4.14}{}}
+\newlabel{eq:quad}{{4.1}{56}{A circuit as a system of quadratic equations}{equation.4.1}{}}
+\newlabel{lem:freivalds}{{4.15}{56}{Tensor test; Freivalds}{theorem.4.15}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.2}The verifier $V^{\oplus }$}{56}{subsection.4.3.2}\protected@file@percent }
+\newlabel{def:vplus}{{4.16}{56}{Hadamard verifier}{theorem.4.16}{}}
+\citation{ALMSS98}
+\newlabel{thm:vplus}{{4.17}{57}{The Hadamard inner verifier; ALMSS Theorem~15}{theorem.4.17}{}}
+\newlabel{ex:had}{{4.18}{57}{Two circuits on five gates}{theorem.4.18}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.4}Lines: low-degree testing and correction with $O(1)$ queries}{58}{section.4.4}\protected@file@percent }
+\newlabel{sec:lines}{{4.4}{58}{\texorpdfstring {Lines: low-degree testing and correction with $O(1)$ queries}{Lines: low-degree testing and correction with O(1) queries}}{section.4.4}{}}
+\newlabel{lem:sz-tot}{{4.19}{58}{Schwartz--Zippel, total degree}{theorem.4.19}{}}
+\citation{RubinfeldSudan96}
+\citation{RubinfeldSudan96}
+\@writefile{toc}{\contentsline {paragraph}{The encoding.}{59}{paragraph*.22}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.1}The low-degree test with a table of lines}{59}{subsection.4.4.1}\protected@file@percent }
+\newlabel{def:polytest}{{4.20}{59}{Line table, Poly-test}{theorem.4.20}{}}
+\newlabel{thm:polytest}{{4.21}{59}{Low-degree test; ALMSS Theorem~45}{theorem.4.21}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.2}Correcting a polynomial at a point}{59}{subsection.4.4.2}\protected@file@percent }
+\newlabel{def:polycorr}{{4.22}{59}{Poly-self-corr}{theorem.4.22}{}}
+\newlabel{prop:polycorr}{{4.23}{59}{ALMSS Proposition~46}{theorem.4.23}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.3}Concatenating polynomials}{60}{subsection.4.4.3}\protected@file@percent }
+\newlabel{def:polyconcat}{{4.24}{60}{Concatenated polynomial}{theorem.4.24}{}}
+\newlabel{lem:polyconcat}{{4.25}{60}{Concatenation test; ALMSS Lemma~49}{theorem.4.25}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.5}Curves: collapsing $l$ queries into one}{60}{section.4.5}\protected@file@percent }
+\newlabel{sec:curves}{{4.5}{60}{\texorpdfstring {Curves: collapsing $l$ queries into one}{Curves: collapsing l queries into one}}{section.4.5}{}}
+\newlabel{def:curve}{{4.26}{60}{Curves}{theorem.4.26}{}}
+\newlabel{prop:curve-deg}{{4.27}{60}{}{theorem.4.27}{}}
+\newlabel{def:curvecheck}{{4.28}{60}{Curve-corr-check}{theorem.4.28}{}}
+\newlabel{lem:curvecheck}{{4.29}{60}{ALMSS Lemma~57}{theorem.4.29}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.2}{\ignorespaces Aggregating queries. The oracle $O$ lists, for every tuple of points, the restriction of the (encoded) proof to the curve through them. The verifier \emph  {checks} this restriction at one random point of the curve, and \emph  {reads off} the $l$ values it wanted from the coefficients.}}{61}{figure.4.2}\protected@file@percent }
+\newlabel{fig:curve}{{4.2}{61}{Aggregating queries. The oracle $O$ lists, for every tuple of points, the restriction of the (encoded) proof to the curve through them. The verifier \emph {checks} this restriction at one random point of the curve, and \emph {reads off} the $l$ values it wanted from the coefficients}{figure.4.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.6}The parallelized verifier}{61}{section.4.6}\protected@file@percent }
+\newlabel{sec:par}{{4.6}{61}{The parallelized verifier}{section.4.6}{}}
+\newlabel{thm:seq}{{4.30}{61}{Arora--Safra, in the form of ALMSS Theorem~39; quoted}{theorem.4.30}{}}
+\@writefile{toc}{\contentsline {paragraph}{Parameters of $V^{\rm  par}$.}{62}{paragraph*.23}\protected@file@percent }
+\newlabel{def:vpar}{{4.31}{62}{The verifier $V^{\rm par}$}{theorem.4.31}{}}
+\newlabel{thm:par}{{4.32}{62}{Parallelization; ALMSS Theorem~14}{theorem.4.32}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.7}Assembling the proof: three steps, constant parameters}{63}{section.4.7}\protected@file@percent }
+\newlabel{sec:assemble}{{4.7}{63}{Assembling the proof: three steps, constant parameters}{section.4.7}{}}
+\newlabel{thm:alm17}{{4.33}{63}{ALMSS Theorem~17}{theorem.4.33}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.1}{\ignorespaces The parameter chase of Theorem~\ref {thm:alm17}. Compare with Table~\ref {tab:chase}: there, \emph  {every} composition kept $\sqrt  {\log n}$ queries and shrank the exponent of the alphabet by half; here the queries are made constant before any composition, and two compositions suffice.}}{64}{table.4.1}\protected@file@percent }
+\newlabel{tab:alm-chase}{{4.1}{64}{The parameter chase of Theorem~\ref {thm:alm17}. Compare with Table~\ref {tab:chase}: there, \emph {every} composition kept $\sqrt {\log n}$ queries and shrank the exponent of the alphabet by half; here the queries are made constant before any composition, and two compositions suffice}{table.4.1}{}}
+\citation{ALMSS98}
+\@writefile{toc}{\contentsline {section}{\numberline {4.8}Consequences, and the link to games}{65}{section.4.8}\protected@file@percent }
+\newlabel{sec:alm-cons}{{4.8}{65}{Consequences, and the link to games}{section.4.8}{}}
+\@writefile{toc}{\contentsline {paragraph}{Max-3SAT.}{65}{paragraph*.26}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Max-Clique.}{65}{paragraph*.27}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Label Cover.}{65}{paragraph*.28}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Transparent proofs of mathematics.}{65}{paragraph*.29}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.9}What the proof does not do, and what replaces it}{65}{section.4.9}\protected@file@percent }
+\newlabel{sec:alm-limits}{{4.9}{65}{What the proof does not do, and what replaces it}{section.4.9}{}}
+\citation{Dinur07}
+\@writefile{toc}{\contentsline {section}{Exercises}{66}{Item.70}\protected@file@percent }
+\newlabel{ex:maj3}{{4.1}{66}{\stars {$\star $}}{exercise.4.1}{}}
+\newlabel{ex:frank}{{4.2}{66}{\stars {$\star $}}{exercise.4.2}{}}
+\newlabel{ex:quadeq}{{4.3}{66}{\stars {$\star $}}{exercise.4.3}{}}
+\newlabel{ex:had-cheat}{{4.4}{66}{\stars {$\star \star $}}{exercise.4.4}{}}
+\newlabel{ex:alm-reps}{{4.5}{66}{\stars {$\star \star $}}{exercise.4.5}{}}
+\citation{ALMSS98}
+\citation{BLR90}
+\citation{Freivalds79}
+\citation{BCHKS96}
+\citation{RubinfeldSudan96}
+\citation{AroraSafra98}
+\citation{AroraSafra98}
+\citation{ALMSS98}
+\citation{ALMSS98}
+\newlabel{ex:oracle-size}{{4.6}{67}{\stars {$\star \star $}}{exercise.4.6}{}}
+\newlabel{ex:curve-line}{{4.7}{67}{\stars {$\star \star $}}{exercise.4.7}{}}
+\newlabel{ex:alm-reading}{{4.8}{67}{\stars {$\star \star \star $}}{exercise.4.8}{}}
+\@writefile{toc}{\contentsline {section}{Notes and further reading}{67}{exercise.4.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Where this lecture comes from.}{67}{paragraph*.30}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{On attributions.}{67}{paragraph*.31}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Small points in the text of \citet  {ALMSS98} that we handled differently.}{67}{paragraph*.32}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{What is not covered.}{68}{paragraph*.33}\protected@file@percent }
+\citation{Raz98}
+\citation{DinurSteurer14}
+\@writefile{toc}{\contentsline {chapter}{\numberline {5}Parallel Repetition: Driving the Soundness Down}{69}{chapter.5}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{lec:raz}{{5}{69}{Parallel Repetition: Driving the Soundness Down}{chapter.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.1}Repeating a game is not raising its value to a power}{70}{section.5.1}\protected@file@percent }
+\newlabel{sec:notpower}{{5.1}{70}{Repeating a game is not raising its value to a power}{section.5.1}{}}
+\newlabel{def:wgame}{{5.1}{70}{Weighted projection game}{theorem.5.1}{}}
+\newlabel{rem:multiplicity}{{5.1}{70}{}{theorem.5.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.1}The easy inequalities}{70}{subsection.5.1.1}\protected@file@percent }
+\newlabel{lem:rep-basic}{{5.2}{70}{Elementary facts}{theorem.5.2}{}}
+\newlabel{ex:chsh}{{5.3}{70}{CHSH}{theorem.5.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5.1}{\ignorespaces The winning question pairs of the two-fold CHSH strategy of Example~\ref {ex:chsh}: $10$ of $16$. A single coordinate of the same strategy would win only $\frac  34$ of the time on its own; the strategy gains by letting each prover's answer in coordinate~$i$ depend on the \emph  {other} coordinate's question.}}{71}{table.5.1}\protected@file@percent }
+\newlabel{tab:chsh-win}{{5.1}{71}{The winning question pairs of the two-fold CHSH strategy of Example~\ref {ex:chsh}: $10$ of $16$. A single coordinate of the same strategy would win only $\frac 34$ of the time on its own; the strategy gains by letting each prover's answer in coordinate~$i$ depend on the \emph {other} coordinate's question}{table.5.1}{}}
+\newlabel{ex:feige}{{5.4}{71}{Feige's non-interactive agreement game}{theorem.5.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.2}A projection game as a linear operator}{72}{section.5.2}\protected@file@percent }
+\newlabel{sec:operator}{{5.2}{72}{A projection game as a linear operator}{section.5.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2.1}Strategies, the operator $P_G$, and the success probability}{72}{subsection.5.2.1}\protected@file@percent }
+\newlabel{lem:bilinear}{{5.5}{72}{The success probability is a bilinear form}{theorem.5.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2.2}The collision value}{72}{subsection.5.2.2}\protected@file@percent }
+\newlabel{def:coll}{{5.6}{72}{Collision value}{theorem.5.6}{}}
+\newlabel{lem:collgame}{{5.7}{72}{The collision game}{theorem.5.7}{}}
+\citation{DinurSteurer14}
+\citation{DinurSteurer14}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.1}{\ignorespaces The collision game of the clause--variable game of Figure~\ref {fig:cv}. The referee picks the variable $x_3$ and two clauses containing it; the two copies of Alice answer with satisfying assignments of their clauses (both are satisfying in (a) and (b)) and are accepted iff their projections to $x_3$ coincide. Bob does not appear.}}{73}{figure.5.1}\protected@file@percent }
+\newlabel{fig:collision}{{5.1}{73}{The collision game of the clause--variable game of Figure~\ref {fig:cv}. The referee picks the variable $x_3$ and two clauses containing it; the two copies of Alice answer with satisfying assignments of their clauses (both are satisfying in (a) and (b)) and are accepted iff their projections to $x_3$ coincide. Bob does not appear}{figure.5.1}{}}
+\newlabel{lem:val-coll}{{5.8}{73}{Collision value versus value}{theorem.5.8}{}}
+\newlabel{ex:chsh-coll}{{5.9}{73}{CHSH, by hand}{theorem.5.9}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.3}The collision value under products}{74}{section.5.3}\protected@file@percent }
+\newlabel{sec:tensor}{{5.3}{74}{The collision value under products}{section.5.3}{}}
+\newlabel{lem:tensor}{{5.10}{74}{Products are tensor products}{theorem.5.10}{}}
+\newlabel{lem:coll-mono}{{5.11}{74}{Playing in parallel cannot raise the collision value}{theorem.5.11}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.4}The product theorem}{75}{section.5.4}\protected@file@percent }
+\newlabel{sec:product}{{5.4}{75}{The product theorem}{section.5.4}{}}
+\newlabel{def:lamp}{{5.12}{75}{The trivial game and the parameter $\lamp (G)$}{theorem.5.12}{}}
+\newlabel{thm:product}{{5.13}{75}{Product theorem; Dinur--Steurer}{theorem.5.13}{}}
+\citation{DinurSteurer14}
+\@writefile{lot}{\contentsline {table}{\numberline {5.2}{\ignorespaces CHSH: the true values of Example~\ref {ex:chsh} (second column; exhaustive search) are sandwiched between the na\"ive power (first column) and the collision value (third column), which equals $(\sqrt  3/2)^k=\lambda _{+}(G)^k$ by Example~\ref {ex:chsh-lamp}. The first inequality of Lemma~\ref {lem:rep-basic} is strict for $k\ge 2$.}}{76}{table.5.2}\protected@file@percent }
+\newlabel{tab:chsh-sandwich}{{5.2}{76}{CHSH: the true values of Example~\ref {ex:chsh} (second column; exhaustive search) are sandwiched between the na\"ive power (first column) and the collision value (third column), which equals $(\sqrt 3/2)^k=\lamp (G)^k$ by Example~\ref {ex:chsh-lamp}. The first inequality of Lemma~\ref {lem:rep-basic} is strict for $k\ge 2$}{table.5.2}{}}
+\newlabel{cor:lamp}{{5.14}{76}{Repetition bound in terms of $\lamp $}{theorem.5.14}{}}
+\newlabel{ex:chsh-lamp}{{5.15}{76}{CHSH, continued}{theorem.5.15}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.5}Expanding games: the proof}{76}{section.5.5}\protected@file@percent }
+\newlabel{sec:expander}{{5.5}{76}{Expanding games: the proof}{section.5.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.5.1}The Markov chain of a game}{76}{subsection.5.5.1}\protected@file@percent }
+\newlabel{eq:poincare}{{5.1}{77}{The Markov chain of a game}{equation.5.1}{}}
+\newlabel{ex:gaps}{{5.16}{77}{}{theorem.5.16}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.5.2}Expansion makes the product theorem effective}{77}{subsection.5.5.2}\protected@file@percent }
+\newlabel{thm:expander}{{5.17}{77}{$\lamp $ is close to the collision value on expanding games; Dinur--Steurer}{theorem.5.17}{}}
+\newlabel{eq:coll-quad}{{5.2}{77}{Expansion makes the product theorem effective}{equation.5.2}{}}
+\newlabel{eq:pointwise}{{5.3}{78}{Expansion makes the product theorem effective}{equation.5.3}{}}
+\newlabel{cor:expander}{{5.18}{78}{Parallel repetition for expanding projection games}{theorem.5.18}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.6}The Label Cover theorem, with explicit parameters}{78}{section.5.6}\protected@file@percent }
+\newlabel{sec:lc}{{5.6}{78}{The Label Cover theorem, with explicit parameters}{section.5.6}{}}
+\newlabel{lem:mix}{{5.19}{79}{Making a game expand}{theorem.5.19}{}}
+\newlabel{thm:lc-explicit}{{5.20}{79}{Label Cover theorem, with constants}{theorem.5.20}{}}
+\citation{Raz98}
+\citation{Holenstein09}
+\citation{Rao11}
+\citation{DinurSteurer14}
+\citation{DinurSteurer14}
+\citation{Raz11}
+\citation{FKO07}
+\citation{BRRRS09}
+\citation{RR12}
+\citation{DinurSteurer14}
+\@writefile{lot}{\contentsline {table}{\numberline {5.3}{\ignorespaces Parallel repetition theorems. The first three are quoted; the last was proved in this lecture.}}{80}{table.5.3}\protected@file@percent }
+\newlabel{tab:rep-thms}{{5.3}{80}{Parallel repetition theorems. The first three are quoted; the last was proved in this lecture}{table.5.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.7}What is true in general, and what is not}{80}{section.5.7}\protected@file@percent }
+\newlabel{sec:general}{{5.7}{80}{What is true in general, and what is not}{section.5.7}{}}
+\@writefile{toc}{\contentsline {paragraph}{Strong repetition.}{80}{paragraph*.35}\protected@file@percent }
+\citation{Raz11,FKO07}
+\@writefile{toc}{\contentsline {section}{\numberline {5.8}What repetition cannot do for Unique Games}{81}{section.5.8}\protected@file@percent }
+\newlabel{sec:ugc-rep}{{5.8}{81}{What repetition cannot do for Unique Games}{section.5.8}{}}
+\@writefile{toc}{\contentsline {section}{Exercises}{81}{section.5.8}\protected@file@percent }
+\newlabel{ex:rep-prod}{{5.1}{81}{\stars {$\star \star $}}{exercise.5.1}{}}
+\citation{DinurSteurer14}
+\citation{DinurSteurer14}
+\newlabel{ex:fig-gap}{{5.2}{82}{\stars {$\star $}}{exercise.5.2}{}}
+\newlabel{ex:cycle-gap}{{5.3}{82}{\stars {$\star \star $}}{exercise.5.3}{}}
+\newlabel{ex:disjoint}{{5.4}{82}{\stars {$\star \star $}}{exercise.5.4}{}}
+\newlabel{ex:ug-mix}{{5.5}{82}{\stars {$\star $}}{exercise.5.5}{}}
+\newlabel{ex:free}{{5.6}{82}{\stars {$\star \star $}}{exercise.5.6}{}}
+\newlabel{ex:reading-ds}{{5.7}{82}{\stars {$\star \star \star $}}{exercise.5.7}{}}
+\@writefile{toc}{\contentsline {section}{Notes and further reading}{82}{exercise.5.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Where this lecture comes from.}{82}{paragraph*.36}\protected@file@percent }
+\citation{Raz98}
+\citation{Feige91}
+\citation{DinurSteurer14}
+\citation{FKO07}
+\citation{Raz11}
+\citation{DinurSteurer14}
+\citation{Dinur07}
+\bibstyle{abbrvnat}
+\bibdata{references}
+\@writefile{toc}{\contentsline {paragraph}{What we changed.}{83}{paragraph*.37}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{On attributions.}{83}{paragraph*.38}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{What is not covered.}{83}{paragraph*.39}\protected@file@percent }
+\bibcite{AKS87}{{1}{1987}{{Ajtai et~al.}}{{Ajtai, Koml{\'o}s, and Szemer{\'e}di}}}
+\bibcite{AroraBarak09}{{2}{2009}{{Arora and Barak}}{{}}}
+\bibcite{AroraSafra98}{{3}{1998}{{Arora and Safra}}{{}}}
+\bibcite{AroraSudan97}{{4}{1997}{{Arora and Sudan}}{{}}}
+\bibcite{ABSS97}{{5}{1997}{{Arora et~al.}}{{Arora, Babai, Stern, and Sweedyk}}}
+\bibcite{ALMSS98}{{6}{1998}{{Arora et~al.}}{{Arora, Lund, Motwani, Sudan, and Szegedy}}}
+\bibcite{ABS15}{{7}{2015}{{Arora et~al.}}{{Arora, Barak, and Steurer}}}
+\bibcite{BFLS91}{{8}{1991{a}}{{Babai et~al.}}{{Babai, Fortnow, Levin, and Szegedy}}}
+\bibcite{BFL91}{{9}{1991{b}}{{Babai et~al.}}{{Babai, Fortnow, and Lund}}}
+\bibcite{BRRRS09}{{10}{2009}{{Barak et~al.}}{{Barak, Rao, Raz, Rosen, and Shaltiel}}}
+\bibcite{BCHKS96}{{11}{1996}{{Bellare et~al.}}{{Bellare, Coppersmith, H{\r a}stad, Kiwi, and Sudan}}}
+\bibcite{BGS98}{{12}{1998}{{Bellare et~al.}}{{Bellare, Goldreich, and Sudan}}}
+\bibcite{BGKW88}{{13}{1988}{{Ben-Or et~al.}}{{Ben-Or, Goldwasser, Kilian, and Wigderson}}}
+\bibcite{BGHSV06}{{14}{2006}{{Ben-Sasson et~al.}}{{Ben-Sasson, Goldreich, Harsha, Sudan, and Vadhan}}}
+\bibcite{BLR90}{{15}{1990}{{Blum et~al.}}{{Blum, Luby, and Rubinfeld}}}
+\bibcite{CMM06}{{16}{2006}{{Charikar et~al.}}{{Charikar, Makarychev, and Makarychev}}}
+\bibcite{Cook71}{{17}{1971}{{Cook}}{{}}}
+\bibcite{Dinur07}{{18}{2007}{{Dinur}}{{}}}
+\bibcite{DR04}{{19}{2006}{{Dinur and Reingold}}{{}}}
+\bibcite{DinurSteurer14}{{20}{2014}{{Dinur and Steurer}}{{}}}
+\bibcite{DKKMS18}{{21}{2018}{{Dinur et~al.}}{{Dinur, Khot, Kindler, Minzer, and Safra}}}
+\bibcite{Feige91}{{22}{1991}{{Feige}}{{}}}
+\bibcite{Feige98}{{23}{1998}{{Feige}}{{}}}
+\bibcite{FeigeLovasz92}{{24}{1992}{{Feige and Lov{\'a}sz}}{{}}}
+\bibcite{FGLSS96}{{25}{1996}{{Feige et~al.}}{{Feige, Goldwasser, Lov{\'a}sz, Safra, and Szegedy}}}
+\bibcite{FKO07}{{26}{2007}{{Feige et~al.}}{{Feige, Kindler, and O'Donnell}}}
+\bibcite{Freivalds79}{{27}{1979}{{Freivalds}}{{}}}
+\bibcite{GW95}{{28}{1995}{{Goemans and Williamson}}{{}}}
+\bibcite{Harsha07}{{29}{2007}{{Harsha}}{{}}}
+\bibcite{DIMACS10}{{30}{2010}{{Harsha and Charikar}}{{}}}
+\bibcite{Hastad99}{{31}{1999}{{H{\r a}stad}}{{}}}
+\bibcite{Hastad01}{{32}{2001}{{H{\r a}stad}}{{}}}
+\bibcite{Holenstein09}{{33}{2009}{{Holenstein}}{{}}}
+\bibcite{Johnson74}{{34}{1974}{{Johnson}}{{}}}
+\bibcite{Karp72}{{35}{1972}{{Karp}}{{}}}
+\bibcite{Khot02}{{36}{2002}{{Khot}}{{}}}
+\bibcite{Khot10}{{37}{2010}{{Khot}}{{}}}
+\bibcite{Khot19}{{38}{2019}{{Khot}}{{}}}
+\bibcite{KhotRegev08}{{39}{2008}{{Khot and Regev}}{{}}}
+\bibcite{KhotVishnoi15}{{40}{2015}{{Khot and Vishnoi}}{{}}}
+\bibcite{KKMO07}{{41}{2007}{{Khot et~al.}}{{Khot, Kindler, Mossel, and O'Donnell}}}
+\bibcite{KMS17}{{42}{2017}{{Khot et~al.}}{{Khot, Minzer, and Safra}}}
+\bibcite{KMS18}{{43}{2018}{{Khot et~al.}}{{Khot, Minzer, and Safra}}}
+\bibcite{LapidotShamir91}{{44}{1991}{{Lapidot and Shamir}}{{}}}
+\bibcite{Levin73}{{45}{1973}{{Levin}}{{}}}
+\bibcite{LundYannakakis94}{{46}{1994}{{Lund and Yannakakis}}{{}}}
+\bibcite{LFKN92}{{47}{1992}{{Lund et~al.}}{{Lund, Fortnow, Karloff, and Nisan}}}
+\bibcite{MOO10}{{48}{2010}{{Mossel et~al.}}{{Mossel, O'Donnell, and Oleszkiewicz}}}
+\bibcite{OpenAI26}{{49}{2026}{{OpenAI}}{{}}}
+\bibcite{PolishchukSpielman94}{{50}{1994}{{Polishchuk and Spielman}}{{}}}
+\bibcite{Raghavendra08}{{51}{2008}{{Raghavendra}}{{}}}
+\bibcite{Rao11}{{52}{2011}{{Rao}}{{}}}
+\bibcite{Raz98}{{53}{1998}{{Raz}}{{}}}
+\bibcite{Raz11}{{54}{2011}{{Raz}}{{}}}
+\bibcite{RR12}{{55}{2012}{{Raz and Rosen}}{{}}}
+\bibcite{RubinfeldSudan92}{{56}{1992}{{Rubinfeld and Sudan}}{{}}}
+\bibcite{RubinfeldSudan96}{{57}{1996}{{Rubinfeld and Sudan}}{{}}}
+\bibcite{Trevisan06}{{58}{2006}{{Trevisan}}{{}}}
+\bibcite{Trevisan12}{{59}{2012}{{Trevisan}}{{}}}
+\bibcite{TSSW00}{{60}{2000}{{Trevisan et~al.}}{{Trevisan, Sorkin, Sudan, and Williamson}}}
+\bibcite{Zuckerman07}{{61}{2007}{{Zuckerman}}{{}}}
+\gdef \@abspage@last{91}

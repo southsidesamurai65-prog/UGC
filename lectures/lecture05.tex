@@ -1,0 +1,621 @@
+\chapter{Parallel Repetition: Driving the Soundness Down}
+\label{lec:raz}
+
+{\sffamily\large\color{softgray}Playing a game $k$ times at once is not the same as playing it $k$ times\par}
+\vspace{0.5em}
+
+\providecommand{\lamp}{\lambda_{+}}
+
+\noindent
+Lecture~\ref{lec:why} ended with a promise.  The PCP theorem gives a game of value $1$ or $1-\eta_0$; repeating it $k=O(\log\frac1\delta)$ times in parallel gives a game of value $1$ or at most $\delta$,
+at the price of an alphabet of size $\poly(1/\delta)$.  The proof there was two lines long: ``apply Theorem~\ref{thm:raz}''.  This lecture opens that black box.
+
+The difficulty is easy to state.  A verifier that repeats itself \emph{sequentially} multiplies its acceptance probabilities (Proposition~\ref{prop:pcp-equiv}).
+Two provers cannot be questioned sequentially $k$ times without $k$ rounds of interaction, so the referee sends all $k$ questions at once, and each prover sees all $k$ of its questions before answering any of them.
+It may therefore answer coordinate~$1$ using what it learned about coordinate~$2$.  Does that help the provers?  It does (Section~\ref{sec:notpower}), and for years it was open whether the value even tends to $0$; a non-constructive proof that it does came first, as Raz notes in his introduction.
+\citet{Raz98} proved that it tends to $0$ exponentially fast in $k$, with a proof of about forty pages.
+
+We shall do three things.  First, we meet the examples that explain why the answer is not obvious: a two-answer game whose two-fold repetition beats the square of its value, and a game of value $\frac12$ whose two-fold repetition still has value~$\frac12$.
+Second, we prove a repetition theorem \emph{completely}, for projection games whose ``collision graph'' is an expander.  The proof, due to \citet{DinurSteurer14}, is linear algebra: it takes a few pages, and it is enough to establish the Label Cover theorem
+(Theorem~\ref{thm:lc}) with explicit constants, using a one-line trick that makes any game expanding.  Third, we state what is known without the expansion hypothesis, sketch how Raz and Holenstein prove it, and explain why repetition can never,
+by itself, prove the Unique Games Conjecture.
+
+\begin{goalbox}{After this lecture you should be able to\ldots}
+\begin{enumerate}[leftmargin=*,label=(\arabic*)]
+  \item compute the $k$-fold value of a small game by exhaustive search, and exhibit a strategy that beats $\val(G)^k$ (Section~\ref{sec:notpower});
+  \item define the collision value $\|G\|$ and prove $\val(G)^2\le\|G\|^2\le\val(G)$ (Section~\ref{sec:operator});
+  \item prove that $\|G\otimes H\|\le\|G\|$ and, more sharply, $\|G\otimes H\|\le\lamp(G)\,\|H\|$ (Sections~\ref{sec:tensor}--\ref{sec:product});
+  \item prove that $\lamp(G)\le1-\gamma\eta/54$ for a $\gamma$-expanding projection game of value $\le1-\eta$, and deduce the Label Cover theorem with an explicit number of repetitions (Sections~\ref{sec:expander}--\ref{sec:lc});
+  \item state the repetition theorems of Raz, Holenstein, Rao and Dinur--Steurer, say what fails (strong repetition) and why that obstructs a repetition-based proof of the Unique Games Conjecture (Sections~\ref{sec:general}--\ref{sec:ugc-rep}).
+\end{enumerate}
+\end{goalbox}
+
+
+%% ===========================================================================
+\section{Repeating a game is not raising its value to a power}
+\label{sec:notpower}
+%% ===========================================================================
+
+We use the games of Lecture~\ref{lec:why} (Definition~\ref{def:game}) with one harmless generalization: the referee draws the edge from an arbitrary probability distribution~$\mu$ rather than the uniform one.
+All games in Lectures~\ref{lec:why}--\ref{lec:games} have uniform~$\mu$, and a rational~$\mu$ can always be made uniform by repeating edges (see Remark~\ref{rem:multiplicity} below).
+
+\begin{definition}[Weighted projection game]\label{def:wgame}
+A \defn{projection game} $G$ has question sets $U$ (Alice) and $W$ (Bob), label sets $\Sigma_U,\Sigma_W$, a finite set $E$ of edges $e=(u_e,w_e)\in U\times W$ (parallel edges allowed) with a probability distribution $\mu$ on $E$, and for every edge a map $\pi_e\colon\Sigma_U\to\Sigma_W$.
+The referee draws $e\sim\mu$, sends $u_e$ to Alice and $w_e$ to Bob, and accepts answers $a\in\Sigma_U$, $b\in\Sigma_W$ iff $\pi_e(a)=b$.
+We write $\mu_U,\mu_W$ for the marginals of $\mu$ on questions (assumed positive), $\mu(\cdot\mid w)$ for $\mu$ conditioned on $w_e=w$, and $\val(G)$ for the maximum acceptance probability over deterministic strategies.
+The \defn{product} $G\otimes H$ has questions $U\times U'$ and $W\times W'$, labels $\Sigma_U\times\Sigma_{U'}$ and $\Sigma_W\times\Sigma_{W'}$, edges $E\times E'$ with the product distribution, and constraint maps $\pi_e\times\pi_{e'}$; $G^{\otimes k}$ is the $k$-fold product.
+\end{definition}
+
+\noindent
+This is the $k$-fold parallel repetition of Lecture~\ref{lec:why}: the referee draws $k$ independent edges, sends all $k$ Alice-questions to Alice and all $k$ Bob-questions to Bob, and accepts iff every coordinate is accepted.
+Note that \emph{totality} of $\pi_e$ is part of the definition: every label of Alice has exactly one accepted partner.  Unique Games are the case of bijective maps.
+
+\begin{remark}\label{rem:multiplicity}
+If $\mu$ takes rational values, write $\mu(e)=n_e/N$; replacing $e$ by $n_e$ parallel copies gives an equivalent game with the uniform distribution on $N$ edges.
+\end{remark}
+
+\subsection{The easy inequalities}
+
+\begin{lemma}[Elementary facts]\label{lem:rep-basic}
+For every game $G$ and $k\ge2$: $\ \val(G)^k\ \le\ \val(G^{\otimes k})\ \le\ \val(G^{\otimes(k-1)})$.  In particular $\val(G)=1$ implies $\val(G^{\otimes k})=1$.
+\end{lemma}
+\begin{proof}
+Lower bound: both provers play an optimal strategy of $G$ independently in each coordinate; the $k$ coordinates are independent.
+Upper bound: take a deterministic strategy $(f,g)$ for $G^{\otimes k}$ and write $e=(e_1,\dots,e_k)$.  Winning all $k$ coordinates implies winning the first $k-1$, so
+$\val(G^{\otimes k})\le\E_{e_k}\Pr_{e_1..e_{k-1}}[\text{first }k-1\text{ coordinates won}\mid e_k]$, hence some fixed edge $e_k=(u_k,w_k)$ attains at least this average.  With $u_k$ and $w_k$ hard-wired, $f(\cdot,u_k)$ and $g(\cdot,w_k)$ are strategies for $G^{\otimes(k-1)}$ that win with probability at least $\val(G^{\otimes k})$.
+\end{proof}
+
+\noindent
+Sequential repetition would give $\val(G)^k$ exactly.  Is the first inequality an equality?  Here is the smallest example showing that it is not.
+
+\begin{example}[CHSH]\label{ex:chsh}
+Let $U=W=\{0,1\}$ and $\Sigma_U=\Sigma_W=\{0,1\}$, with the uniform distribution on the four pairs $(x,y)$ and the constraint $a\oplus b=x\wedge y$, \ie $\pi_{(x,y)}(a)=a\oplus xy$.  Every $\pi_{(x,y)}$ is a bijection, so this is a Unique Game with two labels.
+
+\emph{Its value is $\frac34$.}  The four constraints $f(x)\oplus g(y)=xy$ cannot all hold: adding them, the left sides cancel in pairs and give $0$, while the right sides add up to $0+0+0+1=1$.  The strategy $f=g=0$ satisfies three.
+
+\emph{Its two-fold repetition has value $\frac58>\big(\frac34\big)^2=\frac9{16}$.}  Questions are now $x=(x_1,x_2)$ and $y=(y_1,y_2)$, answers are pairs, and both coordinates must satisfy $a_i\oplus b_i=x_iy_i$.  Consider the strategy
+\[
+  a(x)=\begin{cases}(1,0)&x=(1,1)\\(0,0)&\text{otherwise}\end{cases}\qquad
+  b(y)=\begin{cases}(0,1)&y=(1,1)\\(0,0)&\text{otherwise.}\end{cases}
+\]
+Table~\ref{tab:chsh-win} shows that it wins on $10$ of the $16$ question pairs: $10/16=\frac58$.
+Exhaustive search over all $4^4\cdot4^4$ strategies confirms that nothing does better; for $k=3$ an exhaustive search over Alice's $8^8$ strategies, with Bob responding optimally, gives $\val(G^{\otimes3})=\frac{31}{64}$, which exceeds \mbox{$\big(\frac34\big)^3=\frac{27}{64}$}.
+\end{example}
+
+\begin{table}[t]
+\centering\small
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}c|cccc@{}}
+\toprule
+$x\backslash y$ & $00$ & $01$ & $10$ & $11$\\
+\midrule
+$00$ & \checkmark & \checkmark & \checkmark & $\cdot$\\
+$01$ & \checkmark & $\cdot$ & \checkmark & \checkmark\\
+$10$ & \checkmark & \checkmark & $\cdot$ & $\cdot$\\
+$11$ & $\cdot$ & $\cdot$ & \checkmark & \checkmark\\
+\bottomrule
+\end{tabular}
+\caption{The winning question pairs of the two-fold CHSH strategy of Example~\ref{ex:chsh}: $10$ of $16$.  A single coordinate of the same strategy would win only $\frac34$ of the time on its own; the strategy gains by letting each prover's answer in coordinate~$i$ depend on the \emph{other} coordinate's question.}
+\label{tab:chsh-win}
+\end{table}
+
+\noindent
+The gain is real but small: $\frac58$ against $\frac9{16}$.  The next example shows that without structure, repetition can fail to help at all.
+
+\begin{example}[Feige's non-interactive agreement game]\label{ex:feige}
+Let $x,y\in\{0,1\}$ be independent uniform questions to Alice and Bob, and let the label set of both be $\{A_0,A_1,B_0,B_1\}$.  The provers win iff they give the \emph{same} label and it is either $A_x$ (``we agree on Alice's question'') or $B_y$ (``we agree on Bob's question'').
+
+\emph{Its value is $\frac12$.}  Fix deterministic strategies $f,g$.  For a given Bob-question $y$, the label $g(y)$ can win against at most one $x$ if $g(y)=A_s$ (namely $x=s$), against at most two if $g(y)=B_y$ (namely those $x$ with $f(x)=B_y$), and against none otherwise.
+If some $y$ is won twice then $g(y)=B_y$ and $f\equiv B_y$, and then the other $y'$ is never won; otherwise each $y$ is won at most once.  In either case at most $2$ of the $4$ question pairs are won.  Always answering $A_0$ achieves $\frac12$.
+
+\emph{Its two-fold repetition has value $\frac12$ as well.}  Let Alice, on $(x_1,x_2)$, answer $(A_{x_1},B_{x_1})$, and Bob, on $(y_1,y_2)$, answer $(A_{y_2},B_{y_2})$.  In coordinate~$1$ the pair $(A_{x_1},A_{y_2})$ is accepted iff $y_2=x_1$ (the label $A_{x_1}$ is Alice's own question); in coordinate~$2$ the pair $(B_{x_1},B_{y_2})$ is accepted iff $y_2=x_1$ (the label $B_{y_2}$ is Bob's own question).  Both conditions are the same event $\{x_1=y_2\}$, which has probability $\frac12$.
+Together with Lemma~\ref{lem:rep-basic}, $\val(G^{\otimes2})=\val(G)=\frac12$.  An exhaustive search over all strategies confirms both numbers.
+\end{example}
+
+\begin{pitfall}{repetition does not have to help, and does not help as the product says}
+Example~\ref{ex:feige} is a game for which \emph{no} bound of the form $\val(G^{\otimes2})\le\varphi(\val(G))$ with $\varphi(x)<x$ can hold; a repetition theorem must therefore speak about $k$ large, and about the size of the answer sets or the structure of the constraints.
+Example~\ref{ex:chsh} shows that even for Unique Games the true value of the repeated game lies strictly between $\val(G)^k$ and $\val(G)$.  Neither game is exotic: the first is a free game on two questions, the second is the XOR game behind Bell's inequality.
+The Feige game is \emph{not} a projection game in our sense (a label $A_{1-x}$ of Alice has no accepted partner at all), and Lemma~\ref{lem:val-coll} below uses totality; this is no accident.
+\end{pitfall}
+
+We will return to these two examples in Section~\ref{sec:general}.  For now the lesson is: to prove that $\val(G^{\otimes k})\to0$ we cannot reason one coordinate at a time.  We need a quantity of $G$ that \emph{is} multiplicative-like under products and still controls the value.
+
+
+%% ===========================================================================
+\section{A projection game as a linear operator}
+\label{sec:operator}
+%% ===========================================================================
+
+\subsection{Strategies, the operator $P_G$, and the success probability}
+
+Let $G$ be a projection game.  An \defn{assignment} for Alice is a function $f\colon U\times\Sigma_U\to[0,1]$ with $\sum_af(u,a)=1$ for every $u$; $f(u,a)$ is the probability that Alice answers $a$ to $u$.
+A deterministic \defn{labeling} $\ell\colon U\to\Sigma_U$ is the assignment $f_\ell(u,a)=\mathbf 1[a=\ell(u)]$.  Assignments for Bob are defined in the same way on $W\times\Sigma_W$.
+On real functions $f,f'$ on $U\times\Sigma_U$ and $g,g'$ on $W\times\Sigma_W$ we use the inner products
+\[
+  \langle f,f'\rangle=\E_{u\sim\mu_U}\sum_af(u,a)f'(u,a),\qquad
+  \langle g,g'\rangle=\E_{w\sim\mu_W}\sum_bg(w,b)g'(w,b),
+\]
+and the norms $\|f\|=\langle f,f\rangle^{1/2}$.
+The \defn{operator of the game} sends a function on $U\times\Sigma_U$ to a function on $W\times\Sigma_W$:
+\[
+  (P_Gf)(w,b)\;=\;\E_{e\sim\mu(\cdot\mid w)}\ \sum_{a\colon\pi_e(a)=b}f(u_e,a).
+\]
+In words: to evaluate $P_Gf$ at $w$, pick a random neighbour of $w$, let Alice answer according to $f$, and project her answer to a label of Bob.  Because every $\pi_e$ is a \emph{total} map, $\sum_b(P_Gf)(w,b)=\E_{e\mid w}\sum_af(u_e,a)=1$ when $f$ is an assignment:
+\emph{$P_Gf$ is again an assignment}, this time for Bob.
+
+\begin{lemma}[The success probability is a bilinear form]\label{lem:bilinear}
+If Alice plays the assignment $f$ and Bob plays $g$, the referee accepts with probability $\langle g,P_Gf\rangle$.  Consequently $\val(G)=\max\langle g,P_Gf\rangle$ over assignments, and the maximum is attained by deterministic ones.
+\end{lemma}
+\begin{proof}
+The acceptance probability is $\E_{e\sim\mu}\sum_{a,b}f(u_e,a)g(w_e,b)\mathbf 1[\pi_e(a)=b]$.  Condition on $w_e=w$ to get $\E_w\sum_bg(w,b)\,\E_{e\mid w}\sum_{a\colon\pi_e(a)=b}f(u_e,a)=\langle g,P_Gf\rangle$.
+This expression is bilinear in $(f,g)$, and the set of assignments is a product of simplices whose extreme points are the deterministic ones.
+\end{proof}
+
+\subsection{The collision value}
+
+The optimal $g$ for a given $f$ is obvious (answer the most likely label of $P_Gf$), so the interesting object is $P_Gf$ itself.  Its length is the quantity that will behave well under products.
+
+\begin{definition}[Collision value]\label{def:coll}
+$\|G\|\;=\;\max\{\|P_Gf\|:\ f\text{ an assignment for Alice}\}$.
+\end{definition}
+
+\noindent
+Since $f\mapsto\|P_Gf\|$ is convex, the maximum is attained at a deterministic labeling.  The name comes from the following experiment, in which Bob has been eliminated.
+
+\begin{lemma}[The collision game]\label{lem:collgame}
+$\|P_Gf\|^2$ is the probability of acceptance in this experiment: draw $w\sim\mu_W$ and two edges $e,e'\sim\mu(\cdot\mid w)$ independently; let two independent copies of Alice answer $a\sim f(u_e,\cdot)$ and $a'\sim f(u_{e'},\cdot)$; accept iff $\pi_e(a)=\pi_{e'}(a')$.
+\end{lemma}
+\begin{proof}
+Expand the square and exchange the sum over $b$ with the sums over $a,a'$:
+\begin{align*}
+  \|P_Gf\|^2&=\E_w\sum_b\Big(\E_{e\mid w}\sum_{a\colon\pi_e(a)=b}f(u_e,a)\Big)^2\\
+  &=\E_w\ \E_{e,e'\mid w}\ \sum_{a,a'}f(u_e,a)\,f(u_{e'},a')\,\mathbf 1\big[\pi_e(a)=\pi_{e'}(a')\big].\qedhere
+\end{align*}
+\end{proof}
+
+\noindent
+For the clause--variable game of a $3$-CNF this is the following experiment (Figure~\ref{fig:collision}): choose a random variable $x$ and two random clauses containing it; the two clause-provers must give satisfying assignments of their clauses that \emph{agree on $x$}.
+The same symmetrization appears, implicitly, throughout the PCP literature: for example when a ``line versus point'' low-degree test is turned into a ``line versus line'' test \citep[footnote to Section~2.3]{DinurSteurer14}.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,every node/.style={font=\small},
+   cl/.style={draw,rounded corners=2pt,minimum width=5.3cm,minimum height=0.95cm,fill=accent!8,align=center},
+   vr/.style={draw,circle,minimum size=0.9cm,fill=warn!10},
+   ok/.style={font=\bfseries\small,color=green!50!black},
+   no/.style={font=\bfseries\small,color=claim}]
+  \node[font=\sffamily\small\bfseries,color=accent,anchor=west] at (-2.7,2.55) {(a)\ \ a collision};
+  \node[cl] (c1) at (0,1.5) {$C_1=(x_1\vee x_2\vee\neg x_3)$\\ label $(x_1,x_2,x_3)=(1,0,0)$};
+  \node[cl] (c2) at (0,0) {$C_2=(\neg x_1\vee x_3\vee x_4)$\\ label $(x_1,x_3,x_4)=(0,0,0)$};
+  \node[vr] (x3) at (5.2,0.75) {$x_3$};
+  \draw[-{Stealth[length=2.2mm]},thick] (c1.east) -- node[above,sloped,font=\footnotesize] {$x_3=0$} (x3);
+  \draw[-{Stealth[length=2.2mm]},thick] (c2.east) -- node[below,sloped,font=\footnotesize] {$x_3=0$} (x3);
+  \node[ok,anchor=west] at (5.9,0.75) {agree: accept};
+  \begin{scope}[yshift=-3.9cm]
+  \node[font=\sffamily\small\bfseries,color=accent,anchor=west] at (-2.7,2.55) {(b)\ \ no collision};
+  \node[cl] (d1) at (0,1.5) {$C_1=(x_1\vee x_2\vee\neg x_3)$\\ label $(x_1,x_2,x_3)=(1,0,0)$};
+  \node[cl] (d2) at (0,0) {$C_2=(\neg x_1\vee x_3\vee x_4)$\\ label $(x_1,x_3,x_4)=(1,1,0)$};
+  \node[vr] (y3) at (5.2,0.75) {$x_3$};
+  \draw[-{Stealth[length=2.2mm]},thick] (d1.east) -- node[above,sloped,font=\footnotesize] {$x_3=0$} (y3);
+  \draw[-{Stealth[length=2.2mm]},thick] (d2.east) -- node[below,sloped,font=\footnotesize] {$x_3=1$} (y3);
+  \node[no,anchor=west] at (5.9,0.75) {disagree: reject};
+  \end{scope}
+\end{tikzpicture}
+\caption{The collision game of the clause--variable game of Figure~\ref{fig:cv}.  The referee picks the variable $x_3$ and two clauses containing it; the two copies of Alice answer with satisfying assignments of their clauses (both are satisfying in (a) and (b)) and are accepted iff their projections to $x_3$ coincide.  Bob does not appear.}
+\label{fig:collision}
+\end{figure}
+
+\begin{lemma}[Collision value versus value]\label{lem:val-coll}
+$\ \val(G)^2\ \le\ \|G\|^2\ \le\ \val(G).$
+\end{lemma}
+\begin{proof}
+Let $f,g$ be deterministic and optimal, so $\val(G)=\langle g,P_Gf\rangle\le\|g\|\,\|P_Gf\|\le\|G\|$, because $\|g\|^2=\E_w\sum_bg(w,b)^2=1$.
+For the other inequality let $f$ attain $\|G\|$.  Since $P_Gf$ is an assignment for Bob, Lemma~\ref{lem:bilinear} gives $\|G\|^2=\langle P_Gf,P_Gf\rangle\le\val(G)$.
+\end{proof}
+
+\noindent
+In particular $\val(G)=1$ iff $\|G\|=1$.  The squaring is harmless for us: ``exponentially small'' survives a square root, at the cost of a factor $2$ in the number of repetitions.
+(The proof of the second inequality is the place where totality of the maps $\pi_e$ is used; for a partial projection one must increase some entries of $P_Gf$ to turn it into an assignment, and this is how \citet{DinurSteurer14} proceed.)
+
+\begin{example}[CHSH, by hand]\label{ex:chsh-coll}
+In the collision game of Example~\ref{ex:chsh} the referee picks a uniform $y$ and two independent uniform $x,x'$; a deterministic Alice answers $f(x),f(x')$; the pair is accepted iff $f(x)\oplus xy=f(x')\oplus x'y$.
+If $x=x'$ (probability $\frac12$) this always holds.  If $x\ne x'$ it holds iff $f(0)\oplus f(1)=y$, which happens for exactly one of the two values of $y$.  So $\|P_Gf\|^2=\frac12+\frac12\cdot\frac12=\frac34$ for every deterministic $f$, \ie
+$\|G\|^2=\frac34=\val(G)$.  In Lemma~\ref{lem:val-coll} the left inequality is strict here ($\frac9{16}<\frac34$) and the right one is an equality.
+\end{example}
+
+
+%% ===========================================================================
+\section{The collision value under products}
+\label{sec:tensor}
+%% ===========================================================================
+
+For two functions on question--label pairs the product game acts coordinatewise.  Write $L(X)$ for the real functions on $X$ with the inner product above.
+
+\begin{lemma}[Products are tensor products]\label{lem:tensor}
+$P_{G\otimes H}=P_G\otimes P_H$: for $F\colon(U\times U')\times(\Sigma_U\times\Sigma_{U'})\to\R$,
+\[
+  (P_{G\otimes H}F)\big((w,w'),(b,b')\big)=\E_{e\sim\mu(\cdot\mid w)}\ \E_{e'\sim\mu'(\cdot\mid w')}\ \sum_{a\colon\pi_e(a)=b}\ \sum_{a'\colon\pi_{e'}(a')=b'}F\big((u_e,u_{e'}),(a,a')\big).
+\]
+\end{lemma}
+\begin{proof}
+Given $(w,w')$, the edge of $G\otimes H$ is a product of an edge of $G$ and an edge of $H$, drawn independently from $\mu(\cdot\mid w)$ and $\mu'(\cdot\mid w')$.
+\end{proof}
+
+\noindent
+For the value this tensor structure is of little use, since the value of a product is not the product of the values (Section~\ref{sec:notpower}).  For the \emph{collision} value we can at least prove the monotonicity that is trivial for the value.
+
+\begin{lemma}[Playing in parallel cannot raise the collision value]\label{lem:coll-mono}
+For all projection games $G,H$: $\ \|G\otimes H\|\le\|G\|$ and $\|G\otimes H\|\le\|H\|$.
+\end{lemma}
+\begin{proof}
+By symmetry it suffices to prove the first.  Let $F$ be an assignment for $G\otimes H$.  For $u'\in U'$ and $w'\in W'$ define functions on $U\times\Sigma_U$:
+\[
+  F_{u'}(u,a)=\sum_{a'}F\big((u,u'),(a,a')\big),\qquad F_{w'}=\E_{e'\sim\mu'(\cdot\mid w')}F_{u_{e'}}.
+\]
+$F_{u'}$ is an assignment for $G$ (non-negative, and $\sum_aF_{u'}(u,a)=\sum_{a,a'}F=1$), hence so is the average $F_{w'}$.
+Fix $(w,w')$ and $b$, and put $x_{b'}=(P_{G\otimes H}F)((w,w'),(b,b'))\ge0$ as in Lemma~\ref{lem:tensor}.  Summing over $b'$ removes the constraint on $a'$:
+\[
+  \sum_{b'}x_{b'}=\E_{e\mid w}\ \E_{e'\mid w'}\sum_{a\colon\pi_e(a)=b}F_{u_{e'}}(u_e,a)=\E_{e\mid w}\sum_{a\colon\pi_e(a)=b}F_{w'}(u_e,a)=(P_GF_{w'})(w,b).
+\]
+For non-negative numbers $\sum_{b'}x_{b'}^2\le\big(\sum_{b'}x_{b'}\big)^2$.  Therefore
+\[
+  \|P_{G\otimes H}F\|^2=\E_{w,w'}\sum_{b,b'}x_{b'}^2\ \le\ \E_{w'}\ \E_w\sum_b\big((P_GF_{w'})(w,b)\big)^2=\E_{w'}\|P_GF_{w'}\|^2\ \le\ \|G\|^2.\qedhere
+\]
+\end{proof}
+
+\noindent
+Lemma~\ref{lem:coll-mono} says that $\|G^{\otimes k}\|$ is non-increasing in $k$ (compare Lemma~\ref{lem:rep-basic}).  But it does not say that it \emph{decreases}.  For that we need to compare $G\otimes H$ with $H$ alone, and this is where the argument becomes interesting.
+
+
+%% ===========================================================================
+\section{The product theorem}
+\label{sec:product}
+%% ===========================================================================
+
+Fix $G$.  We look for a number $\rho_G<1$, depending only on $G$, such that $\|G\otimes H\|\le\rho_G\|H\|$ \emph{for every} projection game~$H$.
+Given such a $\rho_G$, $\|G^{\otimes k}\|\le\rho_G^{k-1}\|G\|$ follows at once, and the value of $G^{\otimes k}$ is bounded by Lemma~\ref{lem:val-coll}.
+
+Suppose $F$ is a best assignment for $G\otimes H$ and consider first the ``null'' version of $G$ that never rejects.  This is the trivial game below; comparing $G\otimes H$ with it, the part coming from $H$ will cancel.
+
+\begin{definition}[The trivial game and the parameter $\lamp(G)$]\label{def:lamp}
+The \defn{trivial game} $T_G$ has the same Alice side as $G$ (questions $U$, labels $\Sigma_U$, marginal $\mu_U$), Bob's questions are again $U$, Bob has the single label $\ast$, and the edges are $(u,u)$ with probability $\mu_U(u)$.  Every strategy wins.  Its operator computes the mass $(P_{T_G}h)(u,\ast)=\sum_ah(u,a)$ of a function $h\ge0$, so $\|P_{T_G}h\|^2=\E_u\big(\sum_ah(u,a)\big)^2$.
+Define
+\[
+  \lamp(G)\;=\;\sup\Big\{\frac{\|P_Gh\|}{\|P_{T_G}h\|}\ :\ h\colon U\times\Sigma_U\to\R_{\ge0},\ h\ne0\Big\}.
+\]
+\end{definition}
+
+\noindent
+The supremum is over all non-negative functions, not only assignments, so $\|G\|\le\lamp(G)$ (take $h$ an assignment: $\|P_{T_G}h\|=1$).  Also $\lamp(G)\le1$, because for $m(u)=\sum_ah(u,a)$,
+$\|P_Gh\|^2=\E_w\sum_b\big(\E_{e\mid w}\sum_{a\colon\pi_e(a)=b}h(u_e,a)\big)^2\le\E_w\big(\E_{e\mid w}m(u_e)\big)^2\le\E_um(u)^2$ by $\sum x_b^2\le(\sum x_b)^2$ and Jensen.
+
+\begin{theorem}[Product theorem; Dinur--Steurer]\label{thm:product}
+For all projection games $G,H$: $\ \|G\otimes H\|\le\lamp(G)\cdot\|H\|$.
+\end{theorem}
+\begin{proof}
+Let $F$ be an assignment for $G\otimes H$ with $\|P_{G\otimes H}F\|=\|G\otimes H\|$.  Define a non-negative function $h$ of $x=(u,a)$ and $j=(w',b')$ by applying only the $H$-half of the operator:
+\[
+  h(x;j)\;=\;\E_{e'\sim\mu'(\cdot\mid w')}\ \sum_{a'\colon\pi_{e'}(a')=b'}F\big((u,u_{e'}),(a,a')\big).
+\]
+By Lemma~\ref{lem:tensor}, $P_{G\otimes H}F=(P_G\otimes\mathrm{Id})h$ and $P_{T_G\otimes H}F=(P_{T_G}\otimes\mathrm{Id})h$.
+The assignment $F$ has the same Alice side in $G\otimes H$ and in $T_G\otimes H$, so it is an assignment for $T_G\otimes H$ as well, and by Lemma~\ref{lem:coll-mono}
+\[
+  \|(P_{T_G}\otimes\mathrm{Id})h\|=\|P_{T_G\otimes H}F\|\ \le\ \|T_G\otimes H\|\ \le\ \|H\|.
+\]
+(The left side is positive: for an assignment $F$ the entries of $(P_{T_G}\otimes\mathrm{Id})h$ at $(u,w')$ sum over $b'$ to $1$.)  Dividing,
+\[
+  \frac{\|G\otimes H\|}{\|H\|}\ \le\ \frac{\|(P_G\otimes\mathrm{Id})h\|}{\|(P_{T_G}\otimes\mathrm{Id})h\|}.
+\]
+Both numerator and denominator are sums over the columns $j$ of $h$: with $h_j=h(\cdot\,;j)\ge0$ and weights $m_j=\mu_{W'}(w')$,
+$\|(P_G\otimes\mathrm{Id})h\|^2=\sum_jm_j\|P_Gh_j\|^2$ and $\|(P_{T_G}\otimes\mathrm{Id})h\|^2=\sum_jm_j\|P_{T_G}h_j\|^2$.
+A ratio of sums with positive denominators is at most the largest ratio of corresponding terms, and for each $j$ the ratio is at most $\lamp(G)^2$ by definition (columns with $h_j=0$ contribute $0$ to both sums).
+\end{proof}
+
+\noindent
+The mechanism is worth a sentence.  The function $h$ summarizes everything that $H$ did to the strategy; the factorization $P_{G\otimes H}=(P_G\otimes\mathrm{Id})(\mathrm{Id}\otimes P_H)$ lets us discard $H$ and keep only the best $h$.
+The denominator, supplied by the trivial game, is what turns an inequality about two interacting games into one about~$G$ alone.
+
+\begin{corollary}[Repetition bound in terms of $\lamp$]\label{cor:lamp}
+For every projection game $G$ and $k\ge1$: $\ \val(G^{\otimes k})\ \le\ \|G^{\otimes k}\|\ \le\ \lamp(G)^k$.
+\end{corollary}
+\begin{proof}
+Apply Theorem~\ref{thm:product} with $H=G^{\otimes(k-1)}$ repeatedly, then use $\|G\|\le\lamp(G)$ and Lemma~\ref{lem:val-coll}.
+\end{proof}
+
+\begin{example}[CHSH, continued]\label{ex:chsh-lamp}
+Let $h=m\cdot f_\ell$ for a labeling $\ell$ of Alice's two questions and weights $m=(m_0,m_1)\ge0$.  The computation of Example~\ref{ex:chsh-coll}, now with weights, gives $\|P_Gh\|^2=\frac14(m_0^2+m_1^2)+\frac14m_0m_1$ for \emph{every} $\ell$ (the two questions collide for exactly one of the two values of $y$), while $\|P_{T_G}h\|^2=\frac12(m_0^2+m_1^2)$.
+The largest value of the ratio of these two quadratic forms is $\frac34$, attained at $m=(1,1)$.  Deterministic $h$ suffice for the supremum (Step~1 of the proof of Theorem~\ref{thm:expander} below), so $\lamp(G)^2=\frac34$.  Corollary~\ref{cor:lamp} reads $\val(G^{\otimes k})\le(\frac34)^{k/2}$.
+
+This bound is tight for the \emph{collision value}, for every $k$: the product assignment $f^{\otimes k}$ has $P_{G^{\otimes k}}f^{\otimes k}=(P_Gf)^{\otimes k}$, whose norm is $\|P_Gf\|^k=(\sqrt3/2)^k$, so $\|G^{\otimes k}\|=(\sqrt3/2)^k=\lamp(G)^k$.
+It is not tight for the value: Table~\ref{tab:chsh-sandwich} puts the chain $\val(G)^k\le\val(G^{\otimes k})\le\|G^{\otimes k}\|=\lamp(G)^k$ next to the true values.
+\end{example}
+
+\begin{table}[t]
+\centering\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}rcccc@{}}
+\toprule
+$k$ & $\val(G)^k$ & $\val(G^{\otimes k})$ & $\|G^{\otimes k}\|$ & $\lamp(G)^k$\\
+\midrule
+$1$ & $0.7500$ & $0.7500$ & $0.8660$ & $0.8660$\\
+$2$ & $0.5625$ & $0.6250$ & $0.7500$ & $0.7500$\\
+$3$ & $0.4219$ & $0.4844$ & $0.6495$ & $0.6495$\\
+\bottomrule
+\end{tabular}
+\caption{CHSH: the true values of Example~\ref{ex:chsh} (second column; exhaustive search) are sandwiched between the na\"ive power (first column) and the collision value (third column), which equals $(\sqrt3/2)^k=\lamp(G)^k$ by Example~\ref{ex:chsh-lamp}.  The first inequality of Lemma~\ref{lem:rep-basic} is strict for $k\ge2$.}
+\label{tab:chsh-sandwich}
+\end{table}
+
+\begin{pitfall}{$\lamp(G)$ can equal $1$ for a game that is far from satisfiable}
+Take $G$ to be the disjoint union of a perfectly satisfiable game and a game of value near $0$, each drawn with probability $\frac12$.  A function $h$ supported on the satisfiable half has $\|P_Gh\|=\|P_{T_G}h\|$, so $\lamp(G)=1$ although $\val(G)\approx\frac12$.
+Theorem~\ref{thm:product} is then vacuous: the parameter $\lamp(G)$ cannot see that half of the game is hopeless, because one global denominator ignores how the game is connected.  The remedy of \citet{DinurSteurer14} for general games is to replace $T_G$ by one trivial game per question (their relaxation $\val_+$);
+for the games that matter for Label Cover there is a simpler remedy, the subject of the next section: make the game expand.
+\end{pitfall}
+
+
+%% ===========================================================================
+\section{Expanding games: the proof}
+\label{sec:expander}
+%% ===========================================================================
+
+\subsection{The Markov chain of a game}
+
+In the collision game of Lemma~\ref{lem:collgame} the referee draws two edges $e,e'$ at a common Bob-question.  Let $J_G(u,u')=\Pr[u_e=u,\ u_{e'}=u']$ in that experiment.  It is a symmetric matrix on $U$ whose row sums are $\mu_U(u)$, because each of $u_e,u_{e'}$ alone has law $\mu_U$.
+Let $A_G(u,u')=J_G(u,u')/\mu_U(u)$ be the corresponding random walk: from $u$, move to a random Bob-question $w\sim\mu(\cdot\mid u)$ and come back to a random neighbour $u'\sim\mu(\cdot\mid w)$.  Write $\langle x,y\rangle_U=\E_{u\sim\mu_U}x(u)y(u)$ for functions on $U$ and $\mathrm{Var}(x)=\langle x,x\rangle_U-\langle x,\mathbf 1\rangle_U^2$.
+Then $\langle x,A_Gy\rangle_U=\sum_{u,u'}J_G(u,u')x(u)y(u')$, so $A_G$ is self-adjoint with respect to $\mu_U$, and
+\[
+  \langle x,A_Gx\rangle_U=\E_w\Big(\E_{e\sim\mu(\cdot\mid w)}x(u_e)\Big)^2\ \ge\ 0 .
+\]
+Hence $A_G$ has eigenvalues $1=\lambda_1\ge\lambda_2\ge\dots\ge0$, and the quantity
+\[
+  \gamma(G)\;=\;1-\lambda_2(A_G)\ \in[0,1]
+\]
+is the \defn{spectral gap} of the game; $G$ is \defn{$\gamma$-expanding} if $\gamma(G)\ge\gamma$.  Since $\langle x,(I-A_G)x\rangle_U=\E_w\mathrm{Var}_{e\mid w}\,x(u_e)$ (the first term is $\E_ux(u)^2$ and the second is the square of the mean in each neighbourhood), the spectral gap is the best constant in a Poincar\'e inequality:
+\begin{equation}\label{eq:poincare}
+  \gamma(G)\cdot\mathrm{Var}_{u\sim\mu_U}(x)\ \le\ \E_w\,\mathrm{Var}_{e\sim\mu(\cdot\mid w)}\,x(u_e)\qquad\text{for all }x\colon U\to\R.
+\end{equation}
+In words: a function that varies a lot over $U$ must vary inside many neighbourhoods; a disconnected game has $\gamma=0$.
+
+\begin{example}\label{ex:gaps}
+(a) The CHSH game is \emph{free}: $\mu=\mu_U\otimes\mu_W$.  Then $J_G(u,u')=\mu_U(u)\mu_U(u')$, $A_G$ maps every function to its mean, and $\gamma=1$.  The same holds for every free game (Exercise~\ref{ex:free}).
+(b) In the clause--variable game of Figure~\ref{fig:cv} (three clauses, four variables, nine equally likely edges) one finds $J(C_i,C_i)=\frac4{27}$ and $J(C_i,C_j)=\frac5{54}$ for $i\ne j$, so $A_G=\frac16I+\frac5{18}\mathbf 1\mathbf 1^\top$ has second eigenvalue $\frac16$ and $\gamma=\frac56$ (Exercise~\ref{ex:fig-gap}).
+(c) For the odd cycle game on $\ell$ vertices, $\gamma=1-\cos^4(\pi/\ell)\approx2\pi^2/\ell^2$ (Exercise~\ref{ex:cycle-gap}); the triangle has $\gamma=\frac{15}{16}$.
+\end{example}
+
+\subsection{Expansion makes the product theorem effective}
+
+\begin{theorem}[$\lamp$ is close to the collision value on expanding games; Dinur--Steurer]\label{thm:expander}
+Let $G$ be a $\gamma$-expanding projection game and let $\eps>0$ satisfy $\lamp(G)>1-\eps$.  Then $\ \|G\|^2\ge1-\dfrac{54\,\eps}{\gamma}.$
+\end{theorem}
+\begin{proof}
+Pick $h\ge0$ with $\|P_Gh\|>(1-\eps)\|P_{T_G}h\|$, and scale it so that $\|P_{T_G}h\|=1$.  Write $m(u)=\sum_ah(u,a)$; then $\E_um(u)^2=1$ and $\|P_Gh\|>1-\eps$.
+
+\emph{Step 1: we may assume $h$ is concentrated on one label per question.}  Choose independently for every $u$ with $m(u)>0$ a label $a_u$ with probability $h(u,a)/m(u)$, and set $h'(u,a_u)=m(u)$, $h'(u,a)=0$ otherwise.  Then $\E h'=h$ and $m$ is unchanged, so $\|P_{T_G}h'\|=1$; by convexity of the norm, $\E\|P_Gh'\|\ge\|P_G\E h'\|=\|P_Gh\|$, so some outcome $h'$ has $\|P_Gh'\|\ge\|P_Gh\|$.  (This is where non-negativity of $h$ is used.)
+Henceforth $h=m\cdot f_\ell$ for a labeling $\ell\colon U\to\Sigma_U$.
+
+\emph{Step 2: the quadratic form.}  For $u,u'$ with $J(u,u')>0$ let $Q(u,u')\in[0,1]$ be the probability, in the experiment of Lemma~\ref{lem:collgame}, that $\pi_e(\ell(u))=\pi_{e'}(\ell(u'))$ given $u_e=u$, $u_{e'}=u'$.  The computation of Lemma~\ref{lem:collgame}, now with the weights $m$, gives
+\begin{equation}\label{eq:coll-quad}
+  \|P_Gh\|^2=\sum_{u,u'}J(u,u')\,m(u)m(u')\,Q(u,u'),\qquad
+  \|G\|^2\ \ge\ \|P_Gf_\ell\|^2=\sum_{u,u'}J(u,u')\,Q(u,u').
+\end{equation}
+Write $\E_J$ for the average over $(u,u')\sim J$; so $\|G\|^2\ge\E_JQ$ and $\E_J[mm'\,Q]>(1-\eps)^2$, where $mm'$ abbreviates $m(u)m(u')$.
+
+\emph{Step 3: $m$ is nearly constant.}  Since $Q\le1$ and $\E_J[mm']=\langle m,A_Gm\rangle_U$,
+\[
+  \langle m,(I-A_G)m\rangle_U=1-\E_J[mm']\le1-\E_J[mm'Q]<1-(1-\eps)^2\le2\eps .
+\]
+By~\eqref{eq:poincare}, and since $\mathrm{Var}_{e\mid w}x(u_e)$ averaged over $w$ is exactly $\langle x,(I-A_G)x\rangle_U$,
+$\ \mathrm{Var}(m)\le2\eps/\gamma$.  Put $\bar m=\E_um(u)$; then $\bar m^2=1-\mathrm{Var}(m)$.  If $\eps/\gamma>\frac16$ the claim is trivial (its right side is negative), so assume $\eps/\gamma\le\frac16$; then $\mathrm{Var}(m)\le\frac13$ and $\bar m\ge\frac23$.
+
+\emph{Step 4: the conclusion.}  For $s,t\ge0$ and $c\ge\frac23$,
+\begin{equation}\label{eq:pointwise}
+  1\ \le\ 9st+9(s-c)^2+9(t-c)^2 .
+\end{equation}
+Indeed, if $s<\frac13$ then $(s-c)^2\ge(\frac23-\frac13)^2=\frac19$; likewise for $t$; and if both are at least $\frac13$ then $9st\ge1$.
+Apply~\eqref{eq:pointwise} with $c=\bar m$, $s=m(u)$, $t=m(u')$, multiply by $1-Q(u,u')\in[0,1]$ and average over $J$:
+\[
+  1-\E_JQ\ \le\ 9\,\E_J\big[(1-Q)mm'\big]+9\,\E_J\big[(1-Q)(m(u)-\bar m)^2\big]+9\,\E_J\big[(1-Q)(m(u')-\bar m)^2\big].
+\]
+Both marginals of $J$ equal $\mu_U$ and $0\le1-Q\le1$, so each of the last two terms is at most $9\,\mathrm{Var}(m)\le18\eps/\gamma$.  The first is $9(\E_J[mm']-\E_J[mm'Q])\le9(1-(1-\eps)^2)\le18\eps$, using $\E_J[mm']=\langle m,A_Gm\rangle_U\le\langle m,m\rangle_U=1$.
+Hence $1-\|G\|^2\le1-\E_JQ\le18\eps+36\eps/\gamma\le54\eps/\gamma$, as $\gamma\le1$.
+\end{proof}
+
+\begin{corollary}[Parallel repetition for expanding projection games]\label{cor:expander}
+Let $G$ be a $\gamma$-expanding projection game with $\val(G)\le1-\eta$.  Then $\lamp(G)\le1-\gamma\eta/54$, and for all $k\ge1$
+\[
+  \val(G^{\otimes k})\ \le\ \|G^{\otimes k}\|\ \le\ \Big(1-\frac{\gamma\eta}{54}\Big)^k .
+\]
+\end{corollary}
+\begin{proof}
+Let $\eps>0$ with $\lamp(G)>1-\eps$.  By Theorem~\ref{thm:expander} and Lemma~\ref{lem:val-coll}, $1-54\eps/\gamma\le\|G\|^2\le\val(G)\le1-\eta$, so $\eps\ge\gamma\eta/54$.  As this holds for every $\eps>1-\lamp(G)$, we get $1-\lamp(G)\ge\gamma\eta/54$.  The rest is Corollary~\ref{cor:lamp}.
+\end{proof}
+
+\noindent
+The rate is linear in $\eta$, not quadratic as in the general bounds of Section~\ref{sec:general}; the price is the factor $\gamma$.  Numerical experiments for these notes (876 random projection games with $\gamma>0.001$ and $\lamp<1$, half of them planted to be nearly satisfiable) never produced a value of $(1-\|G\|^2)\gamma/\eps$ above $3.7$, where $\eps=1-\lamp(G)$; the proved bound is $54$.  The constant is certainly not tight, and we have not tried to optimize it.
+
+\begin{pitfall}{what the expansion hypothesis is doing}
+Steps~3--4 are the only places where $\gamma$ enters.  A function $h$ with $\|P_Gh\|\approx\|P_{T_G}h\|$ could, a priori, be a large multiple of a perfect labeling on a tiny part of $U$ and nearly vanish elsewhere; then the weights $m$ would be far from constant and $\|G\|$ could be small even though $\lamp(G)\approx1$.
+That is exactly the disconnected game of the pitfall above.  Expansion forbids it: a function with small Dirichlet form $\langle m,(I-A_G)m\rangle_U$ is close to a constant.
+\end{pitfall}
+
+
+%% ===========================================================================
+\section{The Label Cover theorem, with explicit parameters}
+\label{sec:lc}
+%% ===========================================================================
+
+The hypothesis of Corollary~\ref{cor:expander} is easy to arrange: we may mix in a harmless piece of game that connects everything.
+
+\begin{lemma}[Making a game expand]\label{lem:mix}
+Let $G$ be a projection game, $0\in\Sigma_W$ a fixed label.  Let $G'$ be the game with one new Bob-question $w_0$ whose edge distribution is
+\[
+  \mu'=\tfrac12\mu\ +\ \tfrac12\sum_{u\in U}\mu_U(u)\,\delta_{(u,w_0)},
+\]
+where the edge $(u,w_0)$ carries the constant map $\pi(a)=0$.  Then (i)~$\val(G')=\frac12+\frac12\val(G)$, and (ii)~$\gamma(G')\ge\frac12$.  The question sets $U$, the label sets, and the maps of the old edges are unchanged.
+\end{lemma}
+\begin{proof}
+(i) Any strategy wins the new edges with probability at most $\frac12$, their total weight, and the old edges with probability at most $\frac12\val(G)$.  Both bounds are attained together: Bob answers $0$ at $w_0$ (which wins every new edge, whatever Alice does) and plays an optimal strategy of $G$ elsewhere.
+(ii) The marginal of $\mu'$ on $U$ is $\mu_U$ again.  In the collision experiment of $G'$, with probability $\frac12$ the Bob-question is $w_0$ and $u,u'$ are independent copies of $\mu_U$; otherwise it is as in $G$.  Thus $A_{G'}=\frac12A_G+\frac12\mathbf 1\mu_U^\top$.  On functions orthogonal to the constants $A_{G'}$ acts as $\frac12A_G$, so $\lambda_2(A_{G'})=\frac12\lambda_2(A_G)\le\frac12$.
+\end{proof}
+
+\begin{remark}[Uniformity]
+If $G$ is uniform on $|E|$ edges, then $\mu_U(u)=\deg(u)/|E|$ and $G'$ is the \emph{uniform} game on $2|E|$ edges obtained by adding $\deg(u)$ copies of $(u,w_0)$ for every $u$.  So no weights are needed, and Remark~\ref{rem:multiplicity} applies to $G'^{\otimes k}$.
+\end{remark}
+
+\begin{theorem}[Label Cover theorem, with constants]\label{thm:lc-explicit}
+Suppose it is $\NP$-hard to distinguish projection games (with label sets of sizes $7$ and $2$) of value $1$ from those of value at most $1-\eta_0$; by Theorem~\ref{thm:pcp2} and Proposition~\ref{prop:cv} this holds with $\eta_0=\eps_0/3$.  Then for every $\delta\in(0,1)$ and
+\[
+  k\ =\ \Big\lceil\frac{216}{\eta_0}\ln\frac1\delta\Big\rceil,
+\]
+the map $G\mapsto(G')^{\otimes k}$ is a polynomial-time reduction (for $\delta$ fixed) to distinguishing projection games with label sets of sizes $7^k$ and $2^k$ of value $1$ from value at most~$\delta$.  In particular $7^k,2^k=\poly(1/\delta)$.
+\end{theorem}
+\begin{proof}
+If $\val(G)=1$ then $\val(G')=1$ and $\val((G')^{\otimes k})=1$ by Lemma~\ref{lem:rep-basic}.  If $\val(G)\le1-\eta_0$ then $\val(G')\le1-\eta_0/2$ by Lemma~\ref{lem:mix}(i), and $G'$ is $\frac12$-expanding by (ii).  Corollary~\ref{cor:expander} with $\gamma=\frac12$ and $\eta=\eta_0/2$ gives
+$\val((G')^{\otimes k})\le(1-\eta_0/216)^k\le e^{-k\eta_0/216}\le\delta$.  The product has $(2|E|)^k$ edges, polynomial for fixed $\delta$.
+\end{proof}
+
+\noindent
+This is Theorem~\ref{thm:lc} again, now with a proof that is complete except for the PCP theorem, with $k=O(\log(1/\delta))$ and exponent $\poly(1/\delta)$ of order $1/\eta_0$.
+The proof in Lecture~\ref{lec:why} cited Rao's bound, which needs no expansion but has rate $\eta^2$ instead of $\eta$.  Here the number of repetitions is linear in $1/\eta_0$ rather than quadratic, at the price of the expansion step of Lemma~\ref{lem:mix} and of a worse absolute constant; and nothing beyond linear algebra is used.
+
+\begin{pitfall}{the Label Cover theorem does not give Unique Games}
+Taking a product of projection maps preserves their fibre sizes: if each $\pi_e$ is $d$-to-$1$ then each $\pi_{e_1}\times\dots\times\pi_{e_k}$ is $d^k$-to-$1$, and a product of bijections is a bijection.
+The games produced by Theorem~\ref{thm:lc-explicit} are therefore $d$-to-$1$ with $d$ growing with $k$ (for the clause--variable game, the fibres have $3$ or $4$ elements; the mixed-in edges are constant maps).
+Not one of them is a Unique Game, and repetition cannot make them one.  We return to this in Section~\ref{sec:ugc-rep}.
+\end{pitfall}
+
+
+%% ===========================================================================
+\section{What is true in general, and what is not}
+\label{sec:general}
+%% ===========================================================================
+
+Expansion was a convenience.  The theorems below need no such hypothesis; they are all stated for $\val(G)\le1-\eta$ unless noted.
+
+\begin{table}[t]
+\centering\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{3.6cm}>{\raggedright\arraybackslash}p{4.9cm}@{}}
+\toprule
+result & games & bound on $\val(G^{\otimes k})$\\
+\midrule
+\citet{Raz98}; \citet{Holenstein09} & all games, answer sets of size $\le\sigma$ & $(1-\eta^{c})^{\Omega(k/\log\sigma)}$, with $c=32$, resp.\ $c=3$ (Theorem~\ref{thm:raz})\\
+\citet{Rao11} & projection games & $(1-\Omega(\eta^2))^k$\\
+\citet{DinurSteurer14} & projection games with $\val(G)\le\rho$, any $\rho\in(0,1)$ & $\big(\frac{2\sqrt\rho}{1+\rho}\big)^{k/2}$; this is $\le(1-\eta^2/16)^k$ for $\rho=1-\eta$ and $\le(4\rho)^{k/4}$ for small $\rho$\\
+Corollary~\ref{cor:expander} & $\gamma$-expanding projection games & $(1-\gamma\eta/54)^k$\\
+\bottomrule
+\end{tabular}
+\caption{Parallel repetition theorems.  The first three are quoted; the last was proved in this lecture.}
+\label{tab:rep-thms}
+\end{table}
+
+\noindent
+The new feature of the Dinur--Steurer bound is that $\rho$ may be as small as one likes; before it, it was not known that repetition decreases a value that is already sub-constant \citep[Section~1]{DinurSteurer14}.  Their proof is the general version of the argument of this lecture, with the relaxation $\val_+$ in place of $\lamp$.
+
+\paragraph{Strong repetition.}  The bounds of Table~\ref{tab:rep-thms} for projection games decay like $(1-\Omega(\eta^2))^k$.  \defn{Strong parallel repetition} is the hope that $(1-\Omega(\eta))^k$ holds, as it would if the na\"ive guess were roughly right.
+It is \emph{false} in general, even for Unique Games on two labels: the odd cycle game of Lecture~\ref{lec:why} has $\eta=\frac1{2\ell}$, yet $G^{\otimes k}$ keeps value $1-O(\sqrt k/\ell)$ up to $k\approx\ell^2$ \citep{Raz11}, and this is essentially tight \citep{FKO07}.
+It is true for restricted classes: free projection games \citep{BRRRS09} and projection games on expanders \citep{RR12}.  Corollary~\ref{cor:expander} has the same flavour, with a rate linear in $\eta$ but proportional to the gap $\gamma$; for free games $\gamma=1$ (Exercise~\ref{ex:free}).
+The two facts are consistent: the odd cycle has $\gamma\approx2\pi^2/\ell^2$ (Exercise~\ref{ex:cycle-gap}), so Corollary~\ref{cor:expander} only promises decay after $k\gtrsim\ell^3$ repetitions.
+As \citet{DinurSteurer14} note, a strong repetition bound for every Unique Game ``would imply a reduction from max cut to unique games''; Raz's counterexample rules out this route.
+
+\begin{bigpicture}{The shape of the information-theoretic proof (a sketch; none of this is proved here)}
+The theorems of Raz and Holenstein are proved by contradiction, one coordinate at a time.  Fix a strategy for $G^{\otimes k}$, and for $C\subseteq[k]$ let $W_C$ be the event that all coordinates in $C$ are won.
+The central claim is: \emph{if $\Pr[W_C]$ is not too small (say $\ge2^{-\beta k}$), there is a coordinate $i\notin C$ with $\Pr[W_i\mid W_C]\le\val(G)+o(1)$}.  Iterating, $\Pr[W_{C\cup\{i\}}]\le(\val(G)+o(1))\Pr[W_C]$ until the probability falls below $2^{-\beta k}$, which gives exponential decay.
+Why the claim holds: conditioning on an event of probability $2^{-\beta k}$ can distort the $k$ pairs of questions by at most $\beta k$ bits of information in total, so for most coordinates $i$ the pair $(x_i,y_i)$ is still almost distributed as in $G$.
+The two provers can then \emph{simulate} a strategy for the single game $G$ at coordinate $i$: they embed the real questions at coordinate $i$, and use shared randomness (correlated sampling) to fill in the other coordinates, together with the answers, from the conditional distribution given $W_C$, each looking only at its own question.
+The simulated strategy wins $G$ with probability about $\Pr[W_i\mid W_C]$, hence this is at most $\val(G)+o(1)$.  The dependence on the size $\sigma$ of the answer sets enters through the same information accounting.
+\end{bigpicture}
+
+\noindent
+Compare the two proofs.  Raz and Holenstein follow a \emph{strategy}: they transform a strategy for the product into one for a single copy.  The proof of this lecture never mentions a strategy of the product; it bounds the \emph{norm} of an operator and uses a spectral property of a graph.
+The first is more general; the second shorter, and it yields the explicit rate $\gamma\eta$ that makes the role of the graph visible.
+
+
+%% ===========================================================================
+\section{What repetition cannot do for Unique Games}
+\label{sec:ugc-rep}
+%% ===========================================================================
+
+Repetition turned the PCP theorem into Label Cover.  The Unique Games Conjecture asks for a Label Cover \emph{with bijections}, completeness $1-\zeta$ and soundness $\delta$, for every $\zeta,\delta>0$.  It is natural to try the same recipe, and it is instructive to see exactly where it breaks.
+
+\begin{bigpicture}{Three reasons why repetition does not prove the Unique Games Conjecture}
+\textbf{1.\ The type of the constraints is preserved.}  A product of $d$-to-$1$ maps is $d^k$-to-$1$ and a product of bijections is a bijection (Pitfall in Section~\ref{sec:lc}).  The PCP theorem gives projections that are not bijections (fibres of size $3$ and $4$ for $3$-CNF), and repetition cannot repair that.
+
+\smallskip
+\textbf{2.\ Repetition never improves completeness.}  By Lemma~\ref{lem:rep-basic}, $\val(G^{\otimes k})\le\val(G)$ for every instance, so whatever completeness the base instances have, repetition cannot raise it.  Perfect completeness is not available as a base, since Unique Games of value $1$ can be recognized in polynomial time (Proposition~\ref{prop:ug-easy}).
+The UGC asks for completeness $1-\zeta$ for \emph{every} $\zeta>0$; a repetition-based proof would have to start from a hardness result for Unique Games with the same completeness and a weaker, constant soundness, that is, from a result of the same kind as the conjecture.
+
+\smallskip
+\textbf{3.\ Soundness does not decay at the na\"ive rate.}  Even from such a base problem, $(1-\Omega(\eta))^k$ is false for Unique Games \citep{Raz11,FKO07}: the odd cycle games keep value $1-O(\sqrt k\,\eta)$ for $k$ up to about $1/\eta^2$, so in the worst case about $1/\eta^2$ repetitions are needed before the value drops appreciably.
+Starting from completeness $1-\zeta$ and value at most $1-\eta$ on the no-instances, $k$ repetitions give completeness at most $1-\zeta$ and, by Rao's bound, soundness at most $e^{-\Omega(k\eta^2)}$.
+
+\smallskip
+These are not proofs that the conjecture is hard to prove; they say that the proof, if it exists, must use a different idea.  Lectures~8--12 use the conjecture as a hypothesis, and Lectures~13--15 prove its $2$-to-$2$ relative, which is \emph{not} a statement about Unique Games but comes close.
+\end{bigpicture}
+
+
+%% ===========================================================================
+\section*{Exercises}
+\addcontentsline{toc}{section}{Exercises}
+%% ===========================================================================
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:rep-prod}
+\emph{Products and an experiment.}  (a)~Prove $\val(G)\val(H)\le\val(G\otimes H)\le\min\{\val(G),\val(H)\}$.  (b)~Prove $\|G\otimes H\|\ge\|G\|\,\|H\|$ by exhibiting a product assignment.
+(c)~Write a program that computes $\val(G)$, $\|G\|$ and $\lamp(G)$ for small random projection games, and test Theorem~\ref{thm:product}, and compare $\|G\otimes H\|$ with $\|G\|\,\|H\|$.
+\emph{Hints for (c):} for a labeling $\ell$ put $c_\ell(w,b,u)=\sum_{e=(u,w)\colon\pi_e(\ell(u))=b}\mu(e)$; then $\|P_Gf_\ell\|^2=\sum_{w,b}\big(\sum_uc_\ell(w,b,u)\big)^2/\mu_W(w)$, and $\lamp(G)^2$ is the maximum over $\ell$ of the top eigenvalue of $D^{-1/2}M_\ell D^{-1/2}$, with $D=\mathrm{diag}(\mu_U)$ and $M_\ell(u,u')=\sum_{w,b}c_\ell(w,b,u)c_\ell(w,b,u')/\mu_W(w)$.
+\emph{Warning:} most small random games are satisfiable, hence have $\|G\|=1$, and all the inequalities are trivial for them; filter for $\|G\|<1$ (dense graphs with random projection maps work).  Does $\|G\otimes H\|<\|G\|\,\|H\|$ ever occur in your experiments?  These notes make no claim either way.
+\end{exercise}
+
+\begin{exercise}[\stars{$\star$}]\label{ex:fig-gap}
+For the clause--variable game of the formula of Figure~\ref{fig:cv} compute the matrices $J$ and $A_G$ and verify $\gamma(G)=\frac56$.  Apply Lemma~\ref{lem:mix} and verify that $\gamma(G')=\frac{11}{12}$ (so the bound $\frac12$ of the lemma is far from tight here).
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:cycle-gap}
+Let $G$ be the odd cycle game on $\ell$ vertices.  (a)~Show that $A_G=K^2$ for $K=\frac12I+\frac14(S+S^{-1})$, where $S$ is the cyclic shift, and that $A_G$ has eigenvalues $\cos^4(\pi j/\ell)$, $0\le j<\ell$.  Conclude $\gamma(G)=1-\cos^4(\pi/\ell)$, which is $\frac{15}{16}$ for the triangle.
+(b)~With $\eta=\frac1{2\ell}$, Corollary~\ref{cor:expander} gives $\val(G^{\otimes k})\le(1-\gamma\eta/54)^k$.  Show that this is at least $\frac12$ for $k\le\ell^3$ and $\ell$ large, so that it does not contradict Raz's example (which keeps the value above $\frac12$ for $k\le c\ell^2$).  This is a consistency check, not a claim that the corollary is tight.
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:disjoint}
+Let $G_1$ be a satisfiable projection game, $G_2$ any projection game with $\val(G_2)<1$ on question sets disjoint from those of $G_1$, and let $G$ draw an edge of $G_1$ or of $G_2$ with probability $\frac12$ each.  Show that $\lamp(G)=1$ and $\gamma(G)=0$, while $\|G\|^2\le\val(G)\le\frac12+\frac12\val(G_2)<1$.
+Conclude that no statement of the form of Theorem~\ref{thm:expander} can hold without a hypothesis on $\gamma$.  Which step of its proof fails?
+\end{exercise}
+
+\begin{exercise}[\stars{$\star$}]\label{ex:ug-mix}
+Let $G$ be a Unique Game.  (a)~Show that the game $G'$ of Lemma~\ref{lem:mix} is not a Unique Game, and explain why the proof of Theorem~\ref{thm:lc-explicit} therefore gives no information about Unique Games.
+(b)~Suppose the new edges $(u,w_0)$ carried bijections $\sigma_u$ instead of the constant map.  Show that Lemma~\ref{lem:mix}(i) then fails: find a satisfiable $G$ for which $\val(G')<1$.  \emph{Hint: a path $u_1$---$w$---$u_2$ with identity maps, and $\sigma_{u_1}=\mathrm{id}$, $\sigma_{u_2}=$ the transposition of the two labels.}  Why does this destroy the argument?
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:free}
+A game is \emph{free} if $\mu=\mu_U\otimes\mu_W$.  Show that $J_G=\mu_U\otimes\mu_U$ and $\gamma(G)=1$ for every free game.  Deduce $\val(G^{\otimes k})\le(1-\eta/54)^k$ for every free projection game of value at most $1-\eta$.  Check on CHSH that $\val(G^{\otimes k})>\val(G)^k$ for $k=2,3$, and that it nevertheless respects the bound.
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star\star$}]\label{ex:reading-ds}
+\emph{Reading.}  Read Section~4 of \citet{DinurSteurer14}.  Identify the place where our proof of Theorem~\ref{thm:expander} uses expansion, and explain how their ``partial assignments'' together with correlated sampling replace it for games with $\gamma=0$.
+Then compare the dependence on $\eta$ in Corollary~\ref{cor:expander} (linear) with that of Corollary~1.2 of their paper (quadratic) and say what accounts for the difference.
+\end{exercise}
+
+
+%% ===========================================================================
+\section*{Notes and further reading}
+\addcontentsline{toc}{section}{Notes and further reading}
+%% ===========================================================================
+
+\paragraph{Where this lecture comes from.}
+Sections~\ref{sec:operator}--\ref{sec:lc} follow Sections~2 and~3 and Claim~A.1 of \citet{DinurSteurer14} closely: the collision value, Claims~2.3 and~2.4 (our Lemmas~\ref{lem:val-coll} and~\ref{lem:coll-mono}), the parameter $\lamp$ and Theorems~3.2 and~3.4 (our Theorems~\ref{thm:product} and~\ref{thm:expander}), and the expansion trick.
+The intuition that one should compare $G\otimes H$ with $T\otimes H$ to ``cancel $H$'' is theirs.  Section~\ref{sec:general} and Table~\ref{tab:rep-thms} summarize the literature as described in the introduction of that paper.
+
+\paragraph{What we changed.}
+(i)~\emph{Orientation.}  Dinur and Steurer let the player with the large alphabet be Bob; we let it be Alice, as in Lectures~\ref{lec:why} and~\ref{lec:games}, so the roles of ``$u$'' and ``$v$'' are swapped throughout and the new vertex of the expansion trick sits on Bob's side.
+(ii)~\emph{Totality.}  Their projections may be partial; ours are total.  This removes the step ``increase some entries of $P_Gf$ to turn it into an assignment'' in the proof of $\|G\|^2\le\val(G)$, and it is why Feige's game (Example~\ref{ex:feige}) is outside our class.
+(iii)~\emph{Constants.}  They write $\|G\|>1-O(\eps/\gamma)$; the proof ends in a bound on $\|G\|^2$, which is the form we state and the one we need, with the explicit constant $54$.
+(iv)~\emph{Presentation.}  We avoid $\val_+$ altogether, since the expanding case does not need it.
+
+\paragraph{On attributions.}
+Raz's theorem appeared in preliminary form at STOC~1995 and in full as \citet{Raz98}; Holenstein's simplification and Rao's projection-game bound are cited as in Lecture~\ref{lec:why}.
+Feige's non-interactive agreement game is from \citet{Feige91}, as presented in Appendix~B of \citet{DinurSteurer14}, where $\val(G)=\val(G^{\otimes2})=\frac12$ is stated; we wrote out the short proofs and confirmed both values by exhaustive search.
+The CHSH game is the XOR game of Clauser--Horne--Shimony--Holt; its classical values $\frac34,\frac58,\frac{31}{64}$ for $k=1,2,3$ were computed for these notes by exhaustive search, with $k=3$ checked by two separate programs.
+The odd cycle game and its repetition are due to \citet{FKO07} and \citet{Raz11}.
+
+\paragraph{What is not covered.}
+The proof of the repetition theorem for non-expanding games (the relaxation $\val_+$, the Cheeger-type inequality, correlated sampling), the information-theoretic proofs of Raz and Holenstein, the tight examples for the dependence on the alphabet size, and the applications to Set Cover and to sub-constant soundness (see \citealp{DinurSteurer14}).
+Lecture~6 turns to the other classical way of amplifying a gap, due to \citet{Dinur07}; unlike repetition it keeps the alphabet small.

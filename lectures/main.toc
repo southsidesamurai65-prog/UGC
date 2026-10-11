@@ -1,0 +1,121 @@
+\contentsline {chapter}{About these notes}{i}{chapter*.1}%
+\contentsline {paragraph}{Prerequisites.}{i}{paragraph*.2}%
+\contentsline {paragraph}{How to read the boxes.}{i}{paragraph*.3}%
+\contentsline {paragraph}{How results are labelled.}{i}{paragraph*.4}%
+\contentsline {paragraph}{Exercises.}{i}{paragraph*.5}%
+\contentsline {chapter}{\numberline {1}Why PCP and Unique Games Matter}{1}{chapter.1}%
+\contentsline {section}{\numberline {1.1}A scoreboard of approximability}{2}{section.1.1}%
+\contentsline {section}{\numberline {1.2}Approximation algorithms in one page}{3}{section.1.2}%
+\contentsline {section}{\numberline {1.3}Gap problems: the language of hardness}{3}{section.1.3}%
+\contentsline {section}{\numberline {1.4}Why ordinary reductions cannot create a gap}{4}{section.1.4}%
+\contentsline {subsection}{\numberline {1.4.1}Cook--Levin yields a gap of one clause}{4}{subsection.1.4.1}%
+\contentsline {subsection}{\numberline {1.4.2}Karp reductions transport gaps, they do not create them}{5}{subsection.1.4.2}%
+\contentsline {section}{\numberline {1.5}The PCP theorem: two faces}{6}{section.1.5}%
+\contentsline {subsection}{\numberline {1.5.1}Proofs that can be spot-checked}{6}{subsection.1.5.1}%
+\contentsline {section}{\numberline {1.6}Two provers, Label Cover, and parallel repetition}{8}{section.1.6}%
+\contentsline {subsection}{\numberline {1.6.1}Games, labelings, projections}{9}{subsection.1.6.1}%
+\contentsline {subsection}{\numberline {1.6.2}Parallel repetition}{10}{subsection.1.6.2}%
+\contentsline {section}{\numberline {1.7}Unique Games and the Unique Games Conjecture}{12}{section.1.7}%
+\contentsline {subsection}{\numberline {1.7.1}Definition and a first observation}{12}{subsection.1.7.1}%
+\contentsline {subsection}{\numberline {1.7.2}The conjecture}{13}{subsection.1.7.2}%
+\contentsline {subsection}{\numberline {1.7.3}Why Unique Games?}{13}{subsection.1.7.3}%
+\contentsline {subsection}{\numberline {1.7.4}Evidence for and against}{14}{subsection.1.7.4}%
+\contentsline {section}{\numberline {1.8}The map of the territory}{14}{section.1.8}%
+\contentsline {section}{Exercises}{16}{table.1.3}%
+\contentsline {section}{Notes and further reading}{18}{exercise.1.10}%
+\contentsline {paragraph}{Where this lecture comes from.}{18}{paragraph*.7}%
+\contentsline {paragraph}{On attributions.}{18}{paragraph*.8}%
+\contentsline {paragraph}{What is not covered.}{18}{paragraph*.9}%
+\contentsline {chapter}{\numberline {2}Games, Label Cover, and the Language of PCPs}{19}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Constraint graphs: one language for everything}{19}{section.2.1}%
+\contentsline {subsection}{\numberline {2.1.1}Binary constraints: constraint graphs}{20}{subsection.2.1.1}%
+\contentsline {section}{\numberline {2.2}One oracle or two provers?}{22}{section.2.2}%
+\contentsline {section}{\numberline {2.3}From verifiers and CSPs to games}{24}{section.2.3}%
+\contentsline {section}{\numberline {2.4}The ladder of constraint types}{25}{section.2.4}%
+\contentsline {section}{\numberline {2.5}From PCPs to cliques: the FGLSS graph}{27}{section.2.5}%
+\contentsline {section}{\numberline {2.6}What Label Cover is for}{29}{section.2.6}%
+\contentsline {section}{Exercises}{30}{section.2.6}%
+\contentsline {section}{Notes and further reading}{31}{exercise.2.7}%
+\contentsline {paragraph}{Where this lecture comes from.}{31}{paragraph*.10}%
+\contentsline {paragraph}{On attributions.}{31}{paragraph*.11}%
+\contentsline {paragraph}{What is not covered.}{31}{paragraph*.12}%
+\contentsline {chapter}{\numberline {3}The Arora--Safra Route: Polynomials, Sum-Check and Composition}{32}{chapter.3}%
+\contentsline {section}{\numberline {3.1}What was proved, and when}{33}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Polynomials as codes}{34}{section.3.2}%
+\contentsline {section}{\numberline {3.3}Arithmetization: satisfiability as a vanishing condition}{35}{section.3.3}%
+\contentsline {section}{\numberline {3.4}The sum-check protocol, as a table}{37}{section.3.4}%
+\contentsline {subsection}{\numberline {3.4.1}Putting arithmetization and sum-check together}{39}{subsection.3.4.1}%
+\contentsline {section}{\numberline {3.5}The low-degree test}{39}{section.3.5}%
+\contentsline {subsection}{\numberline {3.5.1}The exact statement, and why it is not enough}{39}{subsection.3.5.1}%
+\contentsline {subsection}{\numberline {3.5.2}The test of Arora and Safra}{40}{subsection.3.5.2}%
+\contentsline {section}{\numberline {3.6}The basic verifier}{41}{section.3.6}%
+\contentsline {section}{\numberline {3.7}Normal form verifiers and split-encoded assignments}{42}{section.3.7}%
+\contentsline {subsection}{\numberline {3.7.1}How $V_{\rm poly}$ becomes a normal form verifier}{43}{subsection.3.7.1}%
+\contentsline {paragraph}{The encoding.}{43}{paragraph*.13}%
+\contentsline {paragraph}{Split encodings.}{43}{paragraph*.14}%
+\contentsline {section}{\numberline {3.8}The composition lemma}{44}{section.3.8}%
+\contentsline {section}{\numberline {3.9}The parameter chase}{46}{section.3.9}%
+\contentsline {section}{\numberline {3.10}Consequence: Clique within $2^{\log ^{1/2-\varepsilon }N}$ is $\mathsf {NP}$-hard}{47}{section.3.10}%
+\contentsline {section}{\numberline {3.11}Why it stops at $\log ^{1/2+\varepsilon }n$, and how to reach $O(1)$}{48}{section.3.11}%
+\contentsline {paragraph}{Queries are inherited, never reduced.}{48}{paragraph*.15}%
+\contentsline {paragraph}{Constants compound.}{48}{paragraph*.16}%
+\contentsline {paragraph}{The remedy of ALMSS.}{48}{paragraph*.17}%
+\contentsline {section}{Exercises}{49}{Item.44}%
+\contentsline {section}{Notes and further reading}{50}{exercise.3.8}%
+\contentsline {paragraph}{Where this lecture comes from.}{50}{paragraph*.18}%
+\contentsline {paragraph}{On attributions.}{50}{paragraph*.19}%
+\contentsline {paragraph}{A caveat on the text.}{50}{paragraph*.20}%
+\contentsline {paragraph}{What is not covered.}{50}{paragraph*.21}%
+\contentsline {chapter}{\numberline {4}Constant Queries: Hadamard Codes, Parallelization and the ALMSS Proof}{51}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Outer verifiers, inner verifiers, and composition again}{52}{section.4.1}%
+\contentsline {subsection}{\numberline {4.1.1}The formalism}{52}{subsection.4.1.1}%
+\contentsline {subsection}{\numberline {4.1.2}Composition}{53}{subsection.4.1.2}%
+\contentsline {section}{\numberline {4.2}The Hadamard code and its local tests}{54}{section.4.2}%
+\contentsline {subsection}{\numberline {4.2.1}Fourier analysis over $\mathbb {F}_2^n$ in one page}{54}{subsection.4.2.1}%
+\contentsline {subsection}{\numberline {4.2.2}Linearity testing}{54}{subsection.4.2.2}%
+\contentsline {subsection}{\numberline {4.2.3}Self-correction and concatenation}{55}{subsection.4.2.3}%
+\contentsline {section}{\numberline {4.3}Verifying a circuit with Hadamard codes}{56}{section.4.3}%
+\contentsline {subsection}{\numberline {4.3.1}A circuit as a system of quadratic equations}{56}{subsection.4.3.1}%
+\contentsline {subsection}{\numberline {4.3.2}The verifier $V^{\oplus }$}{56}{subsection.4.3.2}%
+\contentsline {section}{\numberline {4.4}Lines: low-degree testing and correction with $O(1)$ queries}{58}{section.4.4}%
+\contentsline {paragraph}{The encoding.}{59}{paragraph*.22}%
+\contentsline {subsection}{\numberline {4.4.1}The low-degree test with a table of lines}{59}{subsection.4.4.1}%
+\contentsline {subsection}{\numberline {4.4.2}Correcting a polynomial at a point}{59}{subsection.4.4.2}%
+\contentsline {subsection}{\numberline {4.4.3}Concatenating polynomials}{60}{subsection.4.4.3}%
+\contentsline {section}{\numberline {4.5}Curves: collapsing $l$ queries into one}{60}{section.4.5}%
+\contentsline {section}{\numberline {4.6}The parallelized verifier}{61}{section.4.6}%
+\contentsline {paragraph}{Parameters of $V^{\rm par}$.}{62}{paragraph*.23}%
+\contentsline {section}{\numberline {4.7}Assembling the proof: three steps, constant parameters}{63}{section.4.7}%
+\contentsline {section}{\numberline {4.8}Consequences, and the link to games}{65}{section.4.8}%
+\contentsline {paragraph}{Max-3SAT.}{65}{paragraph*.26}%
+\contentsline {paragraph}{Max-Clique.}{65}{paragraph*.27}%
+\contentsline {paragraph}{Label Cover.}{65}{paragraph*.28}%
+\contentsline {paragraph}{Transparent proofs of mathematics.}{65}{paragraph*.29}%
+\contentsline {section}{\numberline {4.9}What the proof does not do, and what replaces it}{65}{section.4.9}%
+\contentsline {section}{Exercises}{66}{Item.70}%
+\contentsline {section}{Notes and further reading}{67}{exercise.4.8}%
+\contentsline {paragraph}{Where this lecture comes from.}{67}{paragraph*.30}%
+\contentsline {paragraph}{On attributions.}{67}{paragraph*.31}%
+\contentsline {paragraph}{Small points in the text of \citet {ALMSS98} that we handled differently.}{67}{paragraph*.32}%
+\contentsline {paragraph}{What is not covered.}{68}{paragraph*.33}%
+\contentsline {chapter}{\numberline {5}Parallel Repetition: Driving the Soundness Down}{69}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Repeating a game is not raising its value to a power}{70}{section.5.1}%
+\contentsline {subsection}{\numberline {5.1.1}The easy inequalities}{70}{subsection.5.1.1}%
+\contentsline {section}{\numberline {5.2}A projection game as a linear operator}{72}{section.5.2}%
+\contentsline {subsection}{\numberline {5.2.1}Strategies, the operator $P_G$, and the success probability}{72}{subsection.5.2.1}%
+\contentsline {subsection}{\numberline {5.2.2}The collision value}{72}{subsection.5.2.2}%
+\contentsline {section}{\numberline {5.3}The collision value under products}{74}{section.5.3}%
+\contentsline {section}{\numberline {5.4}The product theorem}{75}{section.5.4}%
+\contentsline {section}{\numberline {5.5}Expanding games: the proof}{76}{section.5.5}%
+\contentsline {subsection}{\numberline {5.5.1}The Markov chain of a game}{76}{subsection.5.5.1}%
+\contentsline {subsection}{\numberline {5.5.2}Expansion makes the product theorem effective}{77}{subsection.5.5.2}%
+\contentsline {section}{\numberline {5.6}The Label Cover theorem, with explicit parameters}{78}{section.5.6}%
+\contentsline {section}{\numberline {5.7}What is true in general, and what is not}{80}{section.5.7}%
+\contentsline {paragraph}{Strong repetition.}{80}{paragraph*.35}%
+\contentsline {section}{\numberline {5.8}What repetition cannot do for Unique Games}{81}{section.5.8}%
+\contentsline {section}{Exercises}{81}{section.5.8}%
+\contentsline {section}{Notes and further reading}{82}{exercise.5.7}%
+\contentsline {paragraph}{Where this lecture comes from.}{82}{paragraph*.36}%
+\contentsline {paragraph}{What we changed.}{83}{paragraph*.37}%
+\contentsline {paragraph}{On attributions.}{83}{paragraph*.38}%
+\contentsline {paragraph}{What is not covered.}{83}{paragraph*.39}%

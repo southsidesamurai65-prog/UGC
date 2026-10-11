@@ -1,0 +1,315 @@
+\begin{thebibliography}{61}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Ajtai et~al.(1987)Ajtai, Koml{\'o}s, and Szemer{\'e}di]{AKS87}
+M.~Ajtai, J.~Koml{\'o}s, and E.~Szemer{\'e}di.
+\newblock Deterministic simulation in {LOGSPACE}.
+\newblock In \emph{Proceedings of the 19th Annual ACM Symposium on Theory of Computing (STOC)}, pages 132--140, 1987.
+
+\bibitem[Arora and Barak(2009)]{AroraBarak09}
+S.~Arora and B.~Barak.
+\newblock \emph{Computational Complexity: A Modern Approach}.
+\newblock Cambridge University Press, 2009.
+
+\bibitem[Arora and Safra(1998)]{AroraSafra98}
+S.~Arora and S.~Safra.
+\newblock Probabilistic checking of proofs: a new characterization of {NP}.
+\newblock \emph{Journal of the ACM}, 45\penalty0 (1):\penalty0 70--122, 1998.
+
+\bibitem[Arora and Sudan(1997)]{AroraSudan97}
+S.~Arora and M.~Sudan.
+\newblock Improved low degree testing and its applications.
+\newblock In \emph{Proceedings of the 29th Annual ACM Symposium on Theory of Computing (STOC)}, pages 496--505, 1997.
+
+\bibitem[Arora et~al.(1997)Arora, Babai, Stern, and Sweedyk]{ABSS97}
+S.~Arora, L.~Babai, J.~Stern, and Z.~Sweedyk.
+\newblock The hardness of approximate optima in lattices, codes, and systems of linear equations.
+\newblock \emph{Journal of Computer and System Sciences}, 54\penalty0 (2):\penalty0 317--331, 1997.
+
+\bibitem[Arora et~al.(1998)Arora, Lund, Motwani, Sudan, and Szegedy]{ALMSS98}
+S.~Arora, C.~Lund, R.~Motwani, M.~Sudan, and M.~Szegedy.
+\newblock Proof verification and the hardness of approximation problems.
+\newblock \emph{Journal of the ACM}, 45\penalty0 (3):\penalty0 501--555, 1998.
+
+\bibitem[Arora et~al.(2015)Arora, Barak, and Steurer]{ABS15}
+S.~Arora, B.~Barak, and D.~Steurer.
+\newblock Subexponential algorithms for unique games and related problems.
+\newblock \emph{Journal of the ACM}, 62\penalty0 (5):\penalty0 Article 42, 2015.
+
+\bibitem[Babai et~al.(1991{\natexlab{a}})Babai, Fortnow, Levin, and Szegedy]{BFLS91}
+L.~Babai, L.~Fortnow, L.~A. Levin, and M.~Szegedy.
+\newblock Checking computations in polylogarithmic time.
+\newblock In \emph{Proceedings of the 23rd Annual ACM Symposium on Theory of Computing (STOC)}, pages 21--31, 1991{\natexlab{a}}.
+
+\bibitem[Babai et~al.(1991{\natexlab{b}})Babai, Fortnow, and Lund]{BFL91}
+L.~Babai, L.~Fortnow, and C.~Lund.
+\newblock Non-deterministic exponential time has two-prover interactive protocols.
+\newblock \emph{Computational Complexity}, 1\penalty0 (1):\penalty0 3--40, 1991{\natexlab{b}}.
+
+\bibitem[Barak et~al.(2009)Barak, Rao, Raz, Rosen, and Shaltiel]{BRRRS09}
+B.~Barak, A.~Rao, R.~Raz, R.~Rosen, and R.~Shaltiel.
+\newblock Strong parallel repetition theorem for free projection games.
+\newblock In \emph{Approximation, Randomization, and Combinatorial Optimization (APPROX-RANDOM)}, pages 352--365, 2009.
+
+\bibitem[Bellare et~al.(1996)Bellare, Coppersmith, H{\aa}stad, Kiwi, and Sudan]{BCHKS96}
+M.~Bellare, D.~Coppersmith, J.~H{\aa}stad, M.~Kiwi, and M.~Sudan.
+\newblock Linearity testing in characteristic two.
+\newblock \emph{IEEE Transactions on Information Theory}, 42\penalty0 (6):\penalty0 1781--1795, 1996.
+
+\bibitem[Bellare et~al.(1998)Bellare, Goldreich, and Sudan]{BGS98}
+M.~Bellare, O.~Goldreich, and M.~Sudan.
+\newblock Free bits, {PCP}s, and nonapproximability---towards tight results.
+\newblock \emph{SIAM Journal on Computing}, 27\penalty0 (3):\penalty0 804--915, 1998.
+
+\bibitem[Ben-Or et~al.(1988)Ben-Or, Goldwasser, Kilian, and Wigderson]{BGKW88}
+M.~Ben-Or, S.~Goldwasser, J.~Kilian, and A.~Wigderson.
+\newblock Multi-prover interactive proofs: how to remove intractability assumptions.
+\newblock In \emph{Proceedings of the 20th Annual ACM Symposium on Theory of Computing (STOC)}, pages 113--131, 1988.
+
+\bibitem[Ben-Sasson et~al.(2006)Ben-Sasson, Goldreich, Harsha, Sudan, and Vadhan]{BGHSV06}
+E.~Ben-Sasson, O.~Goldreich, P.~Harsha, M.~Sudan, and S.~Vadhan.
+\newblock Robust {PCP}s of proximity, shorter {PCP}s, and applications to coding.
+\newblock \emph{SIAM Journal on Computing}, 36\penalty0 (4):\penalty0 889--974, 2006.
+
+\bibitem[Blum et~al.(1990)Blum, Luby, and Rubinfeld]{BLR90}
+M.~Blum, M.~Luby, and R.~Rubinfeld.
+\newblock Self-testing/correcting with applications to numerical problems.
+\newblock In \emph{Proceedings of the 22nd Annual ACM Symposium on Theory of Computing (STOC)}, pages 73--83, 1990.
+
+\bibitem[Charikar et~al.(2006)Charikar, Makarychev, and Makarychev]{CMM06}
+M.~Charikar, K.~Makarychev, and Y.~Makarychev.
+\newblock Near-optimal algorithms for unique games.
+\newblock In \emph{Proceedings of the 38th Annual ACM Symposium on Theory of Computing (STOC)}, pages 205--214, 2006.
+
+\bibitem[Cook(1971)]{Cook71}
+S.~A. Cook.
+\newblock The complexity of theorem-proving procedures.
+\newblock In \emph{Proceedings of the 3rd Annual ACM Symposium on Theory of Computing (STOC)}, pages 151--158, 1971.
+
+\bibitem[Dinur(2007)]{Dinur07}
+I.~Dinur.
+\newblock The {PCP} theorem by gap amplification.
+\newblock \emph{Journal of the ACM}, 54\penalty0 (3):\penalty0 Article 12, 2007.
+
+\bibitem[Dinur and Reingold(2006)]{DR04}
+I.~Dinur and O.~Reingold.
+\newblock Assignment testers: towards a combinatorial proof of the {PCP} theorem.
+\newblock \emph{SIAM Journal on Computing}, 36\penalty0 (4):\penalty0 975--1024, 2006.
+
+\bibitem[Dinur and Steurer(2014)]{DinurSteurer14}
+I.~Dinur and D.~Steurer.
+\newblock Analytical approach to parallel repetition.
+\newblock In \emph{Proceedings of the 46th Annual ACM Symposium on Theory of Computing (STOC)}, 2014.
+\newblock arXiv:1305.1979.
+
+\bibitem[Dinur et~al.(2018)Dinur, Khot, Kindler, Minzer, and Safra]{DKKMS18}
+I.~Dinur, S.~Khot, G.~Kindler, D.~Minzer, and M.~Safra.
+\newblock Towards a proof of the 2-to-1 games conjecture?
+\newblock In \emph{Proceedings of the 50th Annual ACM Symposium on Theory of Computing (STOC)}, pages 376--389, 2018.
+
+\bibitem[Feige(1991)]{Feige91}
+U.~Feige.
+\newblock On the success probability of the two provers in one-round proof systems.
+\newblock In \emph{Proceedings of the Structure in Complexity Theory Conference}, pages 116--123, 1991.
+
+\bibitem[Feige(1998)]{Feige98}
+U.~Feige.
+\newblock A threshold of $\ln n$ for approximating set cover.
+\newblock \emph{Journal of the ACM}, 45\penalty0 (4):\penalty0 634--652, 1998.
+
+\bibitem[Feige and Lov{\'a}sz(1992)]{FeigeLovasz92}
+U.~Feige and L.~Lov{\'a}sz.
+\newblock Two-prover one-round proof systems: their power and their problems.
+\newblock In \emph{Proceedings of the 24th Annual ACM Symposium on Theory of Computing (STOC)}, pages 733--744, 1992.
+
+\bibitem[Feige et~al.(1996)Feige, Goldwasser, Lov{\'a}sz, Safra, and Szegedy]{FGLSS96}
+U.~Feige, S.~Goldwasser, L.~Lov{\'a}sz, S.~Safra, and M.~Szegedy.
+\newblock Interactive proofs and the hardness of approximating cliques.
+\newblock \emph{Journal of the ACM}, 43\penalty0 (2):\penalty0 268--292, 1996.
+
+\bibitem[Feige et~al.(2007)Feige, Kindler, and O'Donnell]{FKO07}
+U.~Feige, G.~Kindler, and R.~O'Donnell.
+\newblock Understanding parallel repetition requires understanding foams.
+\newblock In \emph{Proceedings of the 22nd IEEE Conference on Computational Complexity (CCC)}, 2007.
+
+\bibitem[Freivalds(1979)]{Freivalds79}
+R.~Freivalds.
+\newblock Fast probabilistic algorithms.
+\newblock In \emph{Mathematical Foundations of Computer Science (MFCS 1979)}, volume~74 of \emph{Lecture Notes in Computer Science}, pages 57--69. Springer, 1979.
+
+\bibitem[Goemans and Williamson(1995)]{GW95}
+M.~X. Goemans and D.~P. Williamson.
+\newblock Improved approximation algorithms for maximum cut and satisfiability problems using semidefinite programming.
+\newblock \emph{Journal of the ACM}, 42\penalty0 (6):\penalty0 1115--1145, 1995.
+
+\bibitem[Harsha(2007)]{Harsha07}
+P.~Harsha.
+\newblock {CMSC} 39600: {PCP}s, codes and inapproximability, lecture 1.
+\newblock Lecture notes, scribe J.~A.~Grochow, University of Chicago, 2007.
+
+\bibitem[Harsha and Charikar(2010)]{DIMACS10}
+P.~Harsha and M.~Charikar.
+\newblock Limits of approximation algorithms: {PCP}s and unique games ({DIMACS} tutorial lecture notes).
+\newblock arXiv:1002.3864, 2010.
+
+\bibitem[H{\aa}stad(1999)]{Hastad99}
+J.~H{\aa}stad.
+\newblock Clique is hard to approximate within $n^{1-\epsilon}$.
+\newblock \emph{Acta Mathematica}, 182\penalty0 (1):\penalty0 105--142, 1999.
+
+\bibitem[H{\aa}stad(2001)]{Hastad01}
+J.~H{\aa}stad.
+\newblock Some optimal inapproximability results.
+\newblock \emph{Journal of the ACM}, 48\penalty0 (4):\penalty0 798--859, 2001.
+
+\bibitem[Holenstein(2009)]{Holenstein09}
+T.~Holenstein.
+\newblock Parallel repetition: simplification and the no-signaling case.
+\newblock \emph{Theory of Computing}, 5:\penalty0 141--172, 2009.
+
+\bibitem[Johnson(1974)]{Johnson74}
+D.~S. Johnson.
+\newblock Approximation algorithms for combinatorial problems.
+\newblock \emph{Journal of Computer and System Sciences}, 9\penalty0 (3):\penalty0 256--278, 1974.
+
+\bibitem[Karp(1972)]{Karp72}
+R.~M. Karp.
+\newblock Reducibility among combinatorial problems.
+\newblock In R.~E. Miller and J.~W. Thatcher, editors, \emph{Complexity of Computer Computations}, pages 85--103. Plenum Press, 1972.
+
+\bibitem[Khot(2002)]{Khot02}
+S.~Khot.
+\newblock On the power of unique 2-prover 1-round games.
+\newblock In \emph{Proceedings of the 34th Annual ACM Symposium on Theory of Computing (STOC)}, pages 767--775, 2002.
+
+\bibitem[Khot(2010)]{Khot10}
+S.~Khot.
+\newblock On the unique games conjecture (invited survey).
+\newblock In \emph{Proceedings of the 25th IEEE Conference on Computational Complexity (CCC)}, pages 99--121, 2010.
+
+\bibitem[Khot(2019)]{Khot19}
+S.~Khot.
+\newblock On the proof of the 2-to-2 games conjecture.
+\newblock Expository article, 2019.
+
+\bibitem[Khot and Regev(2008)]{KhotRegev08}
+S.~Khot and O.~Regev.
+\newblock Vertex cover might be hard to approximate to within $2-\epsilon$.
+\newblock \emph{Journal of Computer and System Sciences}, 74\penalty0 (3):\penalty0 335--349, 2008.
+
+\bibitem[Khot and Vishnoi(2015)]{KhotVishnoi15}
+S.~Khot and N.~K. Vishnoi.
+\newblock The unique games conjecture, integrality gap for cut problems and embeddability of negative-type metrics into $\ell_1$.
+\newblock \emph{Journal of the ACM}, 62\penalty0 (1):\penalty0 Article 8, 2015.
+
+\bibitem[Khot et~al.(2007)Khot, Kindler, Mossel, and O'Donnell]{KKMO07}
+S.~Khot, G.~Kindler, E.~Mossel, and R.~O'Donnell.
+\newblock Optimal inapproximability results for {MAX-CUT} and other 2-variable {CSP}s?
+\newblock \emph{SIAM Journal on Computing}, 37\penalty0 (1):\penalty0 319--357, 2007.
+
+\bibitem[Khot et~al.(2017)Khot, Minzer, and Safra]{KMS17}
+S.~Khot, D.~Minzer, and M.~Safra.
+\newblock On independent sets, 2-to-2 games, and {G}rassmann graphs.
+\newblock In \emph{Proceedings of the 49th Annual ACM Symposium on Theory of Computing (STOC)}, pages 576--589, 2017.
+\newblock Journal version: Theory of Computing 21(10), 2025.
+
+\bibitem[Khot et~al.(2018)Khot, Minzer, and Safra]{KMS18}
+S.~Khot, D.~Minzer, and M.~Safra.
+\newblock Pseudorandom sets in {G}rassmann graph have near-perfect expansion.
+\newblock In \emph{Proceedings of the 59th IEEE Symposium on Foundations of Computer Science (FOCS)}, pages 592--601, 2018.
+
+\bibitem[Lapidot and Shamir(1991)]{LapidotShamir91}
+D.~Lapidot and A.~Shamir.
+\newblock Fully parallelized multi prover protocols for {NEXPTIME}.
+\newblock In \emph{Proceedings of the 32nd IEEE Symposium on Foundations of Computer Science (FOCS)}, pages 13--18, 1991.
+
+\bibitem[Levin(1973)]{Levin73}
+L.~A. Levin.
+\newblock Universal sequential search problems.
+\newblock \emph{Problems of Information Transmission}, 9\penalty0 (3):\penalty0 115--116, 1973.
+
+\bibitem[Lund and Yannakakis(1994)]{LundYannakakis94}
+C.~Lund and M.~Yannakakis.
+\newblock On the hardness of approximating minimization problems.
+\newblock \emph{Journal of the ACM}, 41\penalty0 (5):\penalty0 960--981, 1994.
+
+\bibitem[Lund et~al.(1992)Lund, Fortnow, Karloff, and Nisan]{LFKN92}
+C.~Lund, L.~Fortnow, H.~Karloff, and N.~Nisan.
+\newblock Algebraic methods for interactive proof systems.
+\newblock \emph{Journal of the ACM}, 39\penalty0 (4):\penalty0 859--868, 1992.
+
+\bibitem[Mossel et~al.(2010)Mossel, O'Donnell, and Oleszkiewicz]{MOO10}
+E.~Mossel, R.~O'Donnell, and K.~Oleszkiewicz.
+\newblock Noise stability of functions with low influences: invariance and optimality.
+\newblock \emph{Annals of Mathematics}, 171\penalty0 (1):\penalty0 295--341, 2010.
+
+\bibitem[{OpenAI}(2026)]{OpenAI26}
+{OpenAI}.
+\newblock The unique games theorem.
+\newblock Manuscript, dated September 23, 2026; not independently verified at the time of writing, 2026.
+
+\bibitem[Polishchuk and Spielman(1994)]{PolishchukSpielman94}
+A.~Polishchuk and D.~A. Spielman.
+\newblock Nearly-linear size holographic proofs.
+\newblock In \emph{Proceedings of the 26th Annual ACM Symposium on Theory of Computing (STOC)}, pages 194--203, 1994.
+
+\bibitem[Raghavendra(2008)]{Raghavendra08}
+P.~Raghavendra.
+\newblock Optimal algorithms and inapproximability results for every {CSP}?
+\newblock In \emph{Proceedings of the 40th Annual ACM Symposium on Theory of Computing (STOC)}, pages 245--254, 2008.
+
+\bibitem[Rao(2011)]{Rao11}
+A.~Rao.
+\newblock Parallel repetition in projection games and a concentration bound.
+\newblock \emph{SIAM Journal on Computing}, 40\penalty0 (6):\penalty0 1871--1891, 2011.
+
+\bibitem[Raz(1998)]{Raz98}
+R.~Raz.
+\newblock A parallel repetition theorem.
+\newblock \emph{SIAM Journal on Computing}, 27\penalty0 (3):\penalty0 763--803, 1998.
+
+\bibitem[Raz(2011)]{Raz11}
+R.~Raz.
+\newblock A counterexample to strong parallel repetition.
+\newblock \emph{SIAM Journal on Computing}, 40\penalty0 (3):\penalty0 771--777, 2011.
+
+\bibitem[Raz and Rosen(2012)]{RR12}
+R.~Raz and R.~Rosen.
+\newblock A strong parallel repetition theorem for projection games on expanders.
+\newblock In \emph{Proceedings of the IEEE Conference on Computational Complexity (CCC)}, pages 247--257, 2012.
+
+\bibitem[Rubinfeld and Sudan(1992)]{RubinfeldSudan92}
+R.~Rubinfeld and M.~Sudan.
+\newblock Self-testing polynomial functions efficiently and over rational domains.
+\newblock In \emph{Proceedings of the 3rd Annual ACM-SIAM Symposium on Discrete Algorithms (SODA)}, pages 23--32, 1992.
+
+\bibitem[Rubinfeld and Sudan(1996)]{RubinfeldSudan96}
+R.~Rubinfeld and M.~Sudan.
+\newblock Robust characterizations of polynomials with applications to program testing.
+\newblock \emph{SIAM Journal on Computing}, 25\penalty0 (2):\penalty0 252--271, 1996.
+
+\bibitem[Trevisan(2006)]{Trevisan06}
+L.~Trevisan.
+\newblock {CS294}: {PCP} and hardness of approximation, lecture notes (lectures 1 and 3).
+\newblock University of California, Berkeley, 2006.
+
+\bibitem[Trevisan(2012)]{Trevisan12}
+L.~Trevisan.
+\newblock On {K}hot's unique games conjecture.
+\newblock \emph{Bulletin of the American Mathematical Society}, 49\penalty0 (1):\penalty0 91--111, 2012.
+
+\bibitem[Trevisan et~al.(2000)Trevisan, Sorkin, Sudan, and Williamson]{TSSW00}
+L.~Trevisan, G.~B. Sorkin, M.~Sudan, and D.~P. Williamson.
+\newblock Gadgets, approximation, and linear programming.
+\newblock \emph{SIAM Journal on Computing}, 29\penalty0 (6):\penalty0 2074--2097, 2000.
+
+\bibitem[Zuckerman(2007)]{Zuckerman07}
+D.~Zuckerman.
+\newblock Linear degree extractors and the inapproximability of max clique and chromatic number.
+\newblock \emph{Theory of Computing}, 3:\penalty0 103--128, 2007.
+
+\end{thebibliography}
