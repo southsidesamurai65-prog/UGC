@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.5.7)  11 OCT 2026 15:40
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.5.7)  11 OCT 2026 20:05
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -856,29 +856,38 @@ Lecture 4.
 Lecture 5.
 [69
 
-] [70] [71] [72] [73] [74] [75] [76] [77] [78] [79] [80] [81] [82]) (./main.bbl [83] [84
+] [70] [71] [72] [73] [74] [75] [76] [77] [78] [79] [80] [81] [82]) (./lecture06.tex [83]
+Lecture 6.
+[84
 
-] [85] [86]) [87] (./main.aux)
+] [85] [86] [87] [88] [89] [90] [91] [92] [93] [94] [95]
+Underfull \hbox (badness 1189) in paragraph at lines 550--553
+[]\T1/lmr/m/it/10.95 Remark \T1/lmr/m/n/10.95 (Rad-hakr-ish-nan's mod-i-fi-ca-tion and de-ran-dom-ized rep-e-ti-tion)\T1/lmr/m/it/10.95 . []\T1/lmr/m/n/10.95 The $[]$ in
+ []
+
+[96] [97]) (./main.bbl [98] [99
+
+] [100] [101]) [102] (./main.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-03-20>
  ***********
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: 81A8B7F725856DFFA2AF25FBA3E254A8;14852.
+(rerunfilecheck)             Checksum: 9BE01479F6E9D2EBDA0C29FF27B1640D;17303.
  ) 
 Here is how much of TeX's memory you used:
- 30525 strings out of 469339
- 595576 string characters out of 5466427
- 1042894 words of memory out of 5000000
- 58277 multiletter control sequences out of 15000+600000
+ 30720 strings out of 469339
+ 598147 string characters out of 5466427
+ 1046489 words of memory out of 5000000
+ 58394 multiletter control sequences out of 15000+600000
  835393 words of font info for 163 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 107i,16n,110p,666b,1266s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 107i,16n,110p,904b,1266s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx9.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmcsc10.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmex10.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi12.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi5.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi6.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi7.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi8.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi9.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr5.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr6.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr7.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr8.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr9.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmri10.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmri9.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmss10.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmss12.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmss9.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmssbo10.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmssbx10.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmsso10.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy5.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy6.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy7.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy8.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy9.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt9.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/amsfonts/symbols/msam10.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></home/joebot/.TinyTeX/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm7.pfb>
-Output written on main.pdf (91 pages, 1082629 bytes).
+Output written on main.pdf (106 pages, 1168134 bytes).
 PDF statistics:
- 2267 PDF objects out of 2487 (max. 8388607)
- 2062 compressed objects within 21 object streams
- 533 named destinations out of 1000 (max. 500000)
- 477 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 2652 PDF objects out of 2984 (max. 8388607)
+ 2404 compressed objects within 25 object streams
+ 608 named destinations out of 1000 (max. 500000)
+ 573 words of extra memory for PDF output out of 10000 (max. 10000000)
 

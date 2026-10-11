@@ -119,3 +119,20 @@
 \contentsline {paragraph}{What we changed.}{83}{paragraph*.37}%
 \contentsline {paragraph}{On attributions.}{83}{paragraph*.38}%
 \contentsline {paragraph}{What is not covered.}{83}{paragraph*.39}%
+\contentsline {chapter}{\numberline {6}Gap Amplification: Dinur's Combinatorial Proof}{84}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Constraint graphs}{84}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Preprocessing: regularity and expansion}{85}{section.6.2}%
+\contentsline {section}{\numberline {6.3}Powering}{86}{section.6.3}%
+\contentsline {section}{\numberline {6.4}The amplification lemma}{87}{section.6.4}%
+\contentsline {subsection}{\numberline {6.4.1}Why amplifying works: an example, and the extraction of a labelling}{88}{subsection.6.4.1}%
+\contentsline {section}{\numberline {6.5}Composition: buying back the alphabet}{91}{section.6.5}%
+\contentsline {section}{\numberline {6.6}The main theorem}{92}{section.6.6}%
+\contentsline {section}{\numberline {6.7}The PCP theorem}{94}{section.6.7}%
+\contentsline {section}{\numberline {6.8}The two proofs of the PCP theorem}{94}{section.6.8}%
+\contentsline {section}{\numberline {6.9}Amplification versus repetition}{95}{section.6.9}%
+\contentsline {section}{Exercises}{96}{table.6.2}%
+\contentsline {section}{Notes and further reading}{98}{exercise.6.10}%
+\contentsline {paragraph}{Where this lecture comes from.}{98}{paragraph*.40}%
+\contentsline {paragraph}{Presentational choices of these notes.}{98}{paragraph*.41}%
+\contentsline {paragraph}{On the numerical example.}{98}{paragraph*.42}%
+\contentsline {paragraph}{What is not covered.}{98}{paragraph*.43}%

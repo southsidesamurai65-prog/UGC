@@ -1,0 +1,631 @@
+\chapter{Gap Amplification: Dinur's Combinatorial Proof}
+\label{lec:dinur}
+
+{\sffamily\large\color{softgray}Amplify a gap by making the graph talk to itself\par}
+\vspace{0.5em}
+
+\noindent
+Lectures~\ref{lec:as} and~\ref{lec:alm} proved the PCP theorem with algebra: polynomials, the low-degree test, curves, Hadamard codes.
+The proof is short for what it achieves, but every step moves through an encoding, and the soundness constant at the end is the weakest constant of five modules.
+This lecture gives the other proof, due to \citet{Dinur07}, in which there is no algebra at all: a constraint graph, a graph power, and a spectral gap.
+The theorem it proves is the same, with one visible parameter --- the amplification factor per round --- replacing the five hidden ones.
+
+The idea can be told in one paragraph.  A constraint graph with $\textsc{unsat}$-value $\eps$ is a system of local tests of which an $\eps$~fraction must fail.
+Raise the graph to a power $t$: the new ``edges'' are $t$-step paths of the old graph, and each vertex now carries a table of opinions about its neighbourhood.
+A path that passes through a failing edge is itself likely to fail, and by expansion a random path passes through a failing edge with probability $\Omega(\sqrt t)\eps$.
+So the $\textsc{unsat}$-value grows by $\sqrt t$ at the price of a larger alphabet; and the alphabet can be bought back by composition, which is allowed to be exponentially wasteful there because it is only ever applied to \emph{constant-size} constraints.
+Iterating $O(\log n)$ times drives a gap of $1/n$ up to a constant.
+
+\begin{goalbox}{After this lecture you should be able to\ldots}
+\begin{enumerate}[leftmargin=*,label=(\arabic*)]
+  \item define a constraint graph and $\textsc{unsat}$, and compute both on small examples (Section~\ref{sec:cg});
+  \item explain why powering amplifies, and prove the two elementary estimates that make the amplification lemma work on a \emph{regular} graph (Sections~\ref{sec:power}--\ref{sec:amp});
+  \item state the amplification lemma and the preprocessing and composition lemmas, and carry out the arithmetic of the main theorem (Sections~\ref{sec:prep}, \ref{sec:amp}, \ref{sec:main});
+  \item prove the PCP theorem from the main theorem by iterating it $O(\log n)$ times, and say what the size does at each step (Section~\ref{sec:pcp6});
+  \item compare the two proofs of the PCP theorem and say what each one is good for (Section~\ref{sec:compare}).
+\end{enumerate}
+\end{goalbox}
+
+
+%% ===========================================================================
+\section{Constraint graphs}
+\label{sec:cg}
+%% ===========================================================================
+
+\begin{definition}[Constraint graph; \citet{Dinur07}]\label{def:cg6}
+A \defn{constraint graph} $G=\langle(V,E),\Sigma,\mathcal C\rangle$ consists of a finite undirected graph $(V,E)$ (parallel edges and self-loops allowed), a finite alphabet $\Sigma$, and for every edge $e\in E$ a \defn{constraint} $c(e)\subseteq\Sigma\times\Sigma$.
+Every edge is oriented for the purpose of writing the constraint down: $c(e)$ is a set of ordered pairs, and the constraint of the reversed edge is the reversed relation.
+An \defn{assignment} is a map $\sigma\colon V\to\Sigma$.  For an edge $e=(u,v)$ written in its oriented form, $\sigma$ \defn{satisfies} $e$ if $(\sigma(u),\sigma(v))\in c(e)$.  We put
+\[
+  \textsc{unsat}_\sigma(G)=\Pr_{e\in E}\big[\sigma\text{ does not satisfy }e\big],\qquad
+  \textsc{unsat}(G)=\min_\sigma\textsc{unsat}_\sigma(G).
+\]
+The \defn{size} of $G$ is $|V|+|E|\cdot|\Sigma|^2$ (the length of its description), and $\val(G)=1-\textsc{unsat}(G)$ is the value in the sense of Lectures~\ref{lec:why} and~\ref{lec:games}.
+\end{definition}
+
+\noindent
+A constraint graph of arity $2$ and alphabet $\Sigma$ is a two-prover game with questions on both sides equal to $V$ (Exercise~\ref{ex:cg-game}); what is new here is not the object but the \emph{operations} we shall perform on it.
+Note that the edges are counted as a multiset, so a $d$-regular graph has a uniform edge distribution and $\textsc{unsat}_\sigma(G)$ is the fraction of edges violated.
+
+\begin{proposition}\label{prop:np-cg}
+It is $\NP$-hard to decide whether an instance of constraint graph satisfiability with $|\Sigma|=3$ has $\textsc{unsat}(G)=0$.
+\end{proposition}
+\begin{proof}
+$3$-colourability: the vertices are the vertices of the given graph, $\Sigma=\{1,2,3\}$, and every edge carries the inequality constraint $c(e)=\{(a,b):a\ne b\}$.
+A graph is $3$-colourable iff this system has $\textsc{unsat}=0$.
+\end{proof}
+
+\noindent
+So $\NP$-hardness of the gap problem $\Gap{0}{\alpha}{\textsc{CSP}}$ for some constant $\alpha>0$ \emph{is} the PCP theorem (Proposition~\ref{prop:pcp-equiv}).  The rest of the lecture constructs it.
+
+\begin{example}[Two small constraint graphs]\label{ex:two-small}
+(a)~The triangle with $\Sigma=\{0,1\}$ and inequality on all three edges has $\textsc{unsat}=\frac13$: a two-colouring of a triangle violates exactly one edge, and every assignment violates at least one.
+
+(b)~The same triangle with a self-loop added at each vertex, the self-loops carrying the always-true constraint, has six edges of which only the three original ones can fail, so $\textsc{unsat}=\frac16$: the loops change the normalisation.
+This second form is the one the amplification lemma applies to, and it is worth noting that the change from $\frac13$ to $\frac16$ is purely a matter of what we divide by.
+\end{example}
+
+\begin{remark}[Why self-loops]\label{rem:loops}
+The amplification lemma needs every vertex to have a self-loop carrying a satisfiable constraint.  The reason is visible in the proof: the lemma compares the distribution of the endpoint of a random walk of length $\ell$ with that of a walk of length $t/2$, and with a self-loop present these two distributions can be coupled tightly (Lemma~\ref{lem:binom}).  Without self-loops the lemma is false already at $t=2$: for the triangle of Example~\ref{ex:two-small}(a), give each vertex the label that assigns to every vertex of its ball the parity of that vertex's index.  Every walk of even length alternates, and each edge of the walk joins vertices of different parity, so all edges of the walk are satisfied and the two tables agree at the middle: this labelling of $G^2$ violates nothing, although $\textsc{unsat}(G)=\frac13$ (Exercise~\ref{ex:parity}).
+\end{remark}
+
+
+%% ===========================================================================
+\section{Preprocessing: regularity and expansion}
+\label{sec:prep}
+%% ===========================================================================
+
+The amplification lemma assumes the graph is regular with a good spectral gap.  Both can be assumed without loss, at the price of a constant factor in the $\textsc{unsat}$-value.
+
+\begin{lemma}[Preprocessing; \citet{Dinur07}, Lemma~3.1]\label{lem:prep}
+There are constants $0<\lambda<d$ and $\beta_1>0$ such that every constraint graph $G$ can be transformed in polynomial time into a constraint graph $G'=\mathrm{prep}(G)$ with
+\[
+  \text{(i) } G'\text{ is }d\text{-regular, has a self-loop at every vertex, and }\lambda(G')\le\lambda,
+\]
+\[
+  \text{(ii) } \beta_1\,\textsc{unsat}(G)\le\textsc{unsat}(G')\le\textsc{unsat}(G),
+\]
+where $\lambda(G')$ is the second largest eigenvalue of the adjacency matrix of~$G'$ (with self-loops counted once).  Also $\mathrm{size}(G')=O(\mathrm{size}(G))$ and $G'$ has the same alphabet as $G$.
+\end{lemma}
+
+\begin{proof}[Sketch]
+Two steps, both standard.
+
+\emph{Step 1: constant degree (\citet{PapadimitriouYannakakis91}).}  Replace every vertex $v$ of degree $d_v$ by $d_v$ new vertices $[v]$, joined by the edges of a fixed $d_0$-regular expander on $d_v$ vertices with the equality constraint, and put the $d_v$ original edges of $v$ on the $d_v$ new vertices, one each.  The result is $(d_0+1)$-regular; the equality constraints force the copies of $v$ to agree, by a plurality argument, whenever the assignment does not want to pay a constant fraction of edges (Exercise~\ref{ex:prep-degree}).
+
+\emph{Step 2: expansion.}  Given a $d$-regular $G$, add a $d_0$-regular expander on the same vertex set with the always-true constraint, and one self-loop per vertex, again with the always-true constraint.  The result is $(d+d_0+1)$-regular and always satisfied on the new edges, so the $\textsc{unsat}$-value only changes by the change of normalisation: $\textsc{unsat}(G')=O(1)\cdot\textsc{unsat}(G)$ from below.
+Its expansion is that of the expander we added, so $\lambda(G')\le d+d_0+1-h_0^2/(d+d_0+1)<\deg(G')$ (Exercise~\ref{ex:prep-expand}).
+\end{proof}
+
+\begin{remark}\label{rem:prep-losses}
+Each step changes the $\textsc{unsat}$-value by a constant factor:
+the first can lose a factor like $h_0/(2d)$ and the second the ratio $\frac{d}{d+d_0+1}$ between the old and the new number of edges.  Both are absorbed into $\beta_1$.
+Completeness is untouched: $\textsc{unsat}(G)=0$ implies $\textsc{unsat}(G')=0$ in both steps, since the extension of a satisfying assignment (constants on the copies, and the old values on the old vertices) uses only always-satisfied or equality edges.
+\end{remark}
+
+
+%% ===========================================================================
+\section{Powering}
+\label{sec:power}
+%% ===========================================================================
+
+Here is the operation that creates the gap.  It is easiest to understand it in the special case of a colouring problem first.
+
+\begin{definition}[Power of a constraint graph; \citet{Dinur07}, Section~3.2]\label{def:power}
+Let $G=\langle(V,E),\Sigma,\mathcal C\rangle$ be a constraint graph and let $t\ge2$ be even, $h=t/2$.
+The \defn{$t$-th power} $G^t=\langle(V,E^t),\Sigma^t,\mathcal C^t\rangle$ has the same vertex set; its alphabet is
+\[
+  \Sigma^t\;=\;\Big\{\text{functions }f\colon B(v,h)\to\Sigma\Big\}\quad\text{with }B(v,h)=\{x\in V:\ \mathrm{dist}(v,x)\le h\},
+\]
+the set of \emph{opinions of $v$ about its $h$-neighbourhood} (we write $\Sigma^t$ for the alphabet size $|\Sigma|^{|B(v,h)|}$, which is bounded by $|\Sigma|^{d^{h}}$ in a $d$-regular graph).
+For every $t$-walk $p=(x_0,x_1,\dots,x_{2h})$ in $G$ --- \emph{one edge of $G^t$ per walk}, joining $x_0$ and $x_{2h}$ --- the constraint is satisfied by a pair of labels $(f,g)$ iff
+\begin{enumerate}[label=(\roman*),leftmargin=*]
+  \item $f$ is defined on $x_0,\dots,x_h$ and $g$ on $x_h,\dots,x_{2h}$, and they \defn{agree at the middle}, $f(x_h)=g(x_h)$; and
+  \item the merged colouring $a(x_i)=f(x_i)$ for $i\le h$, $a(x_i)=g(x_i)$ for $i\ge h$, satisfies every edge $(x_i,x_{i+1})$ of the walk.
+\end{enumerate}
+\end{definition}
+
+\noindent
+Both conditions are needed.  Condition~(ii) alone would let the two tables disagree at the middle vertex; condition~(i) alone would let them agree there while contradicting the edges of the walk.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,every node/.style={font=\small},
+   vx/.style={circle,draw,minimum size=0.62cm,fill=accent!8}]
+  \node[font=\sffamily\small\bfseries,color=accent,anchor=west] at (-1.15,1.05) {(a)\ \ the walk $x_0x_1x_2$};
+  \node[vx] (x0) at (0,0) {$x_0$};
+  \node[vx] (x1) at (1.9,0) {$x_1$};
+  \node[vx] (x2) at (3.8,0) {$x_2$};
+  \draw[thick] (x0)--(x1)--(x2);
+  \node[font=\footnotesize,above=2pt of x0] {$f$};
+  \node[font=\footnotesize,above=2pt of x1] {agree};
+  \node[font=\footnotesize,above=2pt of x2] {$g$};
+  \node[font=\footnotesize,align=center,anchor=west,text width=5.6cm] at (5.0,0)
+     {$f$ lives on $B(x_0,h)=\{x_0,x_1\}$\\
+      $g$ lives on $B(x_2,h)=\{x_1,x_2\}$\\
+      both must name $x_h=x_1$ the same way};
+  \begin{scope}[yshift=-3.0cm]
+  \node[font=\sffamily\small\bfseries,color=accent,anchor=west] at (-1.15,1.05) {(b)\ \ $h=2$: each ball has four vertices};
+  \node[draw,rounded corners=2pt,fill=accent!7,align=left,font=\footnotesize] (t1) at (1.5,0)
+      {$f\colon B(x_0,2)\to\Sigma$,\quad $f=(0,\cdot,\cdot,\cdot)$\\
+       $B(x_0,2)=\{x_0,x_1,x_2,x_3\}$};
+  \node[draw,rounded corners=2pt,fill=warn!8,align=left,font=\footnotesize] (t2) at (8.0,0)
+      {$g\colon B(x_3,2)\to\Sigma$,\quad $g=(\cdot,\cdot,\cdot,0)$\\
+       $B(x_3,2)=\{x_0,x_1,x_2,x_3\}$};
+  \node[font=\footnotesize,align=center] at (4.75,-1.45) {the edge of $G^t$ joins $x_0$ and $x_3$;\\ they must agree on $x_2$};
+  \end{scope}
+\end{tikzpicture}
+\caption{Powering.  A label of a vertex is a table of opinions about its whole $h$-neighbourhood, and every $2h$-walk of the old graph becomes a single edge of the new graph, from its first to its last vertex.  The two tables are compared at the middle vertex $x_h$ and each covers one half of the walk; in (a) the edge $(x_0,x_2)$ of $G^t$ is satisfied only if $f$ and $g$ name $x_1$ the same way and the two edges of the walk are satisfied.}
+\label{fig:power}
+\end{figure}
+
+\begin{remark}[The size of $G^t$]\label{rem:size-power}
+The number of edges of $G^t$ is the number of $t$-walks in $G$, which for a $d$-regular $G$ is $|E|\,d^{t-1}$.  With $t$ constant this is a constant factor: \emph{linear} blow-up.
+The alphabet, on the other hand, is $|\Sigma|^{d^{h}}$, which is constant but very large (for $d=h=2$ and $|\Sigma|=2$ it is $2^{4}=16$ per vertex; the exponent is exponential in $t$).  Two-thirds of the work below goes into removing it.
+\end{remark}
+
+\begin{remark}[Powering versus parallel repetition]\label{rem:power-vs-rep}
+Two differences from the repetition of Lecture~\ref{lec:raz} are worth stating at once.  First, the number of \emph{questions} is unchanged: a vertex of $G^t$ is a vertex of $G$, and the number of vertices does not grow, whereas $G^{\otimes k}$ has $|V|^k$ vertices.
+Second, the two provers of $G^t$ are questioned about two \emph{vertices}, as before, and the constraints still have arity $2$.  What grows is the size of each answer, and that growth is the amplifier: a label of $v$ must commit to a colour for every vertex of $B(v,h)$, so the two provers are forced to take a position on the whole of a length-$t$ walk.
+\end{remark}
+
+
+%% ===========================================================================
+\section{The amplification lemma}
+\label{sec:amp}
+%% ===========================================================================
+
+\begin{lemma}[Amplification; \citet{Dinur07}, Lemma~3.5 and Section~5]\label{lem:amp}
+Let $0<\lambda<d$ and $|\Sigma|$ be constants.  There is a constant $\beta_2=\beta_2(\lambda,d,|\Sigma|)>0$ such that for every even $t\in\N$ and every $d$-regular constraint graph $G$ with a self-loop at every vertex and $\lambda(G)\le\lambda$,
+\[
+  \textsc{unsat}(G^t)\ \ge\ \beta_2\sqrt t\cdot\min\Big(\textsc{unsat}(G),\ \frac1t\Big).
+\]
+\end{lemma}
+
+\noindent
+So as long as $\textsc{unsat}(G)\le1/t$ --- which is the situation at the beginning, when the gap is $1/n$ --- the $\textsc{unsat}$-value of the power is $\Omega(\sqrt t)$ times larger, while the number of \emph{variables} is unchanged and the size only grows by the constant factor $d^{t-1}$.
+The `$\min$' is there because a game cannot have $\textsc{unsat}$-value bigger than $1$, and with $t$ repetitions a single bad edge can be hit at most $1/t$ of the time in the worst case; it is harmless because we apply the lemma only while $\textsc{unsat}\le1/t$.
+
+\subsection{Why amplifying works: an example, and the extraction of a labelling}
+
+Before the proof, the example that shows the operation is not vacuous.
+
+\begin{example}[The triangle]\label{ex:tri-power}
+Let $G$ be the triangle with two colours and inequality on the three edges, plus a self-loop with the always-true constraint at each vertex (Example~\ref{ex:two-small}(b)), so that $\textsc{unsat}(G)=\frac16$.
+The label set of $G^2$ assigns to each vertex a value at itself and at each of its two neighbours, and the edges of $G^2$ correspond to walks $x_0x_1x_2$, \ie to triples in which $x_0,x_1,x_2$ are the three distinct vertices of the triangle (a closed walk such as $x_0x_1x_0$ also occurs).
+An exhaustive search over all $8^3=512$ labellings of $G^2$ gives
+\[
+  \frac{\textsc{unsat}(G^2)}{1/6}=\frac{8}{27}\approx1.78,\qquad
+  \frac{\textsc{unsat}(G^4)}{1/6}\approx3.36,\qquad
+  \frac{\textsc{unsat}(G^6)}{1/6}\approx4.28,
+\]
+against $\sqrt t=1.41,2,2.45$.  The amplification is real and grows like $\sqrt t$; the constant $\beta_2$ hides a numerical factor, as it must, and it is much smaller than the observed one.
+Exhaustive search is possible here because the alphabet of $G^t$ has only $2^3=8$ elements per vertex for the triangle: the ball $B(v,1)$ has $3$ vertices and $B(v,3)=V$ has $3$ vertices, and there are $3^3$ labellings.
+Without the self-loops the $t=2$ power is \emph{satisfiable} (Remark~\ref{rem:loops}), which is the reason for the hypothesis.
+\end{example}
+
+\noindent
+We now prove the lemma.  The proof has a clean shape: given a labelling of $G^t$, extract from it a labelling of $G$; compare the two.
+
+\begin{definition}[Popular opinion]\label{def:popular}
+Let $\vec\sigma\colon V\to\Sigma^t$ be an assignment for $G^t$, so $\vec\sigma(w)$ is a table of opinions about $B(w,h)$.  Write $\vec\sigma(w)_v$ for its value at $v$.
+For $v\in V$ let $X_v$ be the random value obtained by taking a random walk of length $h$ from $v$ (with self-loops allowed, as the graph has them) and reporting the opinion $\vec\sigma(w)_v$ of its endpoint $w$ about $v$.
+Define the \defn{popular-opinion assignment} $\sigma\colon V\to\Sigma$ by
+\[
+  \sigma(v)\;=\;\arg\max_{a\in\Sigma}\ \Pr[X_v=a].
+\]
+\end{definition}
+
+\noindent
+We abbreviate $p_v=\Pr[X_v=\sigma(v)]\ \ge\ 1/|\Sigma|$.
+
+\begin{proof}[Proof of Lemma~\ref{lem:amp}]
+Let $\vec\sigma$ be a best assignment for $G^t$, so that $\textsc{unsat}(G^t)=\textsc{unsat}_{\vec\sigma}(G^t)$, and let $\sigma$ be the popular-opinion assignment.
+
+Let $F\subseteq E$ be the set of edges of $G$ violated by $\sigma$, restricted if necessary so that $|F|/|E|=\min(\textsc{unsat}_\sigma(G),1/t)$:  since $\textsc{unsat}_\sigma(G)\ge\textsc{unsat}(G)$ and the min is at most $1/t$, we have
+\begin{equation}\label{eq:F}
+  \frac{|F|}{|E|}\ \ge\ \min\Big(\textsc{unsat}(G),\frac1t\Big).
+\end{equation}
+
+A walk $p=(x_0,\dots,x_{2h})$ is \defn{hit by its $i$-th edge} if $(x_{i-1},x_i)\in F$ \emph{and} the opinions of the two ends about that edge are correct, \ie $\vec\sigma(x_0)_{x_{i-1}}=\sigma(x_{i-1})$ and $\vec\sigma(x_{2h})_{x_i}=\sigma(x_i)$.
+Let $N(p)$ be the number of indices $i$ in the middle block
+\[
+  I=\{i:\ h-\sqrt t<i\le h+\sqrt t\}
+\]
+by which $p$ is hit.  A hit is a genuine disagreement: the merged labelling of $p$ induced by $\vec\sigma(x_0)$ and $\vec\sigma(x_{2h})$ then violates the edge $(x_{i-1},x_i)$, so the edge $p$ of $G^t$ is \emph{not} satisfied.
+Hence
+\begin{equation}\label{eq:N-positive}
+  \Pr_p[N(p)>0]\ \le\ \textsc{unsat}(G^t).
+\end{equation}
+
+The rest of the proof is the estimate
+\begin{equation}\label{eq:first-moment}
+  \E_p[N(p)]\ \ge\ \Omega(1)\cdot|I|\cdot\frac{|F|}{|E|}\ =\ \Omega(\sqrt t)\cdot\frac{|F|}{|E|},
+  \qquad\text{and}\qquad
+  \E_p[N(p)^2]\ \le\ O(\sqrt t)\cdot\frac{|F|}{|E|}.
+\end{equation}
+Given~\eqref{eq:first-moment}, the Cauchy--Schwarz type inequality of \citet{Dinur07} (Exercise~\ref{ex:fact25}) gives
+\[
+  \Pr[N>0]\ \ge\ \frac{\E[N]^2}{\E[N^2]}\ \ge\ \Omega(\sqrt t)\cdot\frac{|F|}{|E|}.
+\]
+Combining with~\eqref{eq:N-positive} and~\eqref{eq:F} proves the lemma.
+
+\medskip
+\noindent\emph{First moment.}  By linearity, $\E[N]=\sum_{i\in I}\Pr[N_i>0]$ where $N_i$ is the indicator of being hit by the $i$-th edge.  Draw $p$ by choosing first a uniform edge $(u,v)\in E$, then a random walk of length $i-1$ backwards from $u$ to $x_0$, then a random walk of length $2h-i$ forwards from $v$ to $x_{2h}$; since $G$ is regular this is a uniformly random walk.
+By the definition of a hit and the independence of the two ends given the edge,
+\[
+  \Pr[N_i>0]=\frac{|F|}{|E|}\cdot q_u\cdot q_v,\qquad q_u:=\Pr_{x_0}\big[\vec\sigma(x_0)_u=\sigma(u)\big],\ q_v:=\Pr_{x_{2h}}\big[\vec\sigma(x_{2h})_v=\sigma(v)\big].
+\]
+Now $q_u$ is the probability that a random walk of length $i-1$ from $u$ ends at a vertex whose opinion about $u$ is the popular one, \ie $q_u=\Pr[X_{u,i-1}=\sigma(u)]$ in the notation of Definition~\ref{def:popular}.  The key estimate is
+\begin{equation}\label{eq:key}
+  \Pr[X_{u,\ell}=\sigma(u)]\ \ge\ \tau\cdot\Pr[X_u=\sigma(u)]=\tau\,p_u\qquad\text{for every }\ell\text{ with }|\ell-h|\le\sqrt t,
+\end{equation}
+for a constant $\tau>0$ depending only on $d$ and $|\Sigma|$: the two distributions of the endpoint of a walk of length $\ell$ and of length $h$ are close, because one can insert or delete $h-\ell$ steps that use the marked self-loop (this is proved at the end of the section, Lemma~\ref{lem:binom}).
+Since $p_u\ge1/|\Sigma|$, we get $q_u\ge\tau/|\Sigma|$ and likewise $q_v$, hence $\Pr[N_i>0]\ge\frac{|F|}{|E|}\cdot\frac{\tau^2}{|\Sigma|^2}$ for every $i\in I$, and
+$\E[N]\ge|I|\cdot\frac{|F|}{|E|}\cdot\frac{\tau^2}{|\Sigma|^2}=2\sqrt t\cdot\frac{\tau^2}{|\Sigma|^2}\cdot\frac{|F|}{|E|}$.
+
+\medskip
+\noindent\emph{Second moment.}  With $Z(p)=|\{i\in I:\ (x_{i-1},x_i)\in F\}|$ we have $N\le Z$, so $\E[N^2]\le\E[Z^2]$.  Expanding,
+\[
+  \E[Z^2]=\sum_{i\in I}\E[Z_i]+2\sum_{\substack{i<j\\ i,j\in I}}\E[Z_iZ_j] \le |I|\cdot\frac{|F|}{|E|}+|I|^2\Big(\frac{|F|}{|E|}\Big)^2+2\sum_{\substack{i<j\\ i,j\in I}}\Pr[Z_j>0\mid Z_i>0]\cdot\frac{|F|}{|E|}.
+\]
+For the conditional probabilities, the graph is an expander: the walk forgets its past, and the probability that it re-enters $F$ after $j-i$ more steps is at most $\frac{|F|}{|E|}+\lambda^{j-i}$ (this is Proposition~\ref{prop:walk-f}, the standard mixing estimate, applied to the normalized adjacency matrix, whose second eigenvalue in absolute value is $\lambda/d$).
+Therefore
+\[
+  \sum_{\substack{i<j\\ i,j\in I}}\E[Z_iZ_j]\le|I|^2\Big(\frac{|F|}{|E|}\Big)^2+|I|\,\frac{|F|}{|E|}\sum_{i\ge1}\Big(\frac{\lambda}{d}\Big)^{i}=O\Big(\sqrt t\cdot\frac{|F|}{|E|}\Big)
+\]
+because $|I|=2\sqrt t$, $\frac{|F|}{|E|}\le\frac1t$, and $\sum_i(\lambda/d)^i=O(1)$.
+\end{proof}
+
+\begin{proposition}[Random walks on an expander re-enter $F$ at the trivial rate]\label{prop:walk-f}
+Let $G$ be $d$-regular with second largest eigenvalue $\lambda$, and let $F\subseteq E$ with $|F|/|E|=\mu$.  The probability that a random walk which starts at a uniformly random edge of $F$ is again at an edge of $F$ after $i+1$ further steps is at most $\mu+(\lambda/d)^i$.
+\end{proposition}
+\begin{proof}
+Let $K$ be the distribution of the vertex reached by the first edge of $F$, let $A$ be the normalized adjacency matrix, and let $y_v$ be the probability that a random step from $v$ is inside $F$.  The probability in question is $\langle y,A^ix\rangle$, where $x$ is the density of $K$.  Splitting $x=x^\parallel+x^\perp$ into its mean $x^\parallel=\frac1n\mathbf 1$ and its zero-mean part,
+\[
+  \langle y,A^ix\rangle=\langle y,A^ix^\parallel\rangle+\langle y,A^ix^\perp\rangle\ \le\ \mu+\|y\|\,\|A^ix^\perp\|\ \le\ \mu+(\lambda/d)^i,
+\]
+using $\E_vy_v=\mu$, $\|y\|\le1$ and $\|A^ix^\perp\|\le(\lambda/d)^i\|x^\perp\|\le(\lambda/d)^i$.
+\end{proof}
+
+\begin{lemma}[Inserting self-loops does not move the endpoint much]\label{lem:binom}
+Let $G$ be $d$-regular with a self-loop at every vertex, let $h\ge1$, and let $\vec\sigma$ be an assignment for $G^t$ with $t=2h$.  For every $u$ and every $\ell$ with $|\ell-h|\le\sqrt t$,
+\[
+  \Pr[X_{u,\ell}=\sigma(u)]\ \ge\ \tau\cdot\Pr[X_{u,h}=\sigma(u)]
+\]
+for a constant $\tau=\tau(d,|\Sigma|)>0$, where $X_{u,\ell}$ is the opinion about $u$ of the endpoint of a random $\ell$-step walk from $u$.
+\end{lemma}
+\begin{proof}
+Mark one self-loop at every vertex.  A random $\ell$-step walk is described by choosing which $k$ of its steps use the marked loop, and running a walk on the remaining $d-1$ edges otherwise.  Correspondingly,
+\[
+  \Pr[X_{u,\ell}=a]=\sum_{k=0}^{\ell}\Pr[B_{\ell,p}=k]\cdot\Pr[X'_{u,k}=a],\qquad p=1-\tfrac1d,
+\]
+where $X'_{u,k}$ is the opinion obtained from a $k$-step walk conditioned to avoid the marked loops.  The binomial distributions $B_{h,p}$ and $B_{\ell,p}$ are comparable on the range $|k-ph|\le c\sqrt h$ for a constant $\tau$ depending only on $d$: that is, $\Pr[B_{h,p}=k]\ge\tau\Pr[B_{\ell,p}=k]$ there, because $|h-\ell|\le\sqrt t$ and both are binomials with the same mean up to $O(\sqrt t)$ and the same variance $\Theta(t)$.
+Choose $c$ so that $B_{h,p}$ is in that range with probability $\ge1-\frac1{2|\Sigma|}$; then
+\begin{align*}
+  \Pr[X_{u,\ell}=a]\ &\ge\ \tau\!\!\sum_{|k-ph|\le c\sqrt h}\!\!\Pr[B_{h,p}=k]\Pr[X'_{u,k}=a]\\
+  &\ge\ \tau\Big(\Pr[X_{u,h}=a]-\frac1{2|\Sigma|}\Big)\ \ge\ \frac\tau2\Pr[X_{u,h}=a],
+\end{align*}
+the last step because $\Pr[X_{u,h}=a]\ge\frac1{|\Sigma|}$ when $a=\sigma(u)$ is the maximizer.  Taking $\tau:=\tau/2$ proves the claim.
+\end{proof}
+
+\begin{remark}[Where each hypothesis is used]\label{rem:hypotheses}
+Regularity is used twice: to identify the uniform distribution on walks with the sequential description in the first moment, and in Proposition~\ref{prop:walk-f}, where the stationary distribution must be uniform.
+A self-loop at every vertex is used only in Lemma~\ref{lem:binom}.  The bound $\lambda(G)<d$ is what makes $\sum_i(\lambda/d)^i$ converge.  The alphabet enters only through $p_v\ge1/|\Sigma|$ and through the constant $\tau$ of Lemma~\ref{lem:binom}.
+\end{remark}
+
+
+%% ===========================================================================
+\section{Composition: buying back the alphabet}
+\label{sec:comp}
+%% ===========================================================================
+
+After powering, the alphabet is $\Sigma^{d^{h}}$: constant, but enormous.  Composition replaces every constraint of $G^t$ by a small constraint graph over a fixed alphabet $\Sigma_0$, without losing more than a constant factor of the $\textsc{unsat}$-value.
+
+The crucial point is the \emph{size} of the objects we must handle.  A constraint of $G^t$ is a relation on $\Sigma^{t}\times\Sigma^{t}$ where the alphabet is constant, so the constraint has constant size, and there are only $2^{2^{O(1)}}$ distinct constraints.  A transformation that is allowed to be exponentially slow on constant-size input is therefore allowed to be \emph{anything}: it may enumerate all assignments, or search all circuits of bounded size, as long as we know one exists.
+This is the sense in which the argument is not circular, and it is the reason the algebraic PCP of Lectures~\ref{lec:as}--\ref{lec:alm} reappears: we use it once, on constant-size inputs, to obtain the reduction $P$ whose existence we need.
+
+\begin{definition}[Assignment tester; \citet{Dinur07}, Definition~3.1, after \citet{DinurReingold04} and \citet{BGHSV06}]\label{def:at}
+An \defn{assignment tester} with alphabet $\Sigma_0$ and rejection probability $\epsilon>0$ is a map $P$ that takes a Boolean circuit $\Phi$ on variable set $X$ to a constraint graph $G=\langle(V,E),\Sigma_0,\mathcal C\rangle$ with $X\subseteq V$, such that for every $a\colon X\to\{0,1\}$:
+\begin{itemize}
+  \item (completeness) if $a$ satisfies $\Phi$, there is $b\colon V\setminus X\to\Sigma_0$ with $\textsc{unsat}_{a\cup b}(G)=0$;
+  \item (soundness) if $a$ does not satisfy $\Phi$, then for every $b\colon V\setminus X\to\Sigma_0$, $\ \textsc{unsat}_{a\cup b}(G)\ge\epsilon\cdot\mathrm{dist}(a,\mathrm{SAT}(\Phi))$,
+        where $\mathrm{dist}(a,\mathrm{SAT}(\Phi))$ is the Hamming distance from $a$ to the nearest satisfying assignment.
+\end{itemize}
+No bound is imposed on the running time of $P$ or on $\mathrm{size}(G)$.
+\end{definition}
+
+\noindent
+The difference from a PCP verifier is only the ``proximity'' in the soundness clause: the rejection probability is proportional to the distance of the input from satisfiability, not merely positive.  This is what makes composition work at many overlapping constraints simultaneously; \citet{Dinur07} credits the modular treatment to \citet{DinurReingold04} and \citet{BGHSV06}.
+
+\begin{lemma}[Existence, and how to get one]\label{lem:at-exists}
+For every constant $\Sigma_0$ there is an assignment tester with alphabet $\Sigma_0$ and rejection probability $\epsilon>0$ depending only on $\Sigma_0$.  It can be taken to be computable in time exponential in the size of the input circuit.
+\end{lemma}
+\begin{proof}[Sketch]
+Two routes, and it is worth seeing both.
+\emph{(a) By the PCP theorem of Lectures~\ref{lec:as}--\ref{lec:alm}.}  Theorem~\ref{thm:alm17} gives a verifier for $\textsc{CKT-SAT}$ that reads $q=O(1)$ bits of a proof; from it, the FGLSS or the inner-verifier construction of Lecture~\ref{lec:alm} gives a reduction from a circuit to constraints over a constant alphabet, and the soundness clause of an inner verifier is exactly the proximity statement of Definition~\ref{def:at} (Exercise~\ref{ex:at-from-pcp}).
+\emph{(b) Directly, from the Long Code.}  \citet{Dinur07} gives a self-contained construction in her Section~6: encode the assignment $a\in\{0,1\}^s$ by the table $A_a(f)=f(a)$ over all functions $f\colon\{0,1\}^s\to\{0,1\}$, and run dictatorial tests on it.  With $s$ constant this table has constant size, and the tests can be enumerated.
+The construction is exponential in $s$, which is harmless.
+\end{proof}
+
+\begin{remark}[Why we may use the algebraic PCP here]\label{rem:no-circularity}
+The proof of the PCP theorem in this lecture uses as a subroutine a \emph{fixed} reduction $P$ for inputs of \emph{constant} size.  This is not circular: the theorem we are proving is about inputs of size $n$, and $P$ is never applied to such an input.
+Lectures~\ref{lec:as}--\ref{lec:alm} establish the existence of $P$ by constructing it explicitly.  There is no logical dependence on the larger theorem, only on its constant-size instance, which one could also verify by exhaustive search once existence is known.
+\end{remark}
+
+\begin{lemma}[Composition; \citet{Dinur07}, Lemma~3.6]\label{lem:comp6}
+Let $P$ be an assignment tester with constant rejection probability $\epsilon>0$ and constant alphabet $\Sigma_0$.  There is a constant $\beta_3>0$, depending only on $P$, such that every constraint graph $G=\langle(V,E),\Sigma,\mathcal C\rangle$ with $|\Sigma|=O(1)$ can be transformed in polynomial time into a constraint graph $G\circ P$ with alphabet $\Sigma_0$,
+\[
+  \mathrm{size}(G\circ P)=O\big(\mathrm{size}(G)\big),\qquad
+  \beta_3\cdot\textsc{unsat}(G)\le\textsc{unsat}(G\circ P)\le\textsc{unsat}(G).
+\]
+\end{lemma}
+\begin{proof}[Sketch]
+Two steps.
+
+\emph{Robustization.}  A constraint $c(e)\subseteq\Sigma\times\Sigma$ must be presented to $P$ as a circuit on Boolean variables.  Encode each label in $\Sigma$ by a codeword of an error-correcting code $e\colon\Sigma\to\{0,1\}^\ell$ of constant rate and relative distance $\rho>0$; replace each vertex $v$ by $\ell$ Boolean variables $[v]$, and each constraint by the Boolean constraint $\tilde c$ on $[u]\cup[v]$ that is satisfied iff the two blocks are legal codewords of labels that satisfied $c$ (Exercise~\ref{ex:robustization}).
+The code is needed so that a far-from-satisfying input to $P$ corresponds to an assignment that is far from satisfying, with a quantitative bound; this is the technical point that \citet{Dinur07} refers to as discussed at length in \citet{DinurReingold04}.
+
+\emph{Composition.}  Run $P$ on each of the (constantly many distinct) constraints $\tilde c$; the output $G_{\tilde c}$ has $[u]\cup[v]$ among its vertices, and we take the union over all $e\in E$.  Because the same variables $[v]$ appear in the outputs for different edges, the union is not disjoint and the invocations are consistent; this is precisely what the assignment-tester property buys.
+
+The soundness inequality follows from the soundness of $P$.  If $\sigma'$ is an assignment for $G\circ P$, extract $\sigma$ by decoding each block $[v]$ to the nearest codeword.  A fraction $\textsc{unsat}_\sigma(G)$ of constraints rejects $\sigma$; for each such edge $e$, the restriction of $\sigma'$ to $[u]\cup[v]$ is at Hamming distance $\ge\rho/2$ from a satisfying input\footnote{Deleting the $\rho$-distance between codewords: if $\sigma$ and $\sigma'$ disagree on the decoded labels, then the two blocks are $\rho$-far from each other's codewords, so at least one of them is $\rho/2$-far from its own.} of $\tilde c$, so by the soundness of $P$ a fraction at least $\epsilon\rho/2$ of the constraints of $G_{\tilde c}$ rejects.
+Summing over the rejecting edges gives $\textsc{unsat}(G\circ P)\ge(\epsilon\rho/2)\,\textsc{unsat}(G)$, \ie $\beta_3=\epsilon\rho/2$.
+\end{proof}
+
+\noindent
+The upper bound $\textsc{unsat}(G\circ P)\le\textsc{unsat}(G)$ needs no work: a satisfying assignment for $G$ extends, edge by edge, to a satisfying assignment of every $G_{\tilde c}$ by the completeness of $P$, and the extension can be chosen consistently on the shared blocks because the values on $[v]$ are determined by $v$'s label.
+This is the same argument as in the composition theorem of Lecture~\ref{lec:alm}, and the same one appears in the proof of the repetition theorem of Lecture~\ref{lec:raz}: a local view of a global object can be extended consistently when the object is global.
+
+
+%% ===========================================================================
+\section{The main theorem}
+\label{sec:main}
+%% ===========================================================================
+
+\begin{theorem}[Main; \citet{Dinur07}, Theorem~4.1]\label{thm:main6}
+For every constant alphabet $\Sigma$ there are constants $C>0$ and $0<\alpha<1$ such that every constraint graph $G=\langle(V,E),\Sigma,\mathcal C\rangle$ can be transformed in polynomial time into a constraint graph $G'$ with
+\[
+  \mathrm{size}(G')\le C\,\mathrm{size}(G),\qquad |\Sigma'|=O(1),
+\]
+\[
+  \textsc{unsat}(G')\ \begin{cases}=\ 0&\text{if }\textsc{unsat}(G)=0,\\[2pt]
+  \ge\ \min\big(2\,\textsc{unsat}(G),\ \alpha\big)&\text{otherwise.}\end{cases}
+\]
+\end{theorem}
+
+\begin{proof}
+Fix an assignment tester $P$ (Lemma~\ref{lem:at-exists}) and let $\beta_1,\beta_2,\beta_3$ be the constants of Lemma~\ref{lem:prep}, Lemma~\ref{lem:amp} and Lemma~\ref{lem:comp6}.  Put
+\[
+  G'=\big(\mathrm{prep}(G)\big)^{t}\circ P,\qquad
+  t=\Big\lceil\Big(\frac{2}{\beta_1\beta_2\beta_3}\Big)^{2}\,\Big\rceil,
+\]
+a constant depending only on the alphabet and on the constants.  The three steps of the construction, with their effects on the $\textsc{unsat}$-value, are
+\[
+  G\ \xrightarrow[\text{Lemma~\ref{lem:prep}}]{\mathrm{prep}}\ H_1\ \xrightarrow[\text{Lemma~\ref{lem:amp}}]{\text{power }t}\ H_2=H_1^{t}\ \xrightarrow[\text{Lemma~\ref{lem:comp6}}]{\circ P}\ G'.
+\]
+Writing $\eps=\textsc{unsat}(G)$, we have $\textsc{unsat}(H_1)\ge\beta_1\eps$ and
+\begin{align*}
+  \textsc{unsat}(H_2)\ &\ge\ \beta_2\sqrt t\cdot\min\big(\beta_1\eps,\ \tfrac1t\big),\\
+  \textsc{unsat}(G')\ &\ge\ \beta_3\,\textsc{unsat}(H_2)\ \ge\ \beta_1\beta_2\beta_3\sqrt t\cdot\min\big(\eps,\tfrac1{\beta_1 t}\big).
+\end{align*}
+Since $\sqrt t\ge 2/(\beta_1\beta_2\beta_3)$, the constant in front is at least $2$, so $\textsc{unsat}(G')\ge\min(2\eps,\ \alpha)$ with
+\[
+  \alpha=\beta_1\beta_2\beta_3\sqrt t\cdot\min\big(1,\tfrac1{\beta_1 t}\big)>0,
+\]
+a constant.
+(For the last step we used $\min(\beta_1\eps,1/t)\ge\beta_1\min(\eps,1/(\beta_1 t))$: if $\eps\le1/(\beta_1t)$ the left side is $\beta_1\eps$ and the right is $\beta_1\eps$; if $\eps>1/(\beta_1t)$ the left side is $1/t$ and the right is $1/t$.)
+
+\emph{Size.}  Preprocessing and composition cost a constant factor each (Lemmas~\ref{lem:prep} and~\ref{lem:comp6}); the power costs the factor $d^{t-1}$, a constant since $t$ is a constant (Remark~\ref{rem:size-power}).
+So $\mathrm{size}(G')=C\,\mathrm{size}(G)$ with $C=d^{t-1}M$ where $M$ is the constant of Lemma~\ref{lem:comp6}.
+
+\emph{Completeness.}  If $\textsc{unsat}(G)=0$ then $\textsc{unsat}(H_1)=0$ by Lemma~\ref{lem:prep}.  A satisfying assignment $\sigma$ of $H_1$ induces the labelling $\vec\sigma$ of $H_1^{t}$ that stores, at every $v$ and every $x\in B(v,h)$, the value $\sigma(x)$: for a walk $p$ the two tables agree at the middle and the merged colouring is $\sigma$ on the walk, so every edge of $p$ is satisfied.  Hence $\textsc{unsat}(H_2)=0$, and then $\textsc{unsat}(G')=0$ by the completeness of $P$.
+\end{proof}
+
+\begin{remark}[The three constants]\label{rem:three-constants}
+$\beta_1$ is lost in preprocessing, $\beta_2$ is the amplification constant of Lemma~\ref{lem:amp}, $\beta_3$ is lost in composition.  The construction is designed so that a single round multiplies the gap by a factor that is \emph{independent of the instance}: the loss is a constant, the gain is $\sqrt t$, and $t$ is chosen so that the gain outweighs the loss twice over.
+This is exactly what the algebra of Lectures~\ref{lec:as}--\ref{lec:alm} does \emph{not} do: there the gaps are preserved, not multiplied, and the constant at the end is that of the weakest module.
+\end{remark}
+
+\begin{pitfall}{the power is not applied to the composition, and the order cannot be swapped}
+The order is $\mathrm{prep}$, then power, then compose.  Powering first would amplify a gap before regularizing, but the amplification lemma needs regularity and expansion; composing first would destroy the expansion with its gadget constraints and, worse, the alphabet after composition is fixed, so a subsequent powering would raise it again to $|\Sigma_0|^{d^{h}}$ --- the same place we started.
+The single round is therefore a fixed pipeline, and it is the \emph{iteration} of the pipeline that produces the theorem.
+\end{pitfall}
+
+
+%% ===========================================================================
+\section{The PCP theorem}
+\label{sec:pcp6}
+%% ===========================================================================
+
+\begin{theorem}[PCP theorem, gap form; \citet{Dinur07}, Corollary~4.2]\label{thm:pcp6}
+There is a constant $\alpha>0$ for which it is $\NP$-hard to decide, given a constraint graph $G$ with alphabet $\Sigma_0=O(1)$, whether $\textsc{unsat}(G)=0$ or $\textsc{unsat}(G)\ge\alpha$.
+In particular $\Gap{0}{\alpha}{\textsc{CSP}}_{\Sigma_0}$ is $\NP$-hard, and so is $\Gap{1}{1-\alpha}{3SAT}$.
+\end{theorem}
+\begin{proof}
+Start from $3$-colourability (Proposition~\ref{prop:np-cg}): given a graph on $n$ vertices, produce the constraint graph $G_0$ with $|\Sigma|=3$, so that $\textsc{unsat}(G_0)=0$ if the graph is $3$-colourable and $\textsc{unsat}(G_0)\ge1/(3m)$ otherwise, where $m$ is the number of edges.
+Let $G_0,G_1,\dots$ be the iterates, $G_{i+1}$ the output of Theorem~\ref{thm:main6} on $G_i$, and let $\eps_i=\textsc{unsat}(G_i)$.  By that theorem,
+\begin{equation}\label{eq:iter}
+  \eps_{i+1}\ \ge\ \min\big(2\,\eps_i,\ \alpha\big),
+\end{equation}
+and $\mathrm{size}(G_i)\le C^i\,\mathrm{size}(G_0)$.
+
+Since $\textsc{unsat}(G_0)\ge1/(3m)$ whenever it is positive, the sequence $\min(2^i\eps_0,\alpha/2)$ reaches $\alpha/2$ after at most
+$k=\lceil\log_2(3m/\alpha)\rceil=O(\log n)$ steps, and $\eps_i\ge\min(2^i\eps_0,\alpha/2)$ for every $i$ by induction on~\eqref{eq:iter}.
+Hence $\eps_k\ge\alpha/2$: after $O(\log n)$ rounds the gap is a constant.
+$3$-colourability is $\NP$-hard, so distinguishing $\eps=0$ from $\eps\ge\alpha/2$ is $\NP$-hard.
+Finally, a local gadget (Exercise~\ref{ex:gap3sat}) converts each constant-size constraint into a constant number of $3$-clauses while preserving the gap up to a constant, which gives $\Gap{1}{1-\alpha}{3SAT}$ and hence Theorem~\ref{thm:pcp2}.
+\end{proof}
+
+\noindent
+Compare this with the proofs of Lectures~\ref{lec:as} and~\ref{lec:alm}.  There, the gap was created in one step (the PCP theorem was derived from algebraic tests whose soundness is a constant) and the rest was spent on the parameters: alphabet, queries, randomness.
+Here the gap is \emph{grown}, from $1/n$ to a constant in $O(\log n)$ rounds, and no round is delicate; the parameters are handled by preprocessing (regularity) and composition (alphabet), both of which are lossy but only by constants.
+
+\begin{bigpicture}{The arithmetic of one round, and of the iteration}
+One round: $\textsc{unsat}\mapsto\min(2\cdot\textsc{unsat},\alpha)$ (Theorem~\ref{thm:main6}), size $\mapsto C\cdot$size.
+Iteration: the size grows by $C$ per round, so after $k$ rounds it is $C^{k}\mathrm{size}(G_0)$.
+Two regimes.  While $\textsc{unsat}<\alpha/2$ the gap doubles each round, so after $O(\log n)$ rounds it is a constant; the size paid is $C^{O(\log n)}=\poly(n)$, because $C$ is a constant.
+Once the gap is a constant the round keeps it there (the minimum is $\alpha$), and it would cost nothing to stop.
+The instance $G_0$ has size $m=O(n)$; the final instance has size $\poly(n)$, and its alphabet is the fixed $\Sigma_0$ of the assignment tester.
+\end{bigpicture}
+
+
+%% ===========================================================================
+\section{The two proofs of the PCP theorem}
+\label{sec:compare}
+%% ===========================================================================
+
+We now have both proofs.  It is worth putting them side by side, because they are good for different things, and neither supersedes the other.
+
+\begin{table}[t]
+\centering\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{5.0cm}>{\raggedright\arraybackslash}p{5.0cm}@{}}
+\toprule
+& Lectures~\ref{lec:as}--\ref{lec:alm}: algebraic & this lecture: combinatorial\\
+\midrule
+main object & a verifier reading few symbols of an encoded proof & a constraint graph and its power\\
+source of the gap & a constant from local tests & amplification by $\sqrt t$ per round, iterated\\
+number of rounds & $2$ compositions & $O(\log n)$ rounds\\
+what is amplified & nothing: gaps are preserved, constants compound & the gap itself, by a fixed factor\\
+algebra used & low-degree test, sum-check, Hadamard, curves & none (only an error-correcting code in composition)\\
+queries at the end & $O(1)$ (parallelization) & $2$ throughout\\
+proof length & $\poly(n)$, exponent depending on the constants & $\poly(n)$, with a known exponent $\log_2 C$ per round\\
+good for & small constants, linear-length PCPs, hardness with explicit soundness & a self-contained proof, locality of codes, combinatorial intuition\\
+\bottomrule
+\end{tabular}
+\caption{The two proofs of the PCP theorem.}
+\label{tab:two-proofs}
+\end{table}
+
+\noindent
+The two are connected by \emph{composition}, which both use and both need: in the algebraic proof it shrinks the alphabet of the inner verifier; here it shrinks the alphabet of the power.  In both, the inner object is applied only to an input of bounded size, and that is what makes composition affordable.
+
+\begin{bigpicture}{What the iteration really does}
+The gap doubles once per round.  Starting from $\textsc{unsat}\ge1/n$ ($n$ the input size) and $O(\log n)$ rounds, the gap becomes a constant.  The size grows by a constant factor at every round, so the total blow-up is $2^{O(\log n)}=\poly(n)$.
+In other words: \emph{a constant number of rounds of amplification would only raise the gap from $1/n$ to $O(1/n)$, and it takes $\Theta(\log n)$ rounds to make it constant.}
+This is why the theorem is about $O(\log n)$ random bits --- each round costs a constant number of random bits, and the logarithm comes from iterating until the gap stops improving.
+\end{bigpicture}
+
+
+%% ===========================================================================
+\section{Amplification versus repetition}
+\label{sec:amp-vs-rep}
+%% ===========================================================================
+
+Lecture~\ref{lec:raz} amplified a gap by repeating a game; this lecture amplifies it by powering a graph.  The two operations look similar --- both compare a vertex with a vertex at distance $t$ --- but they differ in the three ways that matter, and \citet[Section~9]{Dinur07} states the comparison explicitly.
+
+\begin{table}[t]
+\centering\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{5.0cm}@{}}
+\toprule
+& parallel repetition (Lecture~\ref{lec:raz}) & powering (this lecture)\\
+\midrule
+questions & $k$-tuples of questions & the same question set\\
+answer size & grows as $\sigma^{k}$ & grows as $|\Sigma|^{d^{h}}$, then bought back by composition\\
+number of vertices & $|V|^{k}$ & $|V|$\\
+size & exponential in $t$ & linear in $|E|$ (a factor $d^{t-1}$)\\
+amplification per round & $\val\mapsto\val^{t}$ (roughly $1-t\eta$ for small $\eta$) & $\textsc{unsat}\mapsto\Theta(\sqrt t)\,\textsc{unsat}$ while $\textsc{unsat}\le1/t$\\
+for constant $\textsc{unsat}$ & keeps improving, towards $1$ & stops improving \citep{Bogdanov05}\\
+for tiny $\textsc{unsat}$ & $\Theta(t)\cdot\textsc{unsat}$ \citep[Section~9]{Dinur07} & $\Theta(\sqrt t)\cdot\textsc{unsat}$\\
+\bottomrule
+\end{tabular}
+\caption{Two ways to amplify a gap.  Repetition is stronger per round for small gaps but blows up the instance; powering is weaker per round but keeps the size linear, which is what makes the iteration of Section~\ref{sec:pcp6} possible.}
+\label{tab:amp-vs-rep}
+\end{table}
+
+\noindent
+The decisive row is the size.  Repetition turns a game on $|V|$ questions into one on $|V|^k$, so a round of repetition of a $\poly(n)$-size instance has super-polynomial size as soon as $k$ is a constant bigger than $1$ (Lecture~\ref{lec:raz} only ever repeated a \emph{constant-size} game, which is why the Label Cover theorem survives).
+Powering keeps the vertex set, so its cost is a constant factor, and a constant factor can be paid $O(\log n)$ times.  This is the whole reason the iterative proof works.
+
+The price is the rate: $\sqrt t$ instead of $t$, and the stopping condition $\textsc{unsat}\le1/t$.  For a constant gap powering makes no progress at all \citep{Bogdanov05}, whereas repetition keeps improving.  The two operations are thus useful in opposite regimes.
+
+\begin{bigpicture}{Why this lecture needs linear blow-up and Lecture~\ref{lec:raz} does not}
+Lecture~\ref{lec:raz} used repetition once, on a game of constant size (the clause--variable game of a single constraint, in the composition step), to reach soundness $\delta$ at the cost of an alphabet $\poly(1/\delta)$.  The blow-up mattered there only through the alphabet.
+This lecture uses amplification $O(\log n)$ times, on the whole instance, and the point of each round is that the \emph{value} improves while the \emph{size} does not get out of hand.
+A $\poly(n)$-size growth per round, iterated $\log n$ times, would give an instance of size $n^{\Theta(\log n)}$ and the argument would collapse; a linear growth per round gives $\poly(n)$ overall, and the argument succeeds.
+\end{bigpicture}
+
+\begin{remark}[Radhakrishnan's modification and derandomized repetition]
+The $\sqrt t$ in Lemma~\ref{lem:amp} can be improved to $t$ by a modification due to Jaikumar Radhakrishnan \citep[footnote in Section~9]{Dinur07}; the reason the basic proof stops at $\sqrt t$ is that it can only guarantee a hit inside a middle block of length $2\sqrt t$ (the set $I$ of the proof), and the gain is the size of that block.
+One may also view the whole construction as a \emph{derandomized} repetition: instead of allowing all $t$-tuples of questions, we allow only the $t$-walks of an expander, and the expander makes the answers of the two ends almost independent.
+\citet{FeigeKilian95} showed that no generic derandomization of the repetition theorem can work; as \citet{Dinur07} notes, their parameters do not cover this setting, and the question of how far the derandomization can be pushed is open.
+\end{remark}
+
+
+%% ===========================================================================
+\section*{Exercises}
+\addcontentsline{toc}{section}{Exercises}
+%% ===========================================================================
+
+\begin{exercise}[\stars{$\star$}]\label{ex:cg-game}
+Write a constraint graph as a two-prover game, in the sense of Definition~\ref{def:game}: who are Alice and Bob, what are the question sets, what are the label sets, and what is the edge distribution?  Show that the game is a projection game iff every constraint has the form $\{(a,\pi(a))\}$.
+Then show that the power $G^t$ of Definition~\ref{def:power} is a game whose two questions are both vertices of $V$ (not $t$-tuples), and identify its relation to the game of the clause--variable type analysed in Lecture~\ref{lec:games}.
+\end{exercise}
+
+\begin{exercise}[\stars{$\star$}]\label{ex:two-small-exact}
+(a)~Show that the triangle with two colours and inequality has $\textsc{unsat}=\frac13$ and that every optimal assignment violates exactly one edge.
+(b)~Show that adding the always-true self-loops makes it $\frac16$, and that this equals the fraction of the \emph{total} edge multiset.
+(c)~For the triangle with self-loops, verify by hand that $\textsc{unsat}(G^2)=\frac{8}{27}$: the label set is $\{0,1\}^{3}$ per vertex, and the answer should be the minimum over the $512$ labellings.  (A program is fine, but describe the optimum.)
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:parity}
+Let $G$ be the triangle with two colours and inequality and \emph{no} self-loops.  Give a labelling of $G^2$ that satisfies every edge, so that $\textsc{unsat}(G^2)=0$ although $\textsc{unsat}(G)=\frac13$.
+\emph{Hint: label each vertex $v$ by the table that assigns to every vertex $x$ of $B(v,1)$ the parity of $x$'s index relative to $v$.}  Where does the proof of Lemma~\ref{lem:amp} break for this graph?  (Check both the regularity hypothesis and the use of Lemma~\ref{lem:binom}.)
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:fact25}
+Prove that for every non-negative random variable $X$, $\Pr[X>0]\ge\frac{\E[X]^2}{\E[X^2]}$.  \emph{Hint: condition on $X>0$ and apply $\E[Y^2]\ge\E[Y]^2$ to $Y=[X\mid X>0]$.}
+Where is this used in the proof of Lemma~\ref{lem:amp}, and why can it not be replaced by Markov's inequality?
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:prep-degree}
+Prove Lemma~\ref{lem:prep} (Step~1).  \emph{Hint: let $\sigma'$ be an assignment of the new graph and let $\sigma(v)$ be the plurality value of $\sigma'$ on the copies $[v]$; let $S$ be the set of copies whose value differs from the plurality.  Show that if $|S|$ is large then many expander edges inside some copy are violated, and otherwise many original edges are.}
+Carry out the same count for Step~2 and compute the constants.
+\end{exercise}
+
+\begin{exercise}[\stars{$\star$}]\label{ex:prep-expand}
+Show that if a $d$-regular graph $G$ is obtained from another graph by adding a $d_0$-regular expander with $h(X)\ge h_0$ and a self-loop at every vertex, then $h(G)\ge h_0$ and $\lambda(G)\le d_0+d+1-h_0^2/(d_0+d+1)$.
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:robustization}
+Let $e\colon\Sigma\to\{0,1\}^\ell$ be an encoding with relative distance $\rho$, and let $\tilde c$ be the Boolean constraint on $[u]\cup[v]$ that is satisfied iff both blocks are legal codewords of labels satisfying $c$.  Show that if a pair of blocks is at Hamming distance $<\rho/2$ from a satisfying input, then one of the two blocks is at distance $<\rho/2$ from a codeword; and deduce the $\rho/2$ used in the proof of Lemma~\ref{lem:comp6}.
+Why does a na\"ive binary encoding of $\Sigma$ (no error-correcting code) fail?
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star\star$}]\label{ex:at-from-pcp}
+Derive an assignment tester (Definition~\ref{def:at}) from the inner verifier system of Theorem~\ref{thm:alm17}: show that the soundness clause of Definition~\ref{def:inner} implies the proximity clause of Definition~\ref{def:at}, with $\epsilon$ a constant.  Where does the distance to $\mathrm{SAT}(\Phi)$ appear on the verifier side, and what has to be checked about the completeness of the encoded assignment?
+\end{exercise}
+
+\begin{exercise}[\stars{$\star$}]\label{ex:gap3sat}
+Let $G$ be a constraint graph with alphabet $\Sigma_0$, $|\Sigma_0|=O(1)$, and $\textsc{unsat}$-value $\eps$.  Show that $G$ can be converted in polynomial time into a $3$-CNF whose optimal assignment violates at least $\eps/\mathrm{const}$ and at most $1$ of the clauses.  \emph{Hint: a constraint on two variables with alphabet size $k$ is a Boolean function of $2\log k$ bits; write each violated accepting-pattern as a clause and use one auxiliary variable per constraint.}
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:iter-check}
+Trace the constants of Theorem~\ref{thm:main6}.  Suppose $C=10^{6}$ and $\alpha=10^{-6}$.  How many rounds are needed for an instance with $m=2^{30}$ edges?  Compare with $\log_2(3m/\alpha)$.
+\end{exercise}
+
+
+%% ===========================================================================
+\section*{Notes and further reading}
+\addcontentsline{toc}{section}{Notes and further reading}
+%% ===========================================================================
+
+\paragraph{Where this lecture comes from.}
+Everything is from \citet{Dinur07}: preprocessing is Section~3.1 (Lemmas~3.1--3.3 and Corollary~3.4), powering is Section~3.2 (Definition and Lemma~3.5), composition is Section~3.3 (Definition~3.1 and Lemma~3.6), the main theorem is Theorem~4.1 and the amplification lemma is proved in Section~5 (Lemmas~5.1--5.3 and Proposition~5.4).
+The assignment-tester formalism and the composition theorem are due to \citet{DinurReingold04} and \citet{BGHSV06}; the expander-replacement transformation of Lemma~\ref{lem:prep} Step~1 is from \citet{PapadimitriouYannakakis91}.
+The comparison of Section~\ref{sec:amp-vs-rep} is Section~9 of the paper, including the example of \citet{Bogdanov05} showing that amplification stalls at constant gaps and the improvement of Radhakrishnan to a rate $t$ instead of $\sqrt t$.
+
+\paragraph{Presentational choices of these notes.}
+(i)~\emph{The label of $G^t$ is a ball, not a walk.}  \citet{Dinur07} describes the label informally as ``values for all of its neighbors reachable in $t/2$ steps''; in a $d$-regular graph the number of walks grows like $d^{h}$ but the number of vertices is at most $d^{h}$, and we take the label to be a colouring of the ball $B(v,h)$, which is the smaller and more canonical object.  The constraints only ever read the label at the vertices of the given walk, so the two formulations give the same constraint.
+(ii)~\emph{Self-loops are stipulated in the definitions.}  Dinur's Lemma~3.5 assumes them; Remark~\ref{rem:loops} shows that they cannot be dropped, with the parity example of Exercise~\ref{ex:parity}.
+(iii)~\emph{The popular-opinion assignment is a separate definition} (Definition~\ref{def:popular}), since it is also the object that Corollary~5.5 of the paper needs for the short PCPs.
+(iv)~\emph{Constants.}  We do not compute $\beta_1,\beta_2,\beta_3$; the paper does not either, and Theorem~\ref{thm:main6} only needs their existence.  The point of Theorem~\ref{thm:main6} is the \emph{shape} $2\cdot\textsc{unsat}$ rather than the number $2$.
+
+\paragraph{On the numerical example.}
+The values $\textsc{unsat}(G^2),\textsc{unsat}(G^4),\textsc{unsat}(G^6)$ of Example~\ref{ex:tri-power} were computed for these notes by exhaustive search over the $8^{3}$ labellings of the triangle power (the alphabet of $G^t$ has $2^{3}$ elements per vertex for every $t$, because the triangle has three vertices).
+The claims about the spectra and about the $K_4$ example in the exercises were checked with the same programs.
+
+\paragraph{What is not covered.}
+We do not prove the soundness of the assignment tester outside the two sketches of Lemma~\ref{lem:at-exists}, we do not treat the extensions of the paper to assignment testers (its Section~8) or to short PCPs and locally testable codes (its Section~7), and we do not discuss the limits of amplification at constant gaps beyond the reference to \citet{Bogdanov05}.
+The next lecture returns to the algebraic method and proves the optimal inapproximability constants, which the combinatorial proof of this lecture is not designed to give.

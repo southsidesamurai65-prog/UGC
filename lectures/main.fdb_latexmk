@@ -1,13 +1,13 @@
 # Fdb version 4
-["bibtex main"] 1791704459.43592 "main.aux" "main.bbl" "main" 1791704467.59054 0
-  "./references.bib" 1791703290.83604 17784 7599932a0969182c1b800d273941bb2b ""
+["bibtex main"] 1791720318.17179 "main.aux" "main.bbl" "main" 1791720321.23569 0
+  "./references.bib" 1791719846.06091 18956 fbb79d8b979a60eeaa95b7a1d468ab69 ""
   "/home/joebot/.TinyTeX/texmf-dist/bibtex/bst/natbib/abbrvnat.bst" 1233624470 26532 66bed5cc59495faaa3f9ae9af9fa5e42 ""
-  "main.aux" 1791704467.37406 58116 32b93ce361da7865760216d9cd21aea1 "pdflatex"
+  "main.aux" 1791720321.09436 67124 13ab95323e3278cf9b7b3d2f682207ac "pdflatex"
   (generated)
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["pdflatex"] 1791704459.45942 "main.tex" "main.pdf" "main" 1791704467.59115 0
+["pdflatex"] 1791720318.18975 "main.tex" "main.pdf" "main" 1791720321.23596 0
   "/home/joebot/.TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc" 1254269338 2375 baa924870cfb487815765f9094cf3728 ""
   "/home/joebot/.TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc" 1202520719 3486 c7eadf5dcc57b3b2d11736679f6636ba ""
   "/home/joebot/.TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc" 1202520719 2405 5dcf2c1b967ee25cc46c58cd52244aed ""
@@ -284,11 +284,12 @@
   "lecture03.tex" 1791602756.09972 68638 7076ecf1a182edfd36562815f77afa51 ""
   "lecture04.tex" 1791608601.59824 68232 dca4960ca98f0a11e8dd120b9f287052 ""
   "lecture05.tex" 1791704452.94689 54705 06c1e3de24f540ed323353f8d9013605 ""
-  "main.aux" 1791704467.37406 58116 32b93ce361da7865760216d9cd21aea1 "pdflatex"
-  "main.bbl" 1791704459.45171 15444 b471d5fdfc8ceb02438f48117a651a99 "bibtex main"
-  "main.out" 1791704467.37771 14852 81a8b7f725856dffa2af25fba3e254a8 "pdflatex"
-  "main.tex" 1791704016.5295 3607 63f8ec0435188aea31b00df2c053763f ""
-  "main.toc" 1791704467.37771 10698 81750a8b095a8ec4b8b83827fa0179ea "pdflatex"
+  "lecture06.tex" 1791719846.07378 55964 cc9e65d844ca390b31282b75b675e25a ""
+  "main.aux" 1791720321.09436 67124 13ab95323e3278cf9b7b3d2f682207ac "pdflatex"
+  "main.bbl" 1791720318.18448 16518 2f3629694c2cb6854e2d68a76b79b432 "bibtex main"
+  "main.out" 1791720321.09798 17303 9be01479f6e9d2ebda0c29ff27b1640d "pdflatex"
+  "main.tex" 1791716589.78634 3625 5094d5fb74ccf14f5ee3a05f8975a737 ""
+  "main.toc" 1791720321.09798 12134 b6a44cb48efc9e161360a5e4d50d6f51 "pdflatex"
   "preamble.tex" 1791565083.34667 5509 4977a95a77de6160c3042441109e2cd8 ""
   (generated)
   "main.aux"

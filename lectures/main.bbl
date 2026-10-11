@@ -1,4 +1,4 @@
-\begin{thebibliography}{61}
+\begin{thebibliography}{65}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -80,6 +80,12 @@ M.~Blum, M.~Luby, and R.~Rubinfeld.
 \newblock Self-testing/correcting with applications to numerical problems.
 \newblock In \emph{Proceedings of the 22nd Annual ACM Symposium on Theory of Computing (STOC)}, pages 73--83, 1990.
 
+\bibitem[Bogdanov(2005)]{Bogdanov05}
+A.~Bogdanov.
+\newblock On the optimality of the {D}inur gap amplification.
+\newblock In \emph{Electronic Colloquium on Computational Complexity}, 2005.
+\newblock Report TR05-101.
+
 \bibitem[Charikar et~al.(2006)Charikar, Makarychev, and Makarychev]{CMM06}
 M.~Charikar, K.~Makarychev, and Y.~Makarychev.
 \newblock Near-optimal algorithms for unique games.
@@ -95,10 +101,15 @@ I.~Dinur.
 \newblock The {PCP} theorem by gap amplification.
 \newblock \emph{Journal of the ACM}, 54\penalty0 (3):\penalty0 Article 12, 2007.
 
-\bibitem[Dinur and Reingold(2006)]{DR04}
+\bibitem[Dinur and Reingold(2006{\natexlab{a}})]{DR04}
 I.~Dinur and O.~Reingold.
 \newblock Assignment testers: towards a combinatorial proof of the {PCP} theorem.
-\newblock \emph{SIAM Journal on Computing}, 36\penalty0 (4):\penalty0 975--1024, 2006.
+\newblock \emph{SIAM Journal on Computing}, 36\penalty0 (4):\penalty0 975--1024, 2006{\natexlab{a}}.
+
+\bibitem[Dinur and Reingold(2006{\natexlab{b}})]{DinurReingold04}
+I.~Dinur and O.~Reingold.
+\newblock Assignment testers: Towards a combinatorial proof of the {PCP} theorem.
+\newblock \emph{SIAM Journal on Computing}, 36\penalty0 (4):\penalty0 975--1024, 2006{\natexlab{b}}.
 
 \bibitem[Dinur and Steurer(2014)]{DinurSteurer14}
 I.~Dinur and D.~Steurer.
@@ -120,6 +131,11 @@ U.~Feige.
 U.~Feige.
 \newblock A threshold of $\ln n$ for approximating set cover.
 \newblock \emph{Journal of the ACM}, 45\penalty0 (4):\penalty0 634--652, 1998.
+
+\bibitem[Feige and Kilian(1995)]{FeigeKilian95}
+U.~Feige and J.~Kilian.
+\newblock Impossibility results for recycling random bits in two-prover proof systems.
+\newblock In \emph{Proceedings of the 27th Annual ACM Symposium on Theory of Computing (STOC)}, pages 457--468, 1995.
 
 \bibitem[Feige and Lov{\'a}sz(1992)]{FeigeLovasz92}
 U.~Feige and L.~Lov{\'a}sz.
@@ -251,6 +267,11 @@ E.~Mossel, R.~O'Donnell, and K.~Oleszkiewicz.
 {OpenAI}.
 \newblock The unique games theorem.
 \newblock Manuscript, dated September 23, 2026; not independently verified at the time of writing, 2026.
+
+\bibitem[Papadimitriou and Yannakakis(1991)]{PapadimitriouYannakakis91}
+C.~H. Papadimitriou and M.~Yannakakis.
+\newblock Optimization, approximation, and complexity classes.
+\newblock \emph{Journal of Computer and System Sciences}, 43\penalty0 (3):\penalty0 425--440, 1991.
 
 \bibitem[Polishchuk and Spielman(1994)]{PolishchukSpielman94}
 A.~Polishchuk and D.~A. Spielman.

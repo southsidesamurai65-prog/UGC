@@ -483,6 +483,11 @@ INPUT ./lecture05.tex
 INPUT ./lecture05.tex
 INPUT ./lecture05.tex
 INPUT lecture05.tex
+INPUT ./lecture06.tex
+INPUT ./lecture06.tex
+INPUT ./lecture06.tex
+INPUT ./lecture06.tex
+INPUT lecture06.tex
 INPUT ./main.bbl
 INPUT ./main.bbl
 INPUT main.bbl
