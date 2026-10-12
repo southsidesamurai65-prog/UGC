@@ -1,9 +1,31 @@
-# PCP / UGC 这条线：经典论文合集
+# PCP / UGC 这条线：经典论文合集与配套讲义
 
-本目录收集了 **Probabilistically Checkable Proofs（PCP 定理）→ Unique Games Conjecture（UGC）→ 2-to-2 Games → 2026 年 AI 宣称证明 UGC** 这一整条研究脉络中最核心的论文。
-所有 PDF 放在 `papers/` 下，文件名格式为 `年份_作者_主题.pdf`。
+仓库作者感受：看完这个lecture，基本上教学完全不需要人来做了，脉络太清晰了，而且深入浅出。
+
+本仓库聚焦 **Probabilistically Checkable Proofs（PCP 定理）→ Unique Games Conjecture（UGC）→ 2-to-2 Games → 2026 年 AI 宣称证明 UGC** 这一整条研究脉络，包含两部分：
+
+- **经典论文**：所有 PDF 放在 `papers/` 下，文件名格式为 `年份_作者_主题.pdf`。
+- **配套讲义**：`lectures/` 下是一套自洽的 LaTeX 讲义，从 PCP 定理一路讲到 UGC 与 2026 年的宣称，见文末「配套讲义」一节。
 
 > 说明：PCP 定理的论文块（Arora–Safra、ALMSS、Raz、Håstad）多为 1990s 的会议/期刊版，ACM/IEEE 原文有付费墙；这里尽量选用作者主页、ECCC、arXiv 等**开放获取**版本。个别经典（Feige–Lovász 1992、Khot STOC 2002）没有合法开放 PDF，仅在文末「未能收录」中列出引用。
+
+---
+
+## 仓库结构
+
+```
+PCP/
+├── README.md            # 本文件：论文脉络、讲义说明与导读
+├── outline.md           # 讲义大纲（本地保留，不纳入版本库）
+├── papers/              # 核心论文 PDF（命名：年份_作者_主题.pdf）
+└── lectures/            # LaTeX 讲义源码：从 PCP 定理到 UGC
+    ├── main.tex         # 主文件（标题页、目录、\input 各讲、参考文献）
+    ├── preamble.tex     # 共享宏包、定理环境与三类提示框样式
+    ├── references.bib   # 参考文献（与 papers/ 对应）
+    └── lectureNN.tex    # 每一讲的正文（当前 01–07）
+```
+
+> 构建产物（`*.aux`、`*.log`、`*.toc`、`*.bbl` 等）已在 `.gitignore` 中忽略；`.gitignore` 里的 `outline.md` 同样只保留在本地。
 
 ---
 
@@ -121,7 +143,36 @@
 
 ---
 
-## 五、来源说明
+## 五、配套讲义：从 PCP 定理到 UGC（`lectures/`）
+
+`lectures/` 是一套用 LaTeX 写成的英文讲义，把本目录的论文串成一条可读的学习路径：从「证明检查」讲到「近似困难性」，再到 UGC，最后批判性地阅读 2026 年的宣称。计划共 16 讲，目前已完成前 7 讲。
+
+| 讲次 | 标题 | 主题 |
+|---|---|---|
+| 1 | Why PCP and Unique Games Matter | 为什么 PCP 与 UGC 重要：全景与动机 |
+| 2 | Games, Label Cover, and the Language of PCPs | 游戏 / Label Cover / PCP 的共同语言 |
+| 3 | The Arora–Safra Route | 代数化：多项式、和检验与组合 |
+| 4 | Constant Queries: Hadamard Codes, Parallelization and the ALMSS Proof | 常查询数：Hadamard 码与 ALMSS 路线 |
+| 5 | Parallel Repetition: Driving the Soundness Down | 并行重复：可靠性指数衰减 |
+| 6 | Gap Amplification: Dinur's Combinatorial Proof | Gap 放大：PCP 定理的组合证明 |
+| 7 | Optimal Inapproximability: the Long Code and Fourier Analysis | 最优不可近似性：Long Code 与 Fourier 分析 |
+| 8–16 | *（撰写中）* | UGC 及其推论、2-to-2 定理、2026 年宣称的评读 |
+
+**阅读提示（讲义中约定）**：蓝色框是主干思想，橙色框是常见误区，酒红色框标注结果的**认知状态**——凡未经独立验证的结论都会在此说明，正文绝不把它当作既成事实。每讲末尾练习按 `★`／`★★`／`★★★` 标注难度。
+
+**构建方式**：需要一份包含 `latexmk`、`natbib`、`tcolorbox`、`tikz` 等宏包的 TeX 发行版（本地使用 TinyTeX）。在 `lectures/` 目录下运行：
+
+```bash
+latexmk -pdf main.tex     # 生成 main.pdf
+latexmk -c                # 清理中间产物（保留 main.pdf）
+latexmk -C                # 清理所有产物（含 main.pdf）
+```
+
+也可以直接用 `pdflatex` + `bibtex` 多次编译：`pdflatex main` → `bibtex main` → `pdflatex main` → `pdflatex main`。中间产物已被 `.gitignore` 忽略，可放心反复编译。
+
+---
+
+## 六、来源说明
 
 PDF 取自作者主页、ECCC、arXiv、Theory of Computing、以及 `openai/math` 仓库等开放渠道，仅用于个人学习研究。引用信息以论文本身为准；各篇的会议/期刊年份可能因版本（会议版 vs 期刊版 vs arXiv 版）不同而略有差异。
 

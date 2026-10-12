@@ -631,7 +631,7 @@ This constructive form is what lets a PCP reduction be \emph{a Karp reduction wi
 
 \begin{remark}[How large is $q$?]
 The constant is not made explicit in the paper: it depends on $\delta_0$ and $\alpha$ of Theorem~\ref{thm:polytest}, which are not computed.  Section~8 of ALMSS reports that the smallest $q$ that can be obtained went, in subsequent work, from $29$ (Bellare--Goldwasser--Lund--Russell) to $22$ (Feige--Kilian) to $16$ (Bellare--Goldreich--Sudan) to at most $9$ (the best that can be inferred directly from H\aa stad's work); all of these are for soundness~$\tfrac12$.
-H\aa stad's optimal results (Lecture~7) concern \emph{three}-bit verifiers with soundness close to the trivial value: completeness $1-\eps$ and soundness $\tfrac12+\eps$ (accept iff a parity of the three bits equals a prescribed value), and perfect completeness with soundness $\tfrac78+\eps$ (accept iff a $3$-clause is satisfied).  They are tight because a random proof achieves $\tfrac12$, respectively $\tfrac78$.
+H\aa stad's optimal results (Lecture~\ref{lec:hastad}) concern \emph{three}-bit verifiers with soundness close to the trivial value: completeness $1-\eps$ and soundness $\tfrac12+\eps$ (accept iff a parity of the three bits equals a prescribed value), and perfect completeness with soundness $\tfrac78+\eps$ (accept iff a $3$-clause is satisfied).  They are tight because a random proof achieves $\tfrac12$, respectively $\tfrac78$.
 The Hadamard verifier of this lecture on its own reads $6k+12$ bits per run, and $55$ repetitions bring $\tfrac{19}{20}$ down to $\tfrac1{16}$ (Exercise~\ref{ex:alm-reps}); this is a first indication of where the constant comes from.
 \end{remark}
 
@@ -647,7 +647,7 @@ By the L-reductions of Papadimitriou and Yannakakis this transfers to every \sat
 \paragraph{Max-Clique.}  Let $V$ be the verifier of Theorem~\ref{thm:alm} ($r=c\log n$ random bits, $q$ queries, soundness $\tfrac12$).  Replace it by the verifier $V_k$ that uses a $k$-step random walk on a constant-degree expander on $\{0,1\}^r$
 (Exercise~\ref{ex:expander}): $r+O(k)$ random bits, $kq$ queries, soundness $\le(\tfrac34)^{k-1}$.  Take $k=\lceil\log n\rceil$.  Then the FGLSS graph $H_x$ has $N=2^{r+O(k)+kq}=n^{O(1)}$ vertices and, by Theorem~\ref{thm:fglss}, clique number $2^{r'}$ if $x\in\sat{3SAT}$ and $\le2^{r'}(3/4)^{k-1}$ otherwise:
 a gap of $(4/3)^{k-1}=n^{\Omega(1)}=N^{\eps_1}$.  So approximating the clique number within $N^{\eps_1}$ is $\NP$-hard \citep[Theorem~6]{ALMSS98}.  This is exactly the route indicated by their Theorem~2 (FGLSS plus ``recycled'' randomness),
-and it supersedes Corollary~\ref{cor:as-clique}: the exponent is now polynomial.  H\aa stad's $N^{1-\eps}$ comes in Lecture~7.
+and it supersedes Corollary~\ref{cor:as-clique}: the exponent is now polynomial.  H\aa stad's $N^{1-\eps}$ \citep{Hastad99} is discussed, though not proved, in Lecture~\ref{lec:hastad}.
 
 \paragraph{Label Cover.}  Apply Corollary~\ref{cor:verifier-game} to the verifier of Theorem~\ref{thm:alm}: the constraint--variable game is a projection game with $|\Sigma_U|\le2^q$, $|\Sigma_W|=2$ and
 \[

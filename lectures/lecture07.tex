@@ -1,0 +1,649 @@
+\chapter{Optimal Inapproximability: the Long Code and Fourier Analysis}
+\label{lec:hastad}
+
+{\sffamily\large\color{softgray}Guessing is optimal, and Fourier analysis proves it\par}
+\vspace{0.5em}
+
+\noindent
+Lectures~\ref{lec:as}--\ref{lec:alm} built a verifier that reads a constant number of bits, and Lecture~\ref{lec:dinur} built one combinatorially.  Both end with a \emph{constant} gap whose size nobody computes: $\Gap{1}{1-\eps_0}{3SAT}$ is $\NP$-hard for \emph{some} $\eps_0>0$.  That is enough to prove that \sat{Max-3SAT} has no PTAS, and nothing more.  It does not determine \emph{which} constant,
+and for the problems of Table~\ref{tab:scoreboard} the question is exactly that: the trivial algorithm satisfies $\tfrac78$ of the clauses of a $3$-CNF and $\tfrac12$ of the equations of a linear system,
+and the theorem we want is that nothing does better.
+
+This lecture proves it.  The result is that for \sat{Max-E3-SAT} and \sat{Max-E3-Lin}$(\F_2)$ the random assignment is optimal, up to $\eps$ in the approximation ratio:\footnote{Throughout this lecture $\eps>0$ is an arbitrary constant, fixed in advance and appearing in finitely many places.  It is not the $\eps$ of the UGC, and it is not the $\eps_0$ of the PCP theorem.}
+\begin{itemize}
+  \item for every $\eps>0$ it is $\NP$-hard to approximate \sat{Max-E3-Lin}$(\F_2)$ within $2-\eps$, \ie to do better than satisfying a $(\tfrac12+\eps)$-fraction when a $(1-\eps)$-fraction can be satisfied;
+  \item the same with $2-\eps$ replaced by $\tfrac87-\eps$ for \sat{Max-E3-SAT}.
+\end{itemize}
+The proof is a PCP whose verifier reads \emph{three bits}, and whose analysis is Fourier analysis on a large Boolean cube.  The new ingredient is the \defn{long code}: instead of writing down an assignment $x\in\{\pm1\}^n$, the proof writes down the truth table of the map $f\mapsto f(x)$.
+The table is astronomically redundant, and that redundancy is exactly what lets a verifier check consistency of a \emph{global} object while reading a constant number of bits.
+
+Two features of the lecture are worth flagging in advance, because they are where the difficulty lies.
+
+\emph{First, the Fourier analysis is on the wrong domain.}  A long code is a function of a function.  The characters are indexed by subsets of the domain of the inner function, and the orthogonality that makes everything work is orthogonality over a set of size $2^{2^n}$.
+Section~\ref{sec:fourier-f} sets this up and proves the three identities that the rest of the lecture uses; there is nothing difficult in it, but it must be done carefully once.
+
+\emph{Second, the verifier's soundness is proved by \emph{extracting} a strategy.}  If a table passes the test with probability $\tfrac12+\delta$, we do not show that the table is close to a codeword.  We show that its \emph{Fourier spectrum} contains a large coefficient, and we turn that coefficient into an answer for one of the two provers in the underlying game of Lecture~\ref{lec:raz}.
+This is the ``two tasks integrated'' of H\aa stad's introduction, and it is the conceptual difference from Lectures~\ref{lec:as}--\ref{lec:alm}.
+
+\begin{goalbox}{After this lecture you should be able to\ldots}
+\begin{enumerate}[leftmargin=*,label=(\arabic*)]
+  \item write down the long code, and compute its Fourier transform (Section~\ref{sec:longcode});
+  \item state and use the orthonormality, inversion and Parseval identities on the domain $F_U$ of functions $\{\pm1\}^U\to\{\pm1\}$ (Section~\ref{sec:fourier-f});
+  \item describe the test $\mathrm{L}_\eps(u)$ for linear equations, prove its completeness, and reduce its soundness to a statement about the parallel two-prover protocol (Section~\ref{sec:lin});
+  \item carry out the Fourier proof of the key inequality ``acceptance $\tfrac{1+\delta}{2}$ forces a strategy of value $4\eps\delta^2$'', and say where the square comes from (Section~\ref{sec:soundness});
+  \item deduce $\tfrac87-\eps$ for \sat{Max-E3-SAT} from $2-\eps$ for \sat{Max-E3-Lin}$(\F_2)$ by a four-clause gadget (Section~\ref{sec:e3sat});
+  \item explain what ``non-approximable beyond the random assignment threshold'' means, and why this is where the course turns towards Unique Games (Sections~\ref{sec:optimal}--\ref{sec:towards-ugc}).
+\end{enumerate}
+\end{goalbox}
+
+
+%% ===========================================================================
+\section{Why the previous two proofs do not give constants}
+\label{sec:why-constants}
+%% ===========================================================================
+
+It is worth being precise about what is missing.  The PCP theorem gives, for each $\NP$ language, a verifier that reads $q=O(1)$ bits and has soundness $\tfrac12$.  The reduction of Lecture~\ref{lec:why} turns it into a $3$-CNF by writing each accept predicate as at most $K=(q-2)2^q$ clauses, and an unsatisfiable input then forces a violated fraction of at least $1/(2K)$.
+So $\eps_0$ is of order $2^{-q}/q$, and $q$ is whatever constant the construction happened to produce -- in Lecture~\ref{lec:alm} the Hadamard verifier alone reads $6k+12$ bits per run.
+
+The obstacles to a sharp constant are different in the two proofs.
+In the algebraic proof (Lectures~\ref{lec:as}--\ref{lec:alm}) the final constant comes out of a chain of modules -- the low-degree test, the Hadamard verifier with its soundness $\tfrac{19}{20}$, composition, repetition -- and each link loses a factor.  Any one of them can be improved, but the losses compound, and the resulting $\eps_0$ is not a number anybody tries to compute.
+In the combinatorial proof (Lecture~\ref{lec:dinur}) the same is true in a cleaner form: the round multiplies the gap by $\sqrt t$, so the final constant is whatever $\min(2\,\textsc{unsat},\alpha)$ says at the end of the iteration, and $\alpha$ is a product of three unspecified constants $\beta_1\beta_2\beta_3\sqrt t$.
+
+What is needed is a verifier that is \emph{designed together with the optimisation problem it is supposed to encode}, so that the acceptance predicate is exactly the predicate of the target problem and the soundness analysis does not lose a factor at each step.
+H\aa stad's tests have this property: the acceptance criterion of the test for linear equations is the exclusive-or of three proof bits, and for satisfiability it is a clause on three proof bits.  Nothing is lost in the translation, and the soundness is analysed exactly, by Fourier analysis of the tables the prover writes down.
+
+\begin{bigpicture}{The dictionary of this lecture}
+A long code is an encoding of an assignment $x$ to a set $U$ of variables: the table $A_x\colon F_U\to\{\pm1\}$, $A_x(f)=f(x)$, where $F_U$ is the set of all maps $\{\pm1\}^U\to\{\pm1\}$.
+The table has length $2^{2^{|U|}}$, so a constant-size $U$ gives a constant-size table.
+A \emph{test} queries $A$ at a few inputs $f_1,f_2,\dots$ and accepts according to a predicate on the answers.
+If $A$ is a correct long code, the test must accept with probability $1$; if the test accepts with probability $\tfrac{1+\delta}{2}$ for a table that is \emph{not} a long code, the Fourier coefficients of $A$ must be non-trivial, and those coefficients are the strategies for a two-prover game.
+Good tests are those whose acceptance predicate is the target predicate -- an XOR of three bits for linear equations, a clause for satisfiability -- so that the PCP \emph{is} the CSP.
+\end{bigpicture}
+
+
+%% ===========================================================================
+\section{Fourier analysis on $F_U$}
+\label{sec:fourier-f}
+%% ===========================================================================
+
+Fix a finite set $U$ of variables, $|U|=u$, and let
+\[
+  F_U\;=\;\big\{\,f\colon \{\pm1\}^U\to\{\pm1\}\,\big\},\qquad |F_U|=2^{2^{u}} .
+\]
+We equip $F_U$ with the uniform measure, and for $A,B\colon F_U\to\R$ write (the second expression being the same thing written out)
+\[
+  \langle A,B\rangle\;=\;\E_{f\sim F_U}\big[A(f)B(f)\big]\;=\;2^{-2^{u}}\sum_{f\in F_U}A(f)B(f).
+\]
+The characters are indexed by \emph{subsets} of the domain of $f$, that is by $\alpha\subseteq\{\pm1\}^U$:
+\begin{equation}\label{eq:char-f}
+  \chi_\alpha(f)\;=\;\prod_{x\in\alpha}f(x),\qquad \chi_{\varnothing}\equiv1 .
+\end{equation}
+This is the only place where the double exponent shows up, and it is exactly parallel to the familiar case: a function on $\{\pm1\}^n$ has its characters indexed by subsets of $[n]$, and a function on $F_U$ has them indexed by subsets of $\{\pm1\}^U$.  If the reader keeps in mind that ``$[n]$'' has been replaced by ``$\{\pm1\}^U$'' nothing below is surprising.
+
+\begin{lemma}[Orthonormality]\label{lem:orth-f}
+$\E_f[\chi_\alpha(f)\chi_\beta(f)]=\mathbf 1[\alpha=\beta]$ for all $\alpha,\beta\subseteq\{\pm1\}^U$.
+\end{lemma}
+\begin{proof}
+$\chi_\alpha\chi_\beta=\chi_{\alpha\triangle\beta}$, and a nonempty character is balanced: if $x_0\in\gamma\ne\varnothing$, the map that flips the single value $f(x_0)\mapsto-f(x_0)$ is a measure-preserving involution of $F_U$ that changes the sign of $\chi_\gamma(f)$, so $\E_f[\chi_\gamma(f)]=0$.
+\end{proof}
+
+\begin{definition}[Fourier transform]\label{def:fourier-f}
+$\ \widehat A_\alpha=\langle A,\chi_\alpha\rangle=\E_f\big[A(f)\chi_\alpha(f)\big]$.
+\end{definition}
+
+\begin{theorem}[Inversion and Parseval]\label{thm:inv-f}
+For every $A\colon F_U\to\R$: $\ A=\sum_\alpha\widehat A_\alpha\chi_\alpha$, and $\ \sum_\alpha\widehat A_\alpha^2=\E_f[A(f)^2]$.
+In particular, if $A$ takes values in $\{\pm1\}$ then $\sum_\alpha\widehat A_\alpha^2=1$ and $\sum_\alpha\widehat A_\alpha^3\le\max_\alpha\widehat A_\alpha$.
+\end{theorem}
+\begin{proof}
+By Lemma~\ref{lem:orth-f} the $2^{2^u}$ functions $\chi_\alpha$ are orthonormal in the $2^{2^u}$-dimensional space of real functions on $F_U$, hence an orthonormal basis; the coefficient of $\chi_\alpha$ in $A$ is $\langle A,\chi_\alpha\rangle$, which is the inversion formula.
+Parseval is the same expansion applied to $\langle A,A\rangle$.
+The last claim: $\sum_\alpha\widehat A_\alpha^3\le\max_\alpha\widehat A_\alpha\cdot\sum_\alpha\widehat A_\alpha^2=\max_\alpha\widehat A_\alpha$.
+\end{proof}
+
+\noindent
+Two more identities, which are what the extraction argument uses.
+
+\begin{lemma}[Products and restrictions]\label{lem:prod-f}
+(a)~$\chi_\alpha(fg)=\chi_\alpha(f)\chi_\alpha(g)$, \ie the characters are multiplicative in the pointwise product $fg(x)=f(x)g(x)$.
+(b)~$\chi_\alpha(f)\chi_\beta(f)=\chi_{\alpha\triangle\beta}(f)$.
+(c)~\emph{Restriction.}  Let $U\subseteq W$, let $f\in F_U$, and extend $f$ to $\{\pm1\}^W$ by $f(y)=f(y|_U)$.  Then for every $\beta\subseteq\{\pm1\}^W$,
+\[
+  \chi_\beta(f)\;=\;\chi_{\pi_U(\beta)}(f),\qquad
+  \pi_U(\beta)=\big\{x\in\{\pm1\}^U:\ x=y|_U\text{ for an \emph{odd} number of }y\in\beta\big\}.
+\]
+In particular, if every $x$ occurs an even number of times among the restrictions $y|_U$, $y\in\beta$, then $\chi_\beta\equiv1$.
+\end{lemma}
+\begin{proof}
+(a) and (b) are immediate from~\eqref{eq:char-f}.  For (c), $\chi_\beta(f)=\prod_{y\in\beta}f(y|_U)=\prod_{x\in\{\pm1\}^U}f(x)^{m_x}$ where $m_x$ is the number of $y\in\beta$ with $y|_U=x$; since $f(x)^2=1$, only the parity of $m_x$ matters, which is exactly $\pi_U$.
+\end{proof}
+
+\begin{lemma}[Independence kills mixed terms]\label{lem:indep-f}
+Suppose $f_1,\dots,f_k$ are random functions with ranges in possibly different $F_{U_i}$ and that some character $\chi_\gamma(f_i)$ depends on a coordinate $x_0$ that is uniform and independent of everything else in the product.  Then
+$\E\big[\prod_i\chi_{\alpha_i}(f_i)\big]=0$.
+In particular, if $f$ is uniform on $F_U$ and $\alpha\ne\varnothing$ then $\E_f[\chi_\alpha(f)]=0$.
+\end{lemma}
+\begin{proof}
+Factor out $f_i(x_0)$, which is a uniform sign independent of the remaining factors; the expectation of a product containing an independent uniform sign is $0$.
+\end{proof}
+
+\begin{lemma}[The noise operator]\label{lem:noise}
+Let $\mu$ be chosen by setting $\mu(y)=-1$ with probability $\eps$ and $\mu(y)=+1$ with probability $1-\eps$, independently over $y$.  Then for every $\beta\subseteq\{\pm1\}^W$,
+\[
+  \E_\mu\big[\chi_\beta(\mu)\big]\;=\;(1-2\eps)^{|\beta|}.
+\]
+\end{lemma}
+\begin{proof}
+$\chi_\beta(\mu)=\prod_{y\in\beta}\mu(y)$ is a product of independent random signs, each with mean $1-2\eps$.
+\end{proof}
+
+\begin{lemma}[$x^s\le e^{s(x-1)}$; H\aa stad's Lemma~5.3]\label{lem:exp}
+For all $x>0$ and $s>0$: $x^s\le e^{s(x-1)}$.
+\end{lemma}
+\begin{proof}
+It suffices to prove $x\le e^{x-1}$, since raising to the power $s$ gives $x^s\le e^{s(x-1)}$.  For $x\le1$ the left side is at most $1$ and the right side is at least $1$.  For $x>1$, the function $x-e^{x-1}$ has derivative $1-e^{x-1}<0$ and value $0$ at $x=1$, hence is $\le0$.
+\end{proof}
+
+\begin{pitfall}{do not confuse the two cubes}
+The Boolean cube of an ordinary Fourier argument is $\{\pm1\}^n$, of size $2^n$; here the cube is $F_U=\{\pm1\}^{\{\pm1\}^U}$, of size $2^{2^u}$.  Everything is \emph{doubly} exponential, which is why the long code is only affordable for constant $u$; a table for $|U|=u$ has $2^{2^u}$ bits, and this is what makes the proof's $u$ a constant.
+The character $\chi_\alpha$ is indexed by a subset of the \emph{inner} cube, and the size $|\alpha|$ that appears in Lemma~\ref{lem:noise} is a cardinality of a set of points, not of coordinates.
+\end{pitfall}
+
+
+%% ===========================================================================
+\section{The long code}
+\label{sec:longcode}
+%% ===========================================================================
+
+\begin{definition}[Long code; \citet{BGS98}, \citet{Hastad01}]\label{def:longcode}
+The \defn{long code} of an assignment $x\colon U\to\{\pm1\}$ is the function
+\[
+  A_x\colon F_U\to\{\pm1\},\qquad A_x(f)=f(x).
+\]
+It is the truth table, of length $2^{2^{|U|}}$, of ``evaluation at $x$''.
+\end{definition}
+
+\noindent
+The code is injective, and any two of its codewords differ on exactly half of $F_U$: if $x\ne x'$ then a uniform $f$ has $f(x)\ne f(x')$ with probability $\tfrac12$.  So the long code has relative distance $\tfrac12$, the largest possible, at the price of an \emph{astronomical} rate: $|U|$ bits are encoded by $2^{2^{|U|}}$ bits.
+Only constant $|U|$ is affordable, and that is all we need, since the test is applied to sets of constant size.  The reason the code is used is the following computation.
+
+\begin{lemma}[Long codes are exactly the monomials]\label{lem:longcode-fourier}
+Let $x_0\in\{\pm1\}^U$ and $A=A_{x_0}$.  Then $\widehat A_{\{x_0\}}=1$ and $\widehat A_\alpha=0$ for every $\alpha\ne\{x_0\}$.  Conversely, if $A\colon F_U\to\{\pm1\}$ satisfies $\widehat A_{\{x_0\}}=1$ for some $x_0$, then $A=A_{x_0}$.
+\end{lemma}
+\begin{proof}
+$A_{x_0}(f)=f(x_0)=\chi_{\{x_0\}}(f)$ by the definition of a character, and the characters are orthonormal (Lemma~\ref{lem:orth-f}), so $\widehat A_{\{x_0\}}=\langle\chi_{\{x_0\}},\chi_{\{x_0\}}\rangle=1$ and the other coefficients vanish.
+Conversely, if $\widehat A_{\{x_0\}}=1$ then Parseval $\sum_\alpha\widehat A_\alpha^2=1$ forces $\widehat A_\alpha=0$ for $\alpha\ne\{x_0\}$, and the inversion formula gives $A=\chi_{\{x_0\}}=A_{x_0}$.
+\end{proof}
+
+\noindent
+A \emph{single} Fourier coefficient of size $1$ pins the whole table down.  The tests below are designed so that a table passing them with probability noticeably above $\tfrac12$ must have a coefficient of size $\Omega(1)$ -- not necessarily $1$ -- and a large coefficient at a \emph{small} set $\alpha$ is then, for the purposes of the underlying game, as good as a long code: it yields an assignment of the variables in $\alpha$.
+
+\begin{definition}[Folding and conditioning]\label{def:folding}
+(a)~$A\colon F_U\to\{\pm1\}$ is \defn{folded over true} if $A(\bar f)=-A(f)$ for all $f$, where $\bar f=-f$ pointwise.  Any $A$ is turned into a folded table $\tilde A$ by choosing one function from each pair $\{f,\bar f\}$, say $f$, and setting $\tilde A(f)=A(f)$, $\tilde A(\bar f)=-A(f)$.  Then $\widehat{\tilde A}_\alpha=0$ for every even $|\alpha|$; in particular $\widehat{\tilde A}_\varnothing=0$.
+(b)~Given $h\in F_U$ (read as a Boolean condition on assignments), the \defn{conditioning} of $A$ upon $h$ is $A_h(f)=A(f\wedge h)$, where $f\wedge h$ is the pointwise ``and''.  Since $f\wedge h$ depends only on the values of $f$ at points where $h$ is true, $\widehat{(A_h)}_\alpha=0$ whenever $\alpha$ contains a point at which $h$ is false.
+\end{definition}
+
+\noindent
+Folding enforces a symmetry that every long code has anyway, $A_x(\bar f)=-f(x)=-A_x(f)$; it costs nothing on a correct proof and it removes all even coefficients, the empty set included.  Conditioning is used because the verifier knows something about $x$ -- namely that it satisfies the chosen clauses -- and it removes every coefficient $\alpha$ containing an assignment that violates them.  On a long code of an $x$ with $h(x)$ true, $A_h=A$.  Both are operations the verifier performs when it reads the table (it queries $A$ at $f$ or $\bar f$, at $f\wedge h$), and both facts are proved in \cite[Section~2.5]{Hastad01} by the pairing argument of Lemma~\ref{lem:indep-f} (Exercise~\ref{ex:folding}).
+
+
+%% ===========================================================================
+\section{The two-prover protocol and the standard written proof}
+\label{sec:swp}
+%% ===========================================================================
+
+Everything rests on a game that is deliberately weak.
+
+\begin{definition}[Basic protocol; \citet{Hastad01}, Section~3]\label{def:basic-protocol}
+The input is a $3$-CNF $\varphi=C_1\wedge\dots\wedge C_m$ in which each variable occurs exactly five times.  The referee picks $j\in[m]$ and one of the three variables $x_k$ of $C_j$ uniformly, sends $j$ to $P_1$ and $k$ to $P_2$, receives from $P_1$ a satisfying assignment of $C_j$ and from $P_2$ a bit, and accepts iff the two agree on $x_k$.
+\end{definition}
+
+\begin{lemma}\label{lem:basic-sound}
+If $\varphi$ is $c$-satisfiable then no strategy makes the referee accept with probability more than $\tfrac{2+c}{3}$.
+\end{lemma}
+\begin{proof}
+$P_2$'s answers define an assignment $\sigma$ to all variables, and $\sigma$ satisfies at most a $c$-fraction of the clauses.  Fix a clause $C_j$ not satisfied by $\sigma$.  Either $P_1$ answers with an assignment not satisfying $C_j$, and the referee rejects outright, or $P_1$'s assignment satisfies $C_j$ and therefore disagrees with $\sigma$ on at least one of its three variables; the referee queries that variable with probability at least $\tfrac13$.
+So for each such $j$ the referee rejects with probability at least $\tfrac13$, giving a rejection probability of at least $(1-c)/3$ overall.
+\end{proof}
+
+\noindent
+Taking $c$ from the PCP theorem gives soundness $\tfrac{2+c}{3}<1$, a constant.  Parallel repetition drives it down.
+
+\begin{lemma}[Parallel repetition of the basic protocol; \citet{Hastad01}, Lemma~3.2]\label{lem:parallel-protocol}
+If $\varphi$ is $c$-satisfiable with $c<1$ then there is a constant $\bar c<1$ such that for every $u$ the $u$-parallel repetition of the protocol of Definition~\ref{def:basic-protocol} has value at most $\bar c^{\,u}$; if $\varphi$ is satisfiable its value is $1$.
+\end{lemma}
+
+\noindent
+This is exactly the repetition of Lecture~\ref{lec:raz}: the referee draws $u$ independent clause--variable pairs $(j_i,k_i)$, sends $(j_i)_{i\le u}$ to $P_1$ and $(k_i)_{i\le u}$ to $P_2$, and demands that all $u$ coordinates be consistent and satisfying.
+By Theorem~\ref{thm:raz} the value is $(1-\Omega(1))^{\Omega(u)}$, which is $\bar c^{\,u}$ for some $\bar c<1$; the answer sets of the basic protocol have constant size, so the logarithmic dependence on the alphabet is a constant.
+The strategy of $P_2$ is a function of the set $U=\{x_{k_1},\dots,x_{k_u}\}$, of size at most $u$, and that of $P_1$ is a function of $W$, the set of all variables of the chosen clauses, of size at most $3u$.
+
+Writing down the answers to \emph{all} questions means writing, for every set $V$ of at most $3u$ variables, a table over the assignments of $V$.  The long code turns this into a table over functions.
+
+\begin{definition}[Standard written proof; \citet{Hastad01}, Definition~3.3]\label{def:swp}
+A \defn{standard written proof with parameter $u$}, or $\mathrm{SWP}(u)$, consists, for every $V\subseteq[n]$ with $|V|\le3u$, of a string of length $2^{2^{|V|}}$, read as a function $A_V\colon F_V\to\{\pm1\}$.
+It is \defn{correct} for $\varphi$ if there is an assignment $x$ satisfying $\varphi$ with $A_V=A_{x|_V}$ for every such $V$.
+\end{definition}
+
+\noindent
+Its length is $n^{O(u)}2^{2^{3u}}$, polynomial for constant $u$.  Note that one table $A_V$ serves every clause that uses only variables of $V$; this is the sense in which the encoding is global.
+
+\begin{bigpicture}{How the written proof is used}
+A verifier chooses $U\subseteq W$, a set $h$ of clauses on $W$, and queries $A_U$ at one function $f\in F_U$ and $A_W$ at one or two functions $g_1,g_2\in F_W$, conditioned upon $h$ so that only assignments satisfying the clauses enter the Fourier expansion.
+The whole design problem is to choose the joint distribution of $(f,g_1,g_2)$ so that (i)~a correct proof is accepted with the intended probability, and (ii)~the acceptance predicate is a fixed Boolean function of the three answers, so that the test \emph{is} a constraint of the target CSP.
+Property~(ii) is what makes the final constant exact: there is no intermediate reduction in which a constant can be lost, and the \emph{random assignment threshold} of the target problem appears directly as the soundness.
+\end{bigpicture}
+
+
+%% ===========================================================================
+\section{Testing a long code}
+\label{sec:lctest}
+%% ===========================================================================
+
+The simplest test of this kind checks that a table over $F_U$ really is a long code.  It has no bearing on any optimisation problem; we present it because it isolates the argument.
+
+\begin{definition}[Long-code test]\label{def:lctest}
+Given $A\colon F_U\to\{\pm1\}$: choose $f_0,f_1\in F_U$ uniformly and independently, set $f_2=f_0f_1$ pointwise, and accept iff $A(f_0)A(f_1)A(f_2)=1$.
+\end{definition}
+
+\begin{lemma}[Completeness]\label{lem:lctest-complete}
+If $A=A_{x_0}$ is a long code then the test accepts with probability $1$.
+\end{lemma}
+\begin{proof}
+$A(f_0)A(f_1)A(f_2)=f_0(x_0)f_1(x_0)f_0(x_0)f_1(x_0)=1$.
+\end{proof}
+
+\begin{theorem}[Soundness of the long-code test; \citet{Hastad01}, Section~4]\label{thm:lctest}
+Let $A\colon F_U\to\{\pm1\}$ be accepted with probability $\tfrac{1+\delta}{2}$.  Then $\sum_\alpha\widehat A_\alpha^3=\delta$; in particular $\max_\alpha\widehat A_\alpha\ge\delta$.
+\end{theorem}
+\begin{proof}
+The test accepts exactly when the product is $+1$, so
+\[
+  \E_{f_0,f_1}\big[A(f_0)A(f_1)A(f_0f_1)\big]\;=\;2\Pr[\text{accept}]-1\;=\;\delta .
+\]
+Expand each factor by Theorem~\ref{thm:inv-f} and use Lemma~\ref{lem:prod-f}(a),(b):
+\[
+  \chi_{\alpha_0}(f_0)\chi_{\alpha_1}(f_1)\chi_{\alpha_2}(f_0f_1)=\chi_{\alpha_0\triangle\alpha_2}(f_0)\cdot\chi_{\alpha_1\triangle\alpha_2}(f_1).
+\]
+Substituting and using the independence of $f_0$ and $f_1$,
+\[
+  \E_{f_0,f_1}\big[A(f_0)A(f_1)A(f_0f_1)\big]
+  =\sum_{\alpha_0,\alpha_1,\alpha_2}\widehat A_{\alpha_0}\widehat A_{\alpha_1}\widehat A_{\alpha_2}\ \E_{f_0}\big[\chi_{\alpha_0\triangle\alpha_2}(f_0)\big]\ \E_{f_1}\big[\chi_{\alpha_1\triangle\alpha_2}(f_1)\big].
+\]
+By Lemma~\ref{lem:indep-f} the two expectations are $\mathbf 1[\alpha_0=\alpha_2]$ and $\mathbf 1[\alpha_1=\alpha_2]$, so the sum collapses to $\sum_\alpha\widehat A_\alpha^3=\delta$.
+The final claim is $\sum_\alpha\widehat A_\alpha^3\le\max_\alpha\widehat A_\alpha$ from Theorem~\ref{thm:inv-f}.
+\end{proof}
+
+\noindent
+The identity $\E[A(f_0)A(f_1)A(f_0f_1)]=\sum_\alpha\widehat A_\alpha^3$ was checked by exhaustive computation for $|U|\le2$: it holds exactly for random tables and gives $1$ for a long code.
+The moral is the sentence the whole method rests on: a table that passes the test with probability $\tfrac{1+\delta}{2}$ has a Fourier coefficient of size $\Omega(\delta)$, and that coefficient names a small set of variables.
+
+Definition~\ref{def:lctest} is the prototype.  The tests that follow replace the product $f_0f_1$ by a \emph{noisy} version, which turns the acceptance predicate into the predicate of the target problem and simultaneously weakens the test, so that passing it does not require being a long code but only being close to a monomial.
+
+
+%% ===========================================================================
+\section{Linear equations: the test and its completeness}
+\label{sec:lin}
+%% ===========================================================================
+
+Let $\varphi=C_1\wedge\dots\wedge C_m$ be a $3$-CNF with each variable in exactly five clauses.  We write $\{\pm1\}$ multiplicatively, so that a linear equation is a product: $x_ax_bx_c=b_0$ with $b_0\in\{\pm1\}$.
+
+\begin{definition}[Test $\mathrm{L}_\eps(u)$; \citet{Hastad01}, Section~5]\label{def:testL}
+The written proof is a $\mathrm{SWP}(u)$.  The verifier
+\begin{enumerate}[label=\arabic*.,leftmargin=*]
+  \item chooses $u$ clauses $(C_{j_i})_{i\le u}$ uniformly, and for each a uniformly random variable $x_{k_i}$ occurring in it; sets $U=\{x_{k_1},\dots,x_{k_u}\}$, $W=$ the set of all variables of the chosen clauses, and $h=\bigwedge_iC_{j_i}$;
+  \item chooses $f\in F_U$ uniformly;
+  \item chooses $g_1\in F_W$ uniformly;
+  \item chooses $\mu\in F_W$ by $\mu(y)=-1$ with probability $\eps$ and $\mu(y)=+1$ with probability $1-\eps$, independently over $y$;
+  \item sets $g_2=fg_1\mu$, \ie $g_2(y)=f(y|_U)\,g_1(y)\,\mu(y)$;
+  \item accepts iff $A_{U;{\rm true}}(f)\cdot A_{W,h;{\rm true}}(g_1)\cdot A_{W,h;{\rm true}}(g_2)=1$.
+\end{enumerate}
+\end{definition}
+
+\noindent
+Here $A_{U;{\rm true}}$ is $A_U$ conditioned upon nothing (there is no $h$) and folded; $A_{W,h;{\rm true}}$ is conditioned upon $h$ and folded.  The three queried bits are the signs.  The point of the design is the last line: \emph{the acceptance criterion is the exclusive-or of three proof bits}, which is the predicate of \sat{Max-E3-Lin}$(\F_2)$.
+So the CSP that the test defines is an instance of the target problem, with no reduction in between (Exercise~\ref{ex:testL-is-lin}).
+
+The two queries $g_1,g_2$ to the same table are related: they differ only where $\mu=-1$, an $\eps$-fraction of the points.  This is what makes the test a test of consistency and the predicate a three-bit predicate at the same time.
+
+\begin{lemma}[Completeness; \citet{Hastad01}, Lemma~5.1]\label{lem:L-complete}
+For every $u$, $\ \mathrm{L}_\eps(u)$ accepts a correct proof with probability at least $1-\eps$.
+\end{lemma}
+\begin{proof}
+Let $x$ satisfy $\varphi$ and let $A_V=A_{x|_V}$ for all $|V|\le3u$.  Folding and conditioning agree with the long code on a correct proof, so
+\[
+  A_{U;{\rm true}}(f)=f(x|_U),\qquad
+  A_{W,h;{\rm true}}(g_1)=g_1(x|_W),
+\]
+\[
+  A_{W,h;{\rm true}}(g_2)=g_2(x|_W)=f(x|_U)\,g_1(x|_W)\,\mu(x|_W).
+\]
+The product of the three is $\mu(x|_W)$, which is $-1$ with probability exactly $\eps$.  So the test fails only when $\mu(x|_W)=-1$.
+\end{proof}
+
+\noindent
+Thus the verifier has completeness $1-\eps$ for every $\eps>0$, and the predicate is exactly the target predicate.  The remaining half is soundness, which is where the Fourier analysis of Section~\ref{sec:soundness} happens.
+
+
+%% ===========================================================================
+\section{Soundness: from acceptance to a strategy}
+\label{sec:soundness}
+%% ===========================================================================
+
+The statement to prove is this.
+
+\begin{lemma}[Soundness of $\mathrm{L}_\eps(u)$; \citet{Hastad01}, Lemma~5.2]\label{lem:L-sound}
+Suppose $\mathrm{L}_\eps(u)$ accepts a proof with probability $\tfrac{1+\delta}{2}$.  Then the $u$-parallel two-prover protocol of Lemma~\ref{lem:parallel-protocol} has a strategy with value at least $4\eps\delta^2$.
+\end{lemma}
+
+\noindent
+Before reading the proof, notice what it is not.  It does not say that the table is close to a long code.  It says that a \emph{large Fourier coefficient} of the table can be converted into a strategy for the game.  This is the difference from Lectures~\ref{lec:as}--\ref{lec:alm}, where soundness was proved by decoding, and it is what makes the analysis exact.
+
+Fix $U,W,h$ for the moment and abbreviate $A=A_{U;{\rm true}}$ and $B=A_{W,h;{\rm true}}$.  By the assumption, the expectation of the accepted product is $\delta$:
+\begin{equation}\label{eq:accept}
+  \E_{U,W,h}\ \E_{f,g_1,\mu}\Big[A(f)\,B(g_1)\,B(g_2)\Big]\;=\;\delta,
+  \qquad g_2=fg_1\mu.
+\end{equation}
+
+\begin{proof}[Proof of Lemma~\ref{lem:L-sound}]
+\emph{Step 1: expand in Fourier series.}  Substitute the expansions of $A$ and of the two copies of $B$, and use $g_2=fg_1\mu$ together with part~(a) of Lemma~\ref{lem:prod-f}:
+\[
+  B(g_2)=\sum_{\beta_2}\widehat B_{\beta_2}\,\chi_{\beta_2}(f)\chi_{\beta_2}(g_1)\chi_{\beta_2}(\mu).
+\]
+Using part~(b) to combine the $g_1$-characters and part~(c) to push the $f$-characters down to $U$, and then the independence of $f,g_1,\mu$ (Lemma~\ref{lem:indep-f}),
+\[
+  \E_{f,g_1,\mu}\big[\chi_{\alpha}(f)\chi_{\beta_1}(g_1)\chi_{\beta_2}(f)\chi_{\beta_2}(g_1)\chi_{\beta_2}(\mu)\big]
+  =\mathbf 1[\beta_1=\beta_2]\cdot\mathbf 1[\alpha=\pi_U(\beta_2)]\cdot\E_\mu[\chi_{\beta_2}(\mu)] .
+\]
+By Lemma~\ref{lem:noise} the last factor is $(1-2\eps)^{|\beta_2|}$.  So~\eqref{eq:accept} becomes
+\begin{equation}\label{eq:dsquared}
+  \E_{U,W,h}\left[\sum_{\beta}\widehat A_{\pi_U(\beta)}\,\widehat B_\beta^{\,2}\,(1-2\eps)^{|\beta|}\right]\;=\;\delta .
+\end{equation}
+(This is equation~(12)--(13) of the paper.  Note that the inner sum is over $\beta$, and only its projection to $U$ matters for $A$: the test ``sees'' the small table only through $\pi_U$.)
+
+\emph{Step 2: strategies.}  Define two randomized strategies for the parallel protocol, in which $P_2$ receives $U$ and $P_1$ receives $(W,h)$.
+\begin{itemize}
+  \item $P_2$ on $U$: sample $\alpha$ with probability $\widehat A_\alpha^{\,2}$, then output a uniformly random $x\in\alpha$.
+  \item $P_1$ on $(W,h)$: sample $\beta$ with probability $\widehat B_\beta^{\,2}$, then output a uniformly random $y\in\beta$.
+\end{itemize}
+Both sets are nonempty by the foldedness (Definition~\ref{def:folding}: only odd $|\alpha|$ survive, so $\varnothing$ never has a nonzero coefficient), and every $y$ that $P_1$ outputs satisfies the chosen clauses, by the conditioning (only $\beta$ whose points satisfy $h$ survive).  So the referee accepts whenever the two answers are consistent, $y|_U=x$.
+
+For fixed $U,W,h$ and fixed sampled $\alpha,\beta$ with $\alpha=\pi_U(\beta)$, the answers are consistent with probability at least $|\beta|^{-1}$: whatever $x\in\alpha$ the prover $P_2$ outputs, some $y\in\beta$ restricts to it (an element of $\pi_U(\beta)$ is the restriction of at least one $y\in\beta$), and $P_1$ outputs that $y$ with probability at least $1/|\beta|$.
+Each pair $(\alpha,\beta)$ is sampled with probability $\widehat A_\alpha^{\,2}\widehat B_\beta^{\,2}$, so the acceptance probability for fixed $U,W,h$ is at least
+\begin{equation}\label{eq:strategy}
+  \sum_{\beta}\widehat A_{\pi_U(\beta)}^{\,2}\,\widehat B_\beta^{\,2}\,\frac{1}{|\beta|}\;\ge\;\sum_\beta\widehat A_{\pi_U(\beta)}^{\,2}\,\widehat B_\beta^{\,2}\,4\eps\,(1-2\eps)^{|\beta|},
+\end{equation}
+where the inequality is the key estimate
+\begin{equation}\label{eq:key-ineq}
+  \frac{1}{k}\;\ge\;4\eps\,(1-2\eps)^{k}\qquad\text{for every integer }k\ge1,
+\end{equation}
+proved below.
+
+\emph{Step 3: put the two together.}  Take expectations over $U,W,h$ in~\eqref{eq:strategy}, write $\mu_\beta=\widehat B_\beta^{\,2}(1-2\eps)^{|\beta|}\ge0$, and apply Cauchy--Schwarz to the inner sum:
+\[
+  \sum_\beta \widehat A_{\pi_U(\beta)}^{\,2}\mu_\beta\;\ge\;\Big(\sum_\beta\big|\widehat A_{\pi_U(\beta)}\big|\,\mu_\beta\Big)^2 \;\ge\;\Big(\sum_\beta\widehat A_{\pi_U(\beta)}\,\mu_\beta\Big)^2,
+\]
+using $\sum_\beta\mu_\beta\le\sum_\beta\widehat B_\beta^{\,2}=1$ in the first step and $\widehat A\le|\widehat A|$ in the second.
+Taking expectations and applying $\E[X^2]\ge(\E X)^2$ to $X=\sum_\beta\widehat A_{\pi_U(\beta)}\mu_\beta$ gives
+\[
+  \E_{U,W,h}\Big[\sum_\beta\widehat A_{\pi_U(\beta)}^{\,2}\mu_\beta\Big]\;\ge\;\Big(\E_{U,W,h}\Big[\sum_\beta\widehat A_{\pi_U(\beta)}\mu_\beta\Big]\Big)^2\;=\;\delta^2
+\]
+by~\eqref{eq:dsquared}.  Substituting into~\eqref{eq:strategy} gives a strategy for the parallel protocol with value at least $4\eps\delta^2$.
+\end{proof}
+
+\begin{lemma}[The key inequality, \eqref{eq:key-ineq}]\label{lem:key-ineq}
+For every $\eps\in(0,\tfrac12)$ and every integer $k\ge1$: $\ \dfrac{1}{k}\ \ge\ 4\eps\,(1-2\eps)^{k}$.
+\end{lemma}
+\begin{proof}
+We must show $k\,(1-2\eps)^k\le\frac1{4\eps}$.  Write $w=1-2\eps\in(0,1)$.  The function $k\mapsto kw^k$ is maximal at $k^\ast=-\frac1{\ln w}$, where it equals
+\[
+  k^\ast w^{k^\ast}=\frac{1}{e\,(-\ln w)} .
+\]
+Now $-\ln w=-\ln(1-2\eps)\ge 2\eps$ (since $\ln(1-t)\le-t$), so the maximum is at most $\frac{1}{2e\eps}=\frac{0.1839\ldots}{\eps}<\frac{1}{4\eps}$, since $\frac1{2e}<\frac14$.
+(The value of $k^\ast$ need not be an integer; the maximum over integers is no larger.)
+\end{proof}
+
+\noindent
+It is worth separating the two losses in the proof.  The first is the factor $|\beta|^{-1}$: the extracted strategy outputs a single random point of $\beta$ rather than the whole set.  The noise is what pays for it -- the test only sees $\beta$ through the weight $(1-2\eps)^{|\beta|}$, so large sets contribute little to the acceptance probability, and Lemma~\ref{lem:key-ineq} converts this into the factor $4\eps$.  This is why the noise $\mu$ is in the test at all, and why the soundness bound degrades as $\eps\to0$.  The second loss is the square: the test measures a quantity \emph{linear} in the coefficients of $A$, the strategy succeeds with a quantity \emph{quadratic} in them, and Cauchy--Schwarz and Jensen in Step~3 turn $\delta$ into $\delta^2$.
+
+\begin{pitfall}{what would fail without conditioning and folding}
+Without folding, the empty set $\varnothing$ could carry a large coefficient $\widehat A_\varnothing$, and then the strategy of Step~2 would have to output a random point of the empty set.
+Without conditioning, a set $\beta$ could have all its points violating the chosen clauses, and $P_1$'s answer would not satisfy them.
+Both operations are therefore not cosmetic: they are what makes the extracted strategies well defined, and they are performed by the verifier on the table it is handed, at no cost to completeness.
+\end{pitfall}
+
+\begin{theorem}[Parallel repetition is enough to make $\delta$ arbitrary]\label{thm:L-sound-consequence}
+Let $\eps>0$ be a constant.  If $\varphi$ is not satisfiable then $\mathrm{L}_\eps(u)$ accepts every proof with probability at most $\tfrac12+\delta(u)$, where $\delta(u)\to0$ as $u\to\infty$.
+\end{theorem}
+\begin{proof}
+Suppose a proof is accepted with probability $\tfrac{1+\delta}{2}$.  By Lemma~\ref{lem:L-sound} the parallel protocol has value at least $4\eps\delta^2$, and by Lemma~\ref{lem:parallel-protocol} its value is at most $\bar c^{\,u}$.  Hence $\delta\le\bar c^{\,u/2}/(2\sqrt\eps)$.
+\end{proof}
+
+\noindent
+Since $u$ is our choice, we may make $u$ large enough that $\bar c^{\,u/2}/(2\sqrt\eps)$ is below any prescribed $\delta_0$; $u=O(\log\frac1{\eps\delta_0})$ suffices, and then the proof has polynomial length.  The constants are now explicit in terms of $\bar c$ and $\eps$.
+
+
+%% ===========================================================================
+\section{Max-E3-Lin and Max-E3-SAT}
+\label{sec:e3sat}
+%% ===========================================================================
+
+\begin{theorem}[\sat{Max-E3-Lin}$(\F_2)$; \citet{Hastad01}, Theorem~5.4]\label{thm:e3lin}
+For every $\eps>0$ it is $\NP$-hard to approximate \sat{Max-E3-Lin}$(\F_2)$ within a factor $2-\eps$.  More precisely, for every $\eta>0$ it is $\NP$-hard to distinguish systems of three-variable equations over $\F_2$ in which a $(1-\eta)$-fraction of the equations can be satisfied from those in which at most a $(\tfrac12+\eta)$-fraction can.  (Completeness $1$ is impossible: a satisfiable linear system is solved by Gaussian elimination.)
+\end{theorem}
+\begin{proof}
+Fix $\eps>0$ and choose $\delta=\delta(\eps)>0$ with
+\begin{equation}\label{eq:choose-delta}
+  \frac{1-\delta}{(1+\delta)/2}\ \ge\ 2-\eps ;
+\end{equation}
+$\delta\le\eps/4$ suffices, since $\frac{2(1-\delta)}{1+\delta}\ge2(1-\delta)^2\ge2-4\delta$.  We run the test with noise parameter $\delta$, \ie $\mathrm{L}_\delta(u)$, as \cite{Hastad01} does.
+Let $L\in\NP$ and let $x$ be an input.  By Theorem~\ref{thm:pcp2} there is a $3$-CNF $\varphi$ with each variable in exactly five clauses, of size $\mathrm{poly}(|x|)$, with $\varphi$ satisfiable if $x\in L$ and at most $c$-satisfiable otherwise, $c<1$.
+Choose $u$ so large that $\bar c^{\,u}<4\delta\cdot\delta^2$; this is a constant depending only on $\eps$ and $c$.
+Consider the CSP given by $\mathrm{L}_\delta(u)$ on $\varphi$: its variables are the bits $b$ of the written proof, one for each query, and each accept condition is the equation $b_{U;f}\,b_{W,h;g_1}\,b_{W,h;g_2}=b_0$ with $b_0$ a fixed sign.
+This is an instance of \sat{Max-E3-Lin}$(\F_2)$ of size $n^{O(u)}2^{2^{3u}}=\poly(|x|)$, and by Lemma~\ref{lem:L-complete} and Theorem~\ref{thm:L-sound-consequence}:
+\[
+  x\in L\ \Rightarrow\ \ge(1-\delta)\text{ of the equations satisfiable},\qquad
+  x\notin L\ \Rightarrow\ <\tfrac{1+\delta}{2}\text{ satisfiable,}
+\]
+the second because acceptance probability $\tfrac{1+\delta}{2}$ would give a strategy of value $4\delta\cdot\delta^2>\bar c^{\,u}$ (Lemma~\ref{lem:L-sound}).
+An algorithm with ratio better than $\frac{1-\delta}{(1+\delta)/2}\ge 2-\eps$ would therefore decide $L$; so none exists unless $\Ptime=\NP$.
+\end{proof}
+
+\noindent
+Since $\eps$ is arbitrary, the ratio is arbitrarily close to $2$.  The threshold $\tfrac12$ is exactly the value of a random assignment, so the theorem says that \emph{no polynomial-time algorithm beats guessing}, even when almost all equations can be satisfied simultaneously.
+
+\begin{theorem}[\sat{Max-E3-SAT}; \citet{Hastad01}, Theorem~6.1]\label{thm:e3sat}
+For every $\eps>0$ it is $\NP$-hard to approximate \sat{Max-E3-SAT} within a factor $\tfrac87-\eps$.
+\end{theorem}
+\begin{proof}
+The four-clause gadget of Lemma~\ref{lem:gadget}: replace each equation $x_ax_bx_c=b_0$ (an XOR of three literals) by the four clauses
+\[
+  (x_a\vee x_b\vee x_c),\quad (x_a\vee\bar x_b\vee\bar x_c),\quad (\bar x_a\vee x_b\vee\bar x_c),\quad (\bar x_a\vee\bar x_b\vee x_c),
+\]
+with the signs read according to $b_0$.
+By Lemma~\ref{lem:gadget}, an assignment satisfying the equation satisfies all four clauses, and one violating it satisfies exactly three.  So if an assignment satisfies a fraction $s$ of the equations it satisfies a fraction $\tfrac{4s+3(1-s)}{4}=\tfrac34+\tfrac s4$ of the clauses, and conversely the best assignment for the clauses is the best for the equations.
+Starting from the instances of Theorem~\ref{thm:e3lin} with completeness $1-\delta$ and soundness $\tfrac{1+\delta}{2}$, the clause instances have completeness $\ge1-\tfrac\delta4$ and soundness $\le\tfrac78+\tfrac\delta8$; the ratio $\frac{1-\delta/4}{7/8+\delta/8}$ tends to $\tfrac87$ as $\delta\to0$.
+\end{proof}
+
+\begin{lemma}[The four-clause gadget]\label{lem:gadget}
+For the four clauses displayed in the proof of Theorem~\ref{thm:e3sat}: an assignment satisfies all four if and only if $x_ax_bx_c=b_0$, and exactly three of the four otherwise.
+\end{lemma}
+\begin{proof}
+Direct enumeration of the eight assignments, checked by hand in Table~\ref{tab:gadget}.  It is also the \emph{only} set of four clauses with this property (Exercise~\ref{ex:gadget-unique}).
+\end{proof}
+
+\begin{table}[t]
+\centering\small
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}ccc|cc@{}}
+\toprule
+$x_a$ & $x_b$ & $x_c$ & $x_ax_bx_c$ & clauses satisfied (out of $4$)\\
+\midrule
+$+$ & $+$ & $+$ & $+$ & $4$\\
+$+$ & $+$ & $-$ & $-$ & $3$\\
+$+$ & $-$ & $+$ & $-$ & $3$\\
+$+$ & $-$ & $-$ & $+$ & $4$\\
+$-$ & $+$ & $+$ & $-$ & $3$\\
+$-$ & $+$ & $-$ & $+$ & $4$\\
+$-$ & $-$ & $+$ & $+$ & $4$\\
+$-$ & $-$ & $-$ & $-$ & $3$\\
+\bottomrule
+\end{tabular}
+\caption{The four-clause gadget of Lemma~\ref{lem:gadget} (for $b_0=+1$; a literal is true when its value is $+$).  Satisfying the equation satisfies every clause; violating it costs exactly one clause.  The set is unique with this property.}
+\label{tab:gadget}
+\end{table}
+
+\noindent
+A variant of the same test \cite[Theorem~5.15]{Hastad01} shows that \emph{every} predicate on three bits that is implied by a linear equation is non-approximable beyond its own random threshold: if $P$ accepts whenever $x_ax_bx_c=1$, we may run the test of Definition~\ref{def:testL} with acceptance criterion $P$ instead of the XOR, which only makes the test more generous, and the completeness stays at $1-\eps$ while the soundness analysis goes through with the Fourier coefficients of $P$ in place of those of the XOR (Exercise~\ref{ex:implied-predicates}).
+
+What the argument does \emph{not} give is the corresponding statement on \emph{satisfiable} instances: Theorem~\ref{thm:e3lin} is about $(\tfrac12+\eps)$ versus $1-\eps$, not about $(\tfrac78+\eps)$ versus $1$.  That sharper statement is true -- it is \cite[Theorem~6.5]{Hastad01} -- but its proof needs a substantially more delicate test, and we do not reproduce it.
+
+
+%% ===========================================================================
+\section{What ``optimal beyond the random threshold'' means}
+\label{sec:optimal}
+%% ===========================================================================
+
+\begin{bigpicture}{Why these results are called optimal}
+For \sat{Max-E3-Lin}$(\F_2)$ a uniformly random assignment satisfies exactly half of the equations, whatever the system is; there is no instance on which guessing does worse.  Theorem~\ref{thm:e3lin} says that for every $\eps>0$ no polynomial-time algorithm can guarantee more than a $(\tfrac12+\eps)$-fraction, even on instances where a $(1-\eps)$-fraction is achievable.
+So the ratio $2$ is a bound on \emph{every} algorithm and the algorithm is the trivial one: the threshold of random assignment is exactly the threshold of approximability.
+The same for \sat{Max-E3-SAT} with $\tfrac78$ in the place of $\tfrac12$.
+
+The phrase ``non-approximable beyond the random assignment threshold'' is the name of this phenomenon.  Let $\mathrm{wt}(P)$ be the fraction of inputs accepted by the predicate $P$, \ie the expected fraction of constraints a random assignment satisfies.  The CSP of $P$ is \emph{non-approximable beyond the random assignment threshold} if, unless $\Ptime=\NP$, for every $\eps>0$ no polynomial-time algorithm has approximation ratio $\mathrm{wt}(P)+\eps$ \cite[Definition~2.16]{Hastad01}; it is so \emph{on satisfiable instances} if it is moreover $\NP$-hard to distinguish satisfiable instances from those in which at most a $(\mathrm{wt}(P)+\eps)$-fraction of the constraints can be satisfied \cite[Definition~2.17]{Hastad01}.
+\sat{Max-E3-Lin}$(\F_2)$ has the first property but not the second (Gaussian elimination); \sat{Max-E3-SAT} has both, the second being his Theorem~6.5.
+\end{bigpicture}
+
+\noindent
+For predicates on three bits, \cite{Hastad01} notes that the question is completely resolved by \citet{Zwick98}: the predicates implied by a linear equation are non-approximable beyond their threshold (as his Theorem~5.15 also shows), and the others are not.  For four bits \cite{Hastad01} leaves it open, saying so in his concluding remarks.  This is the frontier: the method is ``very strong'' but ``does not seem universal''.
+
+The paper's table collects the constants that follow.  Table~\ref{tab:scoreboard} of Lecture~\ref{lec:why} quoted some of them; Table~\ref{tab:hastad-ratios} lists the main ones, all in the form ``$\NP$-hard to approximate within''.
+
+\begin{table}[t]
+\centering\small
+\renewcommand{\arraystretch}{1.25}
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabular}{@{}lccc>{\raggedright\arraybackslash}p{3.9cm}@{}}
+\toprule
+problem & ratio & previous & random & how it is obtained\\
+\midrule
+\sat{Max-E3-Lin}$(\F_2)$ & $2-\eps$ & $\tfrac87-\eps$ \citep{BGS98} & $\tfrac12$ & Test $\mathrm{L}_\eps(u)$, Theorem~\ref{thm:e3lin}\\
+\sat{Max-E3-Lin}$(\F_p)$ & $p-\eps$ & $p^{c}$, some $c>0$ & $\tfrac1p$ & same test over $\F_p$\\
+\sat{Max-E3-SAT} & $\tfrac87-\eps$ & $\tfrac{80}{77}-\eps$ \citep{BGS98} & $\tfrac78$ & four-clause gadget, Theorem~\ref{thm:e3sat}\\
+\sat{Max-E2-SAT} & $\tfrac{22}{21}-\eps$ & $\tfrac{220}{217}-\eps$ & --- & gadget of \citet{TSSW00}\\
+\sat{Max-Cut} & $\tfrac{17}{16}-\eps$ & $\tfrac{72}{71}-\eps$ & $\tfrac12$ & gadget of \citet{TSSW00}\\
+\sat{Max-di-Cut} & $\tfrac{12}{11}-\eps$ & $\tfrac{72}{71}-\eps$ & --- & gadget of \citet{TSSW00}\\
+\sat{Vertex Cover} & $\tfrac76-\eps$ & $\tfrac{233}{218}-\eps$ & --- & free bits, \eqref{eq:freebits}\\
+\bottomrule
+\end{tabular}
+\caption{The ratios of \cite{Hastad01}.  ``Previous best'' is the earlier constant, in most cases from \citet{BGS98}; the \sat{Max-E2-SAT}, \sat{Max-Cut} and \sat{Max-di-Cut} rows come from the linear-equations test via gadgets of \citet{TSSW00}, the last row from a free-bit count; none of these four is proved here.}
+\label{tab:hastad-ratios}
+\end{table}
+
+\noindent
+Three points about the table.  First, the two rows we proved are the two where the \emph{predicate of the test} is the predicate of the problem; the others lose an unspecified but explicit constant in a gadget reduction.  Second, the improvement over the previous best is large in the first rows ($\tfrac87\to2$ for linear equations, $\tfrac{80}{77}\to\tfrac87$ for satisfiability) and smaller in the gadget rows, where part of the improvement is due to better gadgets.  Third, the last row uses a different mechanism, which is worth stating because it is the one place where the \emph{number of free bits} of the verifier -- not the predicate -- produces the constant.
+
+\begin{pitfall}{free bits, and why they are not the same as queries}
+For a verifier with perfect completeness, a bit it reads is \defn{non-free} if, at the moment of reading, the verifier will reject unless the bit has one prescribed value; otherwise it is \defn{free}.  Informally, the free bits count the accepting patterns: a verifier with $f$ free bits has at most $2^f$ accepting answer patterns per random string.  For a verifier with $f$ free bits, completeness $c$ and soundness $s$, the induced instance of \sat{Vertex Cover} has a gap of
+\begin{equation}\label{eq:freebits}
+  \frac{2^{f}-s}{2^{f}-c},
+\end{equation}
+and the test $\mathrm{L}_\eps(u)$ has $f=2$, $c=1-\eps$, $s=\tfrac12+\eps$, giving $\frac{4-\frac12-\eps}{4-1+\eps}=\frac{3.5-\eps}{3+\eps}\to\frac76$.
+For \sat{Clique} the corresponding statement is the $N^{1-\eps}$ of \citet{Hastad99}, which is \emph{not} proved in this paper -- \cite{Hastad01} cites it -- and which likewise comes from counting the free bits of a PCP rather than from a sharp predicate (Exercise~\ref{ex:free-bits}).
+\end{pitfall}
+
+
+%% ===========================================================================
+\section{Why this is where the course turns}
+\label{sec:towards-ugc}
+%% ===========================================================================
+
+We now have the two sharpest theorems of the classical theory, and they are sharp in a strong sense: the algorithm is the trivial one and no other algorithm does better unless $\Ptime=\NP$.
+
+Widening the picture, however, the results of this lecture have a shape that stops the method.  Each of them is proved by designing, for one predicate, a test whose acceptance predicate is that predicate, and then analysing that test.  The analysis relies on the Fourier spectrum of the predicate and on the long code, and it works for three-bit predicates and (with more difficulty) for the satisfiable case of \sat{Max-E3-SAT}.  What it does not give is a \emph{general} statement covering every CSP at once, and H\aa stad's own concluding remarks single out the four-bit case as open and say the method ``does not seem universal even limited to CSPs''.
+
+Worse, for the two problems where the algorithmic side is genuinely clever, the results of this lecture do not close the gap.
+
+\begin{bigpicture}{The two gaps that remain, and what they have in common}
+\sat{Max-Cut} is approximable within $\alpha_{\mathrm{GW}}\approx0.8786$ by the semidefinite program of \citet{GW95}, and the best unconditional hardness is $\tfrac{16}{17}\approx0.941$ (\citealp{Hastad01,TSSW00}).  The gap is $0.8786$ against $0.941$.
+\sat{Vertex Cover} is approximable within $2$ by a maximal matching, and the best unconditional hardness is $\sqrt2\approx1.414$ (\citealp{DKKMS18,KMS18}).  The gap is $1.414$ against $2$.
+H\aa stad's own bounds in both rows ($\tfrac{17}{16}$ and $\tfrac76$) come from the linear-equations test through a gadget or a free-bit count, and each loses a constant that the algorithm does not; the later $\sqrt2$ for \sat{Vertex Cover} needed the $2$-to-$2$ theorem of the last part of these notes.
+In both cases, assuming the Unique Games Conjecture, the gap closes exactly and the optimal ratio is the one the algorithm achieves (\citealp{KKMO07,MOO10} for \sat{Max-Cut}, \citealp{KhotRegev08} for \sat{Vertex Cover}).
+\end{bigpicture}
+
+\noindent
+The pattern is this.  The results of this lecture are proved by a test whose predicate \emph{is} the target predicate, and they are optimal for the problems whose predicate is a linear equation or a clause.  For problems whose predicate is not of this kind, the reduction passes through a gadget or a cruder parameter, and the loss there is what the UGC, in these two examples, recovers.
+
+There is also a more intrinsic reason for the turn.  Consider what the proof of Lemma~\ref{lem:L-sound} did: it extracted from a passing table a \emph{small set} of candidate values for a small set of variables, and used it as a strategy.  The natural generalisation is a CSP whose constraints are \emph{bijections} between label sets, so that a label of one side determines a label of the other: then a passing test yields a labeling, not just a set of candidate answers, and the correspondence between the test and the game is exact rather than approximate.  That object is the \emph{Unique Game}, and the conjecture that its gap problem is hard is the subject of the next part of these notes.
+
+Lecture~8 introduces the conjecture; we shall see in Lecture~11 that it is strong enough to determine the optimal ratio for \emph{every} CSP, as the integrality gap of one semidefinite program \citep{Raghavendra08}; and we shall see in the last part of these notes that the $2$-to-$2$ games give it a relative that is now a theorem.
+
+
+%% ===========================================================================
+\section*{Exercises}
+\addcontentsline{toc}{section}{Exercises}
+%% ===========================================================================
+
+\begin{exercise}[\stars{$\star$}]\label{ex:longcode-distance}
+(a)~Show that any two distinct long codes differ on exactly half of $F_U$, so the relative distance is $\tfrac12$.
+(b)~How many bits does a long code of $u$ bits have?  For which $u$ is the table shorter than $2^{1000}$?
+(c)~Show that the long code of $x$ is the unique $A$ with $\widehat A_{\{x\}}=1$, and that if $\widehat A_{\{x\}}\ge1-\eta$ then $A$ agrees with $A_x$ on at least a $(\tfrac12+\tfrac{1-\eta}{2})$-fraction of $F_U$.
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:folding}
+Prove the two Fourier claims of Definition~\ref{def:folding}.  \emph{Hint for (a): for even $|\alpha|$, the substitution $f\mapsto\bar f$ pairs the terms of $\widehat{\tilde A}_\alpha$, and the two contributions cancel because $\chi_\alpha(\bar f)=(-1)^{|\alpha|}\chi_\alpha(f)$.}
+For (b), pair $f$ with the function $f'$ that differs from it only at a point $x_0$ where $h$ is false.
+\end{exercise}
+
+\begin{exercise}[\stars{$\star$}]\label{ex:testL-is-lin}
+Show that the CSP defined by the test $\mathrm{L}_\eps(u)$ is an instance of \sat{Max-E3-Lin}$(\F_2)$: write down its variables, its equations, and its weight distribution.  How many variables does it have (as a function of $u$ and $|\varphi|$)?  Why is this polynomial?
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:key-ineq}
+(a)~Prove $k\,(1-2\eps)^k\le\frac1{4\eps}$ for all integers $k\ge1$ and all $\eps\in(0,\tfrac12)$ by maximising over real $k$.  \emph{Hint: $\ln(1-t)\le-t$.}
+(b)~Use Lemma~\ref{lem:exp} ($x^s\le e^{s(x-1)}$, with $x=4\eps|\beta|$ and $s=\frac12$) and $e^{-2\eps}\ge1-2\eps$ to prove the weaker bound $|\beta|^{-1/2}\ge(4\eps)^{1/2}(1-2\eps)^{|\beta|}$ that \cite{Hastad01} uses, and show that it also suffices for Lemma~\ref{lem:L-sound}.
+(c)~What goes wrong in the proof of Lemma~\ref{lem:L-sound} if $\eps=0$, \ie if the test has no noise?  Exhibit a table that is not close to any long code but passes $\mathrm{L}_0(u)$ with probability $1$.  \emph{Hint: a character $\chi_\beta$ with $|\beta|$ large and $\pi_U(\beta)$ suitable.}
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:gadget-unique}
+Prove Lemma~\ref{lem:gadget} by enumerating the eight assignments, and show that the four clauses displayed are the \emph{only} set of four $3$-clauses (one variable each, all signs allowed) with the property ``satisfied equation $\Rightarrow4/4$, violated equation $\Rightarrow3/4$''.
+\emph{Hint: check all $\binom{8}{4}=70$ possibilities, or argue that each of the four violated parity classes must be excluded by a different clause.}
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:implied-predicates}
+Let $P$ be a predicate on three bits that is satisfied whenever $x_ax_bx_c=1$ (in the $\{\pm1\}$ notation).  Show that the test of Definition~\ref{def:testL} with acceptance criterion $P$ has completeness $1-\eps$, and that its soundness analysis reduces to the one given here with the Fourier coefficients of $P$ in place of those of the XOR.
+Check that $P=$ ``not exactly two of the three bits are true'' is implied by linearity, and compute its acceptance probability on a random input.
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star$}]\label{ex:free-bits}
+(a)~Define free bits and verify \eqref{eq:freebits} on a PCP with $f$ free bits, completeness $c$ and soundness $s$: show that the induced \sat{Vertex Cover} instance has a gap of $(2^f-s)/(2^f-c)$.
+(b)~Apply it to the test $\mathrm{L}_\eps(u)$ ($f=2$, $c=1-\eps$, $s=\tfrac12+\eps$) and compute the limit as $\eps\to0$.
+(c)~Why does the ``$f=2$'' matter, and what would $f=3$ give?
+\end{exercise}
+
+\begin{exercise}[\stars{$\star\star\star$}]\label{ex:reading-hastad}
+\emph{Reading.}  Read Section~6 of \cite{Hastad01} and describe the extra difficulty in proving the satisfiable case (Theorem~6.5) compared with the linear case: what does the test test, and why does conditioning alone not suffice?
+Then read his Section~9, and state precisely which stronger hypothesis is needed to make $\eps$ a function of $n$, and what happens to the size of the PCP under that hypothesis.
+\end{exercise}
+
+
+%% ===========================================================================
+\section*{Notes and further reading}
+\addcontentsline{toc}{section}{Notes and further reading}
+%% ===========================================================================
+
+\paragraph{Where this lecture comes from.}
+Everything is from \citet{Hastad01}: the Fourier toolkit on $F_U$ is Section~2.4 (our Lemmas~\ref{lem:orth-f}--\ref{lem:noise}), folding and conditioning are Section~2.5 (our Definition~\ref{def:folding}), the basic protocol and the standard written proof are Section~3 (our Definitions~\ref{def:basic-protocol} and~\ref{def:swp}, and Lemmas~\ref{lem:basic-sound}--\ref{lem:parallel-protocol}), the long-code test is Section~4 (our Theorem~\ref{thm:lctest}), the linear-equations test and its analysis are Section~5 (our Definition~\ref{def:testL}, Lemmas~\ref{lem:L-complete} and~\ref{lem:L-sound}) and the satisfiability results are Section~6 (our Theorems~\ref{thm:e3lin}--\ref{thm:e3sat} and Lemma~\ref{lem:gadget}).  The nonconstant-$\eps$ results are his Section~9 and the open problems are his Section~10.
+The long code itself is due to \citet{BGS98}; the use of the full Fourier transform (rather than distance to a codeword) for extracting strategies is the innovation of \citet{Hastad99,Hastad01}, and \citet{Hastad01} says so in his introduction.
+
+\paragraph{Presentational choices of these notes.}
+(i)~\emph{Notation.}  Like the paper we work over $\{\pm1\}$ with exclusive-or written as multiplication; we let $+1$ denote true (sign conventions for ``true'' vary, and nothing depends on the choice), and we write $A_{V;h;{\rm true}}$ for the conditioned, folded table.  The reader who prefers $\F_2$ should replace $\{\pm1\}$ by $\{0,1\}$ and the product by the sum.
+(ii)~\emph{Order.}  We prove the long-code test of Section~\ref{sec:lctest} before the linear-equations test, since it isolates the Fourier argument; the paper does the same and calls the first test ``pedagogical''.
+(iii)~\emph{The key inequality.}  The paper's Lemma~5.3 is the estimate $x^s\le e^{s(x-1)}$; the paper applies it as $|\beta|^{-1/2}\ge(4\eps)^{1/2}(1-2\eps)^{|\beta|}$ inside a Cauchy--Schwarz bound.  We use instead the slightly stronger \eqref{eq:key-ineq}, isolated as Lemma~\ref{lem:key-ineq} and proved directly, and then apply Cauchy--Schwarz and Jensen in Step~3; the conclusion $4\eps\delta^2$ is the same.  The square on $\delta$ comes from the Cauchy--Schwarz--Jensen step, not from \eqref{eq:key-ineq}.
+(iv)~\emph{The satisfiable case.}  We prove the gadget reduction of Theorem~\ref{thm:e3sat} but not the sharp satisfiable-case statement (Theorem~6.5 of the paper), and we say so.
+
+\paragraph{Numerical checks made for these notes.}
+The Fourier identities of Section~\ref{sec:fourier-f} (orthonormality, Parseval, the uniqueness of the coefficient of a long code, and the restriction formula of Lemma~\ref{lem:prod-f}(c)) were verified by exhaustive computation for $|U|\le2$; the identity of Theorem~\ref{thm:lctest} was verified on random tables; Lemma~\ref{lem:noise} and Lemma~\ref{lem:key-ineq} were verified by computation over a range of $\eps$; the four-clause gadget of Lemma~\ref{lem:gadget} was verified by enumeration of all eight assignments and of all $70$ four-subsets of the eight clauses; and the arithmetic of~\eqref{eq:choose-delta} and of Table~\ref{tab:hastad-ratios} was checked directly.
+
+\paragraph{What is not covered.}
+We do not prove Theorem~6.5 (the satisfiable case of \sat{Max-E3-SAT}), Set Splitting (Section~7 of the paper), the equations-over-$\F_p$ and Abelian-group extensions (Section~2.6 and Section~5.1), the gadget reductions to \sat{Max-2-SAT}, \sat{Max-Cut} and \sat{Vertex Cover} (Section~8), or the nonconstant-$\eps$ results (Section~9).  The classification of three-variable predicates combines Theorem~5.15 with \citet{Zwick98}; the four-variable case is open.
+The next part of these notes turns to the Unique Games Conjecture, which is what remains when one asks for a sharp theory of \emph{every} CSP rather than one predicate at a time.

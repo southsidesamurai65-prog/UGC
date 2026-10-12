@@ -1,4 +1,23 @@
-# outline
+# outline (kept locally, not uploaded)
 outline.md
 
-
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.idx
+*.ind
+*.ilg
+*.nav
+*.snm
+*.vrb
+*.synctex.gz
+*.bcf
+*.run.xml

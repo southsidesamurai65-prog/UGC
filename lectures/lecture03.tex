@@ -786,7 +786,7 @@ is what survives when one limits oneself to $O(1)$ compositions.
   \item They compose that with a verifier, built from ideas of \citet{BLR90}, which is \emph{wasteful in randomness} (polynomial in the proof size) but makes only $O(1)$ \emph{bit} queries.  Since by now the input
         to the last verifier has size $\polylog n$, its wastefulness is harmless.  The result is a $(\log n,1)$-restricted verifier.
 \end{enumerate}
-This is Lecture~4.  The last of the three verifiers is based on the \emph{Hadamard code} and linearity testing \citep{BLR90}; the \emph{long code} of \citet{BGS98}, the workhorse of Lecture~7, is a more redundant relative of the Hadamard code.
+This is Lecture~4.  The last of the three verifiers is based on the \emph{Hadamard code} and linearity testing \citep{BLR90}; the \emph{long code} of \citet{BGS98}, the workhorse of Lecture~\ref{lec:hastad}, is a more redundant relative of the Hadamard code.
 
 \begin{bigpicture}{The shape of the argument, in one paragraph}
 A satisfying assignment is encoded by a low-degree polynomial, a code in which a $1\%$-corrupted word still determines the codeword.  Satisfiability becomes one vanishing sum, which the sum-check verifies at a single random

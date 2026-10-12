@@ -439,7 +439,7 @@ statement about the complexity of a gap problem for constraint graphs of this ty
 \toprule
 Constraints & Gap problem & Status & Main use\\
 \midrule
-projection (large alphabet) & $\Gap{1}{\delta}{LabelCover}$, every $\delta>0$ & theorem (Thm.~\ref{thm:lc}) & H\aa stad's tight $3$-bit results (Lecture~7)\\
+projection (large alphabet) & $\Gap{1}{\delta}{LabelCover}$, every $\delta>0$ & theorem (Thm.~\ref{thm:lc}) & H\aa stad's tight $3$-bit results (Lecture~\ref{lec:hastad})\\
 $2$-to-$2$ & $\Gap{1-\eps}{\eps}{2-to-2}_k$ for some $k=k(\eps)$ & theorem \citep{KMS17,DKKMS18,KMS18} & \sat{Vertex Cover} within $\sqrt2-\eps$ (Lectures~13--15)\\
 unique & $\Gap{1-\eps}{\delta}{UG}_k$ for some $k=k(\eps,\delta)$ & conjecture \citep{Khot02}; claimed in \citep{OpenAI26}, not verified & tight bounds for \sat{Max-Cut}, \sat{Vertex Cover}, every CSP (Lectures~8--11)\\
 unique, completeness $1$ & $\Gap{1}{\delta}{UG}$ & in $\Ptime$ (Prop.~\ref{prop:ug-easy}) & ---\\
@@ -635,7 +635,7 @@ The FGLSS reduction reads a PCP and builds a graph.  For problems with a rigid l
 \begin{bigpicture}{The recipe of the next lectures}
 \textbf{Step 1 (Lectures 1--2, 5).}  Prove that a Label Cover instance (projection constraints, soundness $\delta$, alphabet $\poly(1/\delta)$) is $\NP$-hard to approximate.
 This is the \emph{outer verifier}.
-\textbf{Step 2 (Lecture 7).}  Replace every vertex $v$ of the instance by a table $f_v$ that is supposed to be the \emph{long-code} encoding of the label of~$v$, and every edge $e=(u,v)$ by a
+\textbf{Step 2 (Lecture~\ref{lec:hastad}).}  Replace every vertex $v$ of the instance by a table $f_v$ that is supposed to be the \emph{long-code} encoding of the label of~$v$, and every edge $e=(u,v)$ by a
 \emph{local test} between $f_u$ and $f_v$ that reads very few entries; this is the \emph{inner verifier}.  The tests have the shape of the target problem: three bits for \sat{Max-E3-Lin}, two bits for \sat{Max-Cut}.
 \textbf{Step 3 (analysis).}  If the Label Cover instance has a labeling of value~$1$, encoding it passes all tests (completeness).  If a family of tables passes the tests with
 probability above the claimed soundness, \emph{decode} each table into a short list of candidate labels; a random choice from the lists is a labeling that satisfies many edges, contradicting the soundness of
